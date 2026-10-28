@@ -92,7 +92,7 @@
   .model-name { font-size: 18px; font-weight: 600; padding: 6px 10px; display: flex; align-items: center; gap: 8px; }
   .logo { width: 26px; height: 26px; border-radius: 7px; }
   .hero-logo { width: 56px; height: 56px; border-radius: 15px; margin-bottom: -12px; }
-  .model-name span { color: var(--muted); font-weight: 400; }
+  .model-name #modelSub { color: var(--muted); font-weight: 400; }
   .topbar .spacer { flex: 1; }
   .open-side { display: none; }
   .sidebar.hidden ~ .main .open-side { display: inline-flex; }
@@ -243,6 +243,7 @@
     background: var(--bg); color: var(--text); font-weight: 400;
   }
   .dlg-body textarea { resize: vertical; min-height: 70px; }
+  .dlg-body small a { color: var(--text); text-decoration: underline; text-underline-offset: 2px; }
   .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .dlg-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px 16px; }
   .btn { padding: 8px 16px; border-radius: 999px; font-size: 14px; font-weight: 500; border: 1px solid var(--border); }
@@ -293,7 +294,7 @@
     <button class="icon-btn open-side" id="openSide" title="Mở thanh bên">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg>
     </button>
-    <div class="model-name"><img class="logo" src="icons/icon.svg" alt="">GLM-Z1 <span>9B · offline</span></div>
+    <div class="model-name"><img class="logo" src="icons/icon.svg" alt=""><span id="modelTitle">GLM-Z1</span> <span id="modelSub">9B · offline</span></div>
     <div class="spacer"></div>
     <button class="icon-btn" id="themeBtn" title="Đổi giao diện sáng/tối">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
@@ -325,7 +326,7 @@
         <svg id="sendIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
       </button>
     </form>
-    <div class="footnote">Chạy hoàn toàn trên máy bạn. Mô hình có thể trả lời sai, hãy kiểm tra thông tin quan trọng.</div>
+    <div class="footnote" id="footnote">Chạy hoàn toàn trên máy bạn. Mô hình có thể trả lời sai, hãy kiểm tra thông tin quan trọng.</div>
   </div>
 </main>
 
@@ -338,9 +339,25 @@
       </button>
     </div>
     <div class="dlg-body">
-      <label>Địa chỉ server
+      <label>Nguồn mô hình
+        <select id="setProvider">
+          <option value="local">Máy này (offline, cần chạy ./server.sh)</option>
+          <option value="zai">Z.ai (đám mây, có mô hình miễn phí)</option>
+          <option value="openrouter">OpenRouter (đám mây, trả phí)</option>
+        </select>
+      </label>
+      <label data-for="local">Địa chỉ server
         <input id="setServer" placeholder="http://127.0.0.1:8080">
         <small>Nơi <code>./server.sh</code> đang chạy.</small>
+      </label>
+      <label data-for="cloud">API key
+        <input id="setKey" type="password" autocomplete="off" placeholder="Dán API key vào đây">
+        <small id="keyHelp"></small>
+      </label>
+      <label data-for="cloud">Mô hình
+        <input id="setModel" list="modelList">
+        <datalist id="modelList"></datalist>
+        <small id="modelHelp"></small>
       </label>
       <label>Lời nhắc hệ thống
         <textarea id="setSystem" placeholder="Ví dụ: Luôn trả lời bằng tiếng Việt."></textarea>
@@ -409,9 +426,42 @@
   };
 
   const settings = Object.assign(
-    { server: "http://127.0.0.1:8080", system: "", temperature: 0.6, maxTokens: 4096, think: "collapsed", deep: false, tools: true },
+    { server: "http://127.0.0.1:8080", system: "", temperature: 0.6, maxTokens: 4096, think: "collapsed", deep: false, tools: true,
+      provider: "local", keys: {}, models: {} },
     store.get("glm.settings", {})
   );
+  // Các nguồn mô hình. Tất cả đều dùng API kiểu OpenAI nên chung một cách gọi.
+  const PROVIDERS = {
+    local: { name: "Máy này" },
+    zai: {
+      name: "Z.ai",
+      url: "https://api.z.ai/api/paas/v4/chat/completions",
+      models: ["glm-4.7-flash", "glm-4.5-flash", "glm-5.3-flash", "glm-5.3"],
+      keyHelp: 'Tạo key miễn phí tại <a href="https://z.ai/manage-apikey/apikey-list" target="_blank" rel="noopener">z.ai</a>. Key chỉ lưu trong trình duyệt này.',
+      modelHelp: "glm-4.7-flash và glm-4.5-flash miễn phí. glm-5.3-flash, glm-5.3 mạnh hơn nhưng tính phí.",
+      extra: { thinking: { type: "enabled" } },
+    },
+    openrouter: {
+      name: "OpenRouter",
+      url: "https://openrouter.ai/api/v1/chat/completions",
+      models: ["z-ai/glm-5.3-flash", "z-ai/glm-4.7-flash", "z-ai/glm-5.3"],
+      keyHelp: 'Tạo key tại <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai</a> (cần nạp tiền). Key chỉ lưu trong trình duyệt này.',
+      modelHelp: "Tên mô hình theo OpenRouter, ví dụ z-ai/glm-5.3-flash.",
+      extra: { reasoning: { enabled: true } },
+    },
+  };
+  const isCloud = () => settings.provider !== "local";
+  const cloudModel = () => settings.models[settings.provider] || PROVIDERS[settings.provider].models[0];
+
+  function paintProvider() {
+    const cloud = isCloud();
+    $("modelTitle").textContent = cloud ? cloudModel().replace(/^z-ai\//, "").split("-").map((w) => (w === "glm" ? "GLM" : w[0].toUpperCase() + w.slice(1))).join("-") : "GLM-Z1";
+    $("modelSub").textContent = cloud ? `· ${PROVIDERS[settings.provider].name}` : "9B · offline";
+    $("footnote").textContent = cloud
+      ? `Tin nhắn được gửi tới máy chủ của ${PROVIDERS[settings.provider].name}. Mô hình có thể trả lời sai, hãy kiểm tra thông tin quan trọng.`
+      : "Chạy hoàn toàn trên máy bạn. Mô hình có thể trả lời sai, hãy kiểm tra thông tin quan trọng.";
+  }
+
   let chats = store.get("glm.chats", []);
   let memories = store.get("glm.memory", []);
   const saveMemories = () => store.set("glm.memory", memories);
@@ -751,7 +801,8 @@
       if (e.name !== "AbortError") {
         reply.error = /Failed to fetch|NetworkError|Load failed/i.test(e.message)
           ? `Không kết nối được tới ${settings.server}. Hãy chạy ./server.sh trong Terminal rồi thử lại.` +
-            (location.protocol === "https:" ? " Nếu trình duyệt hỏi quyền truy cập thiết bị trong mạng cục bộ, hãy chọn Cho phép." : "")
+            (location.protocol === "https:" ? " Nếu trình duyệt hỏi quyền truy cập thiết bị trong mạng cục bộ, hãy chọn Cho phép." : "") +
+            (isCloud() ? "" : " Hoặc vào Cài đặt, chọn nguồn mô hình Z.ai để dùng online.")
           : e.message;
       }
       // Dừng hoặc lỗi giữa bước kiểm tra: giữ lại bản nháp làm câu trả lời.
@@ -841,6 +892,17 @@
     });
   }
 
+  async function apiError(res) {
+    const text = await res.text();
+    let msg = text;
+    try { const j = JSON.parse(text); msg = j.error?.message || j.message || j.msg || text; } catch {}
+    msg = String(msg).slice(0, 300);
+    if (res.status === 401 || res.status === 403) return `API key không đúng hoặc đã hết hạn (${res.status}): ${msg}`;
+    if (res.status === 429) return `Đã vượt giới hạn số lượt hỏi, đợi một lúc rồi thử lại (429): ${msg}`;
+    if (res.status === 402) return `Tài khoản hết tiền (402): ${msg}`;
+    return `Server trả lỗi ${res.status}: ${msg}`;
+  }
+
   // Gửi một yêu cầu và stream kết quả vào `reply`. Dừng sớm khi `stopOn(content)` trả về true.
   async function runPass(messages, reply, node, stopOn) {
     const t0 = performance.now();
@@ -849,19 +911,24 @@
     const onAbort = () => pass.abort();
     controller.signal.addEventListener("abort", onAbort, { once: true });
     try {
+      const p = PROVIDERS[settings.provider];
+      const cloud = isCloud();
+      if (cloud && !settings.keys[settings.provider]) throw new Error(`Chưa có API key của ${p.name}. Vào Cài đặt để dán key.`);
       const body = JSON.stringify({
         messages, stream: true,
-        temperature: Number(settings.temperature), max_tokens: Number(settings.maxTokens),
-        top_p: 0.95, top_k: 40,
+        temperature: Number(settings.temperature), max_tokens: Number(settings.maxTokens), top_p: 0.95,
+        ...(cloud ? { model: cloudModel(), ...p.extra } : { top_k: 40 }),
       });
+      const url = cloud ? p.url : settings.server.replace(/\/+$/, "") + "/v1/chat/completions";
+      const headers = { "Content-Type": "application/json" };
+      if (cloud) headers.Authorization = "Bearer " + settings.keys[settings.provider];
+      if (settings.provider === "openrouter") headers["X-Title"] = "GLM Local";
       const notice = reply.notice;
       let res;
       // Server trả 503 khi mô hình còn đang nạp vào RAM: chờ rồi gửi lại, tối đa ~5 phút.
       for (let attempt = 0; ; attempt++) {
-        res = await fetch(settings.server.replace(/\/+$/, "") + "/v1/chat/completions", {
-          method: "POST", headers: { "Content-Type": "application/json" }, body, signal: pass.signal,
-        });
-        if (res.status !== 503 || attempt >= 150) break;
+        res = await fetch(url, { method: "POST", headers, body, signal: pass.signal });
+        if (cloud || res.status !== 503 || attempt >= 150) break;
         reply.notice = "Đang nạp mô hình vào bộ nhớ, sẽ tự gửi khi xong…";
         setStatus("", "Đang nạp mô hình…");
         paintAssistant(node, reply, true);
@@ -871,8 +938,8 @@
         });
       }
       reply.notice = notice;
-      if (!res.ok) throw new Error(`Server trả lỗi ${res.status}: ${(await res.text()).slice(0, 300)}`);
-      setStatus("ok", "Server đang chạy");
+      if (!res.ok) throw new Error(await apiError(res));
+      setStatus("ok", cloud ? `${p.name} · ${cloudModel()}` : "Server đang chạy");
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
@@ -894,9 +961,11 @@
           if (data === "[DONE]") continue;
           let j; try { j = JSON.parse(data); } catch { continue; }
           const delta = j.choices?.[0]?.delta || {};
-          if (delta.reasoning_content) reply.reasoning += delta.reasoning_content;
+          // llama.cpp và Z.ai dùng reasoning_content, OpenRouter dùng reasoning.
+          const think = delta.reasoning_content || delta.reasoning;
+          if (think) reply.reasoning += think;
           if (delta.content) { reply.content += delta.content; delete reply.notice; }
-          if (delta.reasoning_content || delta.content) {
+          if (think || delta.content) {
             tokens++; tFirst ??= performance.now();
             // Mốc kết thúc suy nghĩ: token trả lời đầu tiên sau phần reasoning, hoặc khi gặp </think>.
             if (tThinkEnd === null && ((reply.reasoning && delta.content) || reply.content.includes("</think>"))) tThinkEnd = performance.now();
@@ -984,6 +1053,8 @@
 
   // ---------- Cài đặt ----------
   $("openSettings").onclick = () => {
+    $("setProvider").value = settings.provider;
+    fillProvider();
     $("setServer").value = settings.server; $("setSystem").value = settings.system;
     $("setTemp").value = settings.temperature; $("setMax").value = settings.maxTokens;
     $("setThink").value = settings.think;
@@ -994,6 +1065,8 @@
   };
   els.settings.addEventListener("close", () => {
     if (els.settings.returnValue !== "save") return;
+    saveProviderFields();
+    settings.provider = $("setProvider").value;
     settings.server = $("setServer").value.trim() || "http://127.0.0.1:8080";
     settings.system = $("setSystem").value;
     settings.temperature = parseFloat($("setTemp").value) || 0.6;
@@ -1001,8 +1074,31 @@
     settings.think = $("setThink").value;
     settings.tools = $("setTools").checked;
     store.set("glm.settings", settings);
-    checkServer(); renderThread();
+    paintProvider(); checkServer(); renderThread();
   });
+  // Ô key/mô hình hiển thị theo nguồn đang chọn trong hộp thoại; mỗi nguồn nhớ key riêng.
+  let shownProvider = null;
+  function saveProviderFields() {
+    if (!shownProvider || shownProvider === "local") return;
+    settings.keys[shownProvider] = $("setKey").value.trim();
+    settings.models[shownProvider] = $("setModel").value.trim();
+  }
+  function fillProvider() {
+    const id = $("setProvider").value, p = PROVIDERS[id];
+    shownProvider = id;
+    els.settings.querySelectorAll("[data-for]").forEach((el) => {
+      el.hidden = el.dataset.for !== (id === "local" ? "local" : "cloud");
+      el.style.display = el.hidden ? "none" : "";
+    });
+    if (id === "local") return;
+    $("setKey").value = settings.keys[id] || "";
+    $("setModel").value = settings.models[id] || p.models[0];
+    $("modelList").innerHTML = p.models.map((m) => `<option value="${m}">`).join("");
+    $("keyHelp").innerHTML = p.keyHelp;
+    $("modelHelp").textContent = p.modelHelp;
+  }
+  $("setProvider").addEventListener("change", () => { saveProviderFields(); fillProvider(); });
+
   function renderMemories() {
     const list = $("memList");
     list.innerHTML = memories.length ? "" : '<li class="empty-mem">Chưa có ghi nhớ nào.</li>';
@@ -1049,6 +1145,12 @@
 
   // ---------- Kiểm tra server ----------
   async function checkServer() {
+    if (isCloud()) {
+      const p = PROVIDERS[settings.provider];
+      if (settings.keys[settings.provider]) setStatus("ok", `${p.name} · ${cloudModel()}`);
+      else setStatus("err", `Chưa nhập API key ${p.name}`);
+      return;
+    }
     try {
       const r = await fetch(settings.server.replace(/\/+$/, "") + "/health", { cache: "no-store" });
       const j = await r.json().catch(() => ({}));
@@ -1058,6 +1160,7 @@
     } catch { setStatus("err", "Chưa chạy ./server.sh"); }
   }
   function setStatus(cls, text) { els.statusDot.className = "dot " + cls; els.statusText.textContent = text; }
+  paintProvider();
   checkServer();
   setInterval(checkServer, 10000);
 
