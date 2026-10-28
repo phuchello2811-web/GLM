@@ -342,6 +342,7 @@
       <label>Nguồn mô hình
         <select id="setProvider">
           <option value="local">Máy này (offline, cần chạy ./server.sh)</option>
+          <option value="shared">GLM miễn phí (online, không cần key hay tài khoản)</option>
           <option value="pollinations">Pollinations (online, không cần key hay tài khoản)</option>
           <option value="puter">Puter (online, cần tài khoản Puter)</option>
           <option value="zai">Z.ai (online, cần API key miễn phí)</option>
@@ -434,14 +435,24 @@
     set(key, value) { try { localStorage.setItem(key, JSON.stringify(value)); } catch {} },
   };
 
+  // Địa chỉ Cloudflare Worker giữ API key Z.ai chung (xem worker/README.md). Để trống thì ẩn lựa chọn này.
+  const SHARED_URL = "";
+
   const settings = Object.assign(
     { server: "http://127.0.0.1:8080", system: "", temperature: 0.6, maxTokens: 4096, think: "collapsed", deep: false, tools: true,
-      provider: location.protocol === "https:" ? "pollinations" : "local", keys: {}, models: {} },
+      provider: location.protocol !== "https:" ? "local" : SHARED_URL ? "shared" : "pollinations", keys: {}, models: {} },
     store.get("glm.settings", {})
   );
   // Các nguồn mô hình. Tất cả đều dùng API kiểu OpenAI nên chung một cách gọi.
   const PROVIDERS = {
     local: { name: "Máy này" },
+    shared: {
+      name: "GLM miễn phí",
+      url: SHARED_URL,
+      models: ["glm-4.7-flash", "glm-4.5-flash"],
+      modelHelp: "Dùng chung máy chủ của trang, không cần key hay tài khoản. Tối đa 20 câu hỏi mỗi phút.",
+      extra: { thinking: { type: "enabled" } },
+    },
     pollinations: {
       name: "Pollinations",
       url: "https://text.pollinations.ai/openai",
@@ -473,6 +484,10 @@
       extra: { reasoning: { enabled: true } },
     },
   };
+  if (!SHARED_URL) {
+    document.querySelector('#setProvider option[value="shared"]').remove();
+    if (settings.provider === "shared") settings.provider = "pollinations";
+  }
   const isCloud = () => settings.provider !== "local";
   const cloudModel = () => settings.models[settings.provider] || PROVIDERS[settings.provider].models[0];
 
