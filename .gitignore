@@ -1,0 +1,4 @@
+models/
+*.gguf
+*.part
+.DS_Store
