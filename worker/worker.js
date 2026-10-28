@@ -77,11 +77,18 @@ export default {
       thinking: { type: body.thinking?.type === "disabled" ? "disabled" : "enabled" },
     };
 
-    const upstream = await fetch(UPSTREAM, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${env.ZAI_API_KEY}` },
-      body: JSON.stringify(clean),
-    });
+    // Bản miễn phí hay bị quá tải (429): thử lần lượt các mô hình miễn phí còn lại.
+    let upstream;
+    for (const m of [model, ...FREE_MODELS.filter((x) => x !== model)]) {
+      if (upstream) await upstream.body?.cancel();
+      upstream = await fetch(UPSTREAM, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${env.ZAI_API_KEY}` },
+        body: JSON.stringify({ ...clean, model: m }),
+      });
+      if (upstream.status !== 429) break;
+    }
+    if (upstream.status === 429) return fail(429, "Máy chủ GLM miễn phí đang quá tải. Đợi một lúc rồi thử lại.");
     // Không trả nguyên lỗi xác thực của Z.ai về trình duyệt để khỏi lộ chi tiết về key.
     if (upstream.status === 401 || upstream.status === 403) return fail(502, "API key trên máy chủ chung bị sai hoặc đã bị thu hồi.");
     const headers = new Headers(cors);
