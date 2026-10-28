@@ -342,15 +342,23 @@
       <label>Nguồn mô hình
         <select id="setProvider">
           <option value="local">Máy này (offline, cần chạy ./server.sh)</option>
-          <option value="zai">Z.ai (đám mây, có mô hình miễn phí)</option>
-          <option value="openrouter">OpenRouter (đám mây, trả phí)</option>
+          <option value="puter">Puter (online, không cần API key)</option>
+          <option value="zai">Z.ai (online, cần API key miễn phí)</option>
+          <option value="openrouter">OpenRouter (online, trả phí)</option>
         </select>
       </label>
       <label data-for="local">Địa chỉ server
         <input id="setServer" placeholder="http://127.0.0.1:8080">
         <small>Nơi <code>./server.sh</code> đang chạy.</small>
       </label>
-      <label data-for="cloud">API key
+      <label data-for="puter">Tài khoản Puter
+        <div class="mem-add">
+          <input id="puterUser" readonly value="Chưa đăng nhập">
+          <button class="btn" id="puterLogin" type="button">Đăng nhập Puter</button>
+        </div>
+        <small>Miễn phí, không cần API key. Puter tính lượt dùng vào tài khoản Puter của bạn.</small>
+      </label>
+      <label data-for="key">API key
         <input id="setKey" type="password" autocomplete="off" placeholder="Dán API key vào đây">
         <small id="keyHelp"></small>
       </label>
@@ -427,14 +435,19 @@
 
   const settings = Object.assign(
     { server: "http://127.0.0.1:8080", system: "", temperature: 0.6, maxTokens: 4096, think: "collapsed", deep: false, tools: true,
-      provider: "local", keys: {}, models: {} },
+      provider: location.protocol === "https:" ? "puter" : "local", keys: {}, models: {} },
     store.get("glm.settings", {})
   );
   // Các nguồn mô hình. Tất cả đều dùng API kiểu OpenAI nên chung một cách gọi.
   const PROVIDERS = {
     local: { name: "Máy này" },
+    puter: {
+      name: "Puter",
+      models: ["z-ai/glm-4.7-flash", "z-ai/glm-5.3-flash", "z-ai/glm-5.3", "z-ai/glm-4.5-air"],
+      modelHelp: "Không cần API key. Lần đầu gửi tin, Puter sẽ mở cửa sổ đăng nhập tài khoản Puter miễn phí.",
+    },
     zai: {
-      name: "Z.ai",
+      name: "Z.ai", needsKey: true,
       url: "https://api.z.ai/api/paas/v4/chat/completions",
       models: ["glm-4.7-flash", "glm-4.5-flash", "glm-5.3-flash", "glm-5.3"],
       keyHelp: 'Tạo key miễn phí tại <a href="https://z.ai/manage-apikey/apikey-list" target="_blank" rel="noopener">z.ai</a>. Key chỉ lưu trong trình duyệt này.',
@@ -442,7 +455,7 @@
       extra: { thinking: { type: "enabled" } },
     },
     openrouter: {
-      name: "OpenRouter",
+      name: "OpenRouter", needsKey: true,
       url: "https://openrouter.ai/api/v1/chat/completions",
       models: ["z-ai/glm-5.3-flash", "z-ai/glm-4.7-flash", "z-ai/glm-5.3"],
       keyHelp: 'Tạo key tại <a href="https://openrouter.ai/keys" target="_blank" rel="noopener">openrouter.ai</a> (cần nạp tiền). Key chỉ lưu trong trình duyệt này.',
@@ -800,9 +813,11 @@
     } catch (e) {
       if (e.name !== "AbortError") {
         reply.error = /Failed to fetch|NetworkError|Load failed/i.test(e.message)
-          ? `Không kết nối được tới ${settings.server}. Hãy chạy ./server.sh trong Terminal rồi thử lại.` +
-            (location.protocol === "https:" ? " Nếu trình duyệt hỏi quyền truy cập thiết bị trong mạng cục bộ, hãy chọn Cho phép." : "") +
-            (isCloud() ? "" : " Hoặc vào Cài đặt, chọn nguồn mô hình Z.ai để dùng online.")
+          ? (isCloud()
+            ? `Không kết nối được tới ${PROVIDERS[settings.provider].name}. Kiểm tra kết nối mạng rồi thử lại.`
+            : `Không kết nối được tới ${settings.server}. Hãy chạy ./server.sh trong Terminal rồi thử lại.` +
+              (location.protocol === "https:" ? " Nếu trình duyệt hỏi quyền truy cập thiết bị trong mạng cục bộ, hãy chọn Cho phép." : "") +
+              " Hoặc vào Cài đặt, chọn nguồn mô hình Puter để dùng online không cần API key.")
           : e.message;
       }
       // Dừng hoặc lỗi giữa bước kiểm tra: giữ lại bản nháp làm câu trả lời.
@@ -910,70 +925,25 @@
     const pass = new AbortController();
     const onAbort = () => pass.abort();
     controller.signal.addEventListener("abort", onAbort, { once: true });
+    let pending = false;
+    const repaint = () => {
+      if (pending) return; pending = true;
+      // Vẽ lại tối đa ~6 lần/giây để trình duyệt không tranh GPU với mô hình.
+      setTimeout(() => { pending = false; if (controller) { paintAssistant(node, reply, true); scrollDown(); } }, 150);
+    };
     try {
-      const p = PROVIDERS[settings.provider];
-      const cloud = isCloud();
-      if (cloud && !settings.keys[settings.provider]) throw new Error(`Chưa có API key của ${p.name}. Vào Cài đặt để dán key.`);
-      const body = JSON.stringify({
-        messages, stream: true,
-        temperature: Number(settings.temperature), max_tokens: Number(settings.maxTokens), top_p: 0.95,
-        ...(cloud ? { model: cloudModel(), ...p.extra } : { top_k: 40 }),
-      });
-      const url = cloud ? p.url : settings.server.replace(/\/+$/, "") + "/v1/chat/completions";
-      const headers = { "Content-Type": "application/json" };
-      if (cloud) headers.Authorization = "Bearer " + settings.keys[settings.provider];
-      if (settings.provider === "openrouter") headers["X-Title"] = "GLM Local";
-      const notice = reply.notice;
-      let res;
-      // Server trả 503 khi mô hình còn đang nạp vào RAM: chờ rồi gửi lại, tối đa ~5 phút.
-      for (let attempt = 0; ; attempt++) {
-        res = await fetch(url, { method: "POST", headers, body, signal: pass.signal });
-        if (cloud || res.status !== 503 || attempt >= 150) break;
-        reply.notice = "Đang nạp mô hình vào bộ nhớ, sẽ tự gửi khi xong…";
-        setStatus("", "Đang nạp mô hình…");
-        paintAssistant(node, reply, true);
-        await new Promise((ok, fail) => {
-          const t = setTimeout(ok, 2000);
-          pass.signal.addEventListener("abort", () => { clearTimeout(t); fail(new DOMException("", "AbortError")); }, { once: true });
-        });
-      }
-      reply.notice = notice;
-      if (!res.ok) throw new Error(await apiError(res));
-      setStatus("ok", cloud ? `${p.name} · ${cloudModel()}` : "Server đang chạy");
-
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-      let buf = "", pending = false;
-      const repaint = () => {
-        if (pending) return; pending = true;
-        // Vẽ lại tối đa ~6 lần/giây để trình duyệt không tranh GPU với mô hình.
-        setTimeout(() => { pending = false; if (controller) { paintAssistant(node, reply, true); scrollDown(); } }, 150);
-      };
-
-      while (!stopped) {
-        const { value, done } = await reader.read();
-        if (done) break;
-        buf += decoder.decode(value, { stream: true });
-        const parts = buf.split("\n"); buf = parts.pop();
-        for (const line of parts) {
-          if (!line.startsWith("data:")) continue;
-          const data = line.slice(5).trim();
-          if (data === "[DONE]") continue;
-          let j; try { j = JSON.parse(data); } catch { continue; }
-          const delta = j.choices?.[0]?.delta || {};
-          // llama.cpp và Z.ai dùng reasoning_content, OpenRouter dùng reasoning.
-          const think = delta.reasoning_content || delta.reasoning;
-          if (think) reply.reasoning += think;
-          if (delta.content) { reply.content += delta.content; delete reply.notice; }
-          if (think || delta.content) {
-            tokens++; tFirst ??= performance.now();
-            // Mốc kết thúc suy nghĩ: token trả lời đầu tiên sau phần reasoning, hoặc khi gặp </think>.
-            if (tThinkEnd === null && ((reply.reasoning && delta.content) || reply.content.includes("</think>"))) tThinkEnd = performance.now();
-          }
-          if (j.timings?.predicted_per_second) reply.tps = j.timings.predicted_per_second.toFixed(1);
-          repaint();
-          if (stopOn?.(reply.content)) { stopped = true; pass.abort(); break; }
+      const stream = settings.provider === "puter" ? puterDeltas(messages, pass.signal) : apiDeltas(messages, reply, node, pass.signal);
+      for await (const { think, text, tps } of stream) {
+        if (think) reply.reasoning += think;
+        if (text) { reply.content += text; delete reply.notice; }
+        if (think || text) {
+          tokens++; tFirst ??= performance.now();
+          // Mốc kết thúc suy nghĩ: token trả lời đầu tiên sau phần reasoning, hoặc khi gặp </think>.
+          if (tThinkEnd === null && ((reply.reasoning && text) || reply.content.includes("</think>"))) tThinkEnd = performance.now();
         }
+        if (tps) reply.tps = tps.toFixed(1);
+        repaint();
+        if (stopOn?.(reply.content)) { stopped = true; pass.abort(); break; }
       }
     } catch (e) {
       if (!(stopped && e.name === "AbortError")) throw e;
@@ -984,6 +954,100 @@
       }
       if (!reply.tps && tokens > 1 && tFirst) reply.tps = (tokens / ((performance.now() - tFirst) / 1000)).toFixed(1);
     }
+  }
+
+  // API kiểu OpenAI (llama-server, Z.ai, OpenRouter): đọc luồng SSE, trả ra từng mẩu suy nghĩ/chữ.
+  async function* apiDeltas(messages, reply, node, signal) {
+    const p = PROVIDERS[settings.provider];
+    const cloud = isCloud();
+    if (p.needsKey && !settings.keys[settings.provider]) throw new Error(`Chưa có API key của ${p.name}. Vào Cài đặt để dán key.`);
+    const body = JSON.stringify({
+      messages, stream: true,
+      temperature: Number(settings.temperature), max_tokens: Number(settings.maxTokens), top_p: 0.95,
+      ...(cloud ? { model: cloudModel(), ...p.extra } : { top_k: 40 }),
+    });
+    const url = cloud ? p.url : settings.server.replace(/\/+$/, "") + "/v1/chat/completions";
+    const headers = { "Content-Type": "application/json" };
+    if (cloud) headers.Authorization = "Bearer " + settings.keys[settings.provider];
+    if (settings.provider === "openrouter") headers["X-Title"] = "GLM Local";
+    const notice = reply.notice;
+    let res;
+    // Server trả 503 khi mô hình còn đang nạp vào RAM: chờ rồi gửi lại, tối đa ~5 phút.
+    for (let attempt = 0; ; attempt++) {
+      res = await fetch(url, { method: "POST", headers, body, signal });
+      if (cloud || res.status !== 503 || attempt >= 150) break;
+      reply.notice = "Đang nạp mô hình vào bộ nhớ, sẽ tự gửi khi xong…";
+      setStatus("", "Đang nạp mô hình…");
+      paintAssistant(node, reply, true);
+      await new Promise((ok, fail) => {
+        const t = setTimeout(ok, 2000);
+        signal.addEventListener("abort", () => { clearTimeout(t); fail(new DOMException("", "AbortError")); }, { once: true });
+      });
+    }
+    reply.notice = notice;
+    if (!res.ok) throw new Error(await apiError(res));
+    setStatus("ok", cloud ? `${p.name} · ${cloudModel()}` : "Server đang chạy");
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buf = "";
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) return;
+      buf += decoder.decode(value, { stream: true });
+      const parts = buf.split("\n"); buf = parts.pop();
+      for (const line of parts) {
+        if (!line.startsWith("data:")) continue;
+        const data = line.slice(5).trim();
+        if (data === "[DONE]") continue;
+        let j; try { j = JSON.parse(data); } catch { continue; }
+        const delta = j.choices?.[0]?.delta || {};
+        // llama.cpp và Z.ai dùng reasoning_content, OpenRouter dùng reasoning.
+        yield { think: delta.reasoning_content || delta.reasoning, text: delta.content, tps: j.timings?.predicted_per_second };
+      }
+    }
+  }
+
+  // Puter.js: không cần API key, người dùng đăng nhập tài khoản Puter miễn phí (Puter hiện cửa sổ đăng nhập khi cần).
+  let puterLoading = null;
+  function loadPuter() {
+    if (window.puter) return Promise.resolve(window.puter);
+    return (puterLoading ??= new Promise((ok, fail) => {
+      const s = document.createElement("script");
+      s.src = "https://js.puter.com/v2/";
+      s.onload = () => ok(window.puter);
+      s.onerror = () => { puterLoading = null; s.remove(); fail(new Error("Không tải được Puter.js. Kiểm tra kết nối mạng rồi thử lại.")); };
+      document.head.append(s);
+    }));
+  }
+
+  async function* puterDeltas(messages, signal) {
+    // Puter không huỷ được yêu cầu (kể cả khi đang chờ đăng nhập), nên mọi bước đều chạy đua với nút dừng.
+    const aborted = new Promise((_, fail) => signal.addEventListener("abort", () => fail(new DOMException("", "AbortError")), { once: true }));
+    aborted.catch(() => {});
+    const puter = await Promise.race([loadPuter(), aborted]);
+    let res;
+    try {
+      res = await Promise.race([puter.ai.chat(messages, false, {
+        model: cloudModel(), stream: true,
+        temperature: Number(settings.temperature), max_tokens: Number(settings.maxTokens),
+      }), aborted]);
+    } catch (e) { throw e.name === "AbortError" ? e : new Error(puterError(e)); }
+    setStatus("ok", `Puter · ${cloudModel()}`);
+    const it = res[Symbol.asyncIterator]();
+    while (true) {
+      const { value: part, done } = await Promise.race([it.next(), aborted]);
+      if (done) return;
+      if (part?.type === "error") throw new Error(puterError(part));
+      yield { think: part?.reasoning, text: part?.text };
+    }
+  }
+
+  function puterError(e) {
+    const msg = e?.message || e?.error?.message || (typeof e === "string" ? e : JSON.stringify(e));
+    if (/sign|auth|login|cancel/i.test(msg)) return `Cần đăng nhập Puter để dùng (miễn phí). Bấm gửi lại và đăng nhập trong cửa sổ hiện ra. Chi tiết: ${msg}`;
+    if (/insufficient|funds|credit|quota|limit/i.test(msg)) return `Tài khoản Puter đã hết lượt dùng miễn phí: ${msg}`;
+    return `Puter báo lỗi: ${msg}`;
   }
 
   function setBusy(busy) {
@@ -1075,29 +1139,50 @@
     settings.tools = $("setTools").checked;
     store.set("glm.settings", settings);
     paintProvider(); checkServer(); renderThread();
+    if (settings.provider === "puter") loadPuter().catch(() => {});
   });
   // Ô key/mô hình hiển thị theo nguồn đang chọn trong hộp thoại; mỗi nguồn nhớ key riêng.
   let shownProvider = null;
   function saveProviderFields() {
     if (!shownProvider || shownProvider === "local") return;
-    settings.keys[shownProvider] = $("setKey").value.trim();
+    if (PROVIDERS[shownProvider].needsKey) settings.keys[shownProvider] = $("setKey").value.trim();
     settings.models[shownProvider] = $("setModel").value.trim();
   }
   function fillProvider() {
     const id = $("setProvider").value, p = PROVIDERS[id];
     shownProvider = id;
     els.settings.querySelectorAll("[data-for]").forEach((el) => {
-      el.hidden = el.dataset.for !== (id === "local" ? "local" : "cloud");
+      const want = el.dataset.for;
+      el.hidden = !(want === "local" ? id === "local" : want === "key" ? !!p.needsKey : want === "puter" ? id === "puter" : id !== "local");
       el.style.display = el.hidden ? "none" : "";
     });
     if (id === "local") return;
+    if (id === "puter") paintPuterUser();
     $("setKey").value = settings.keys[id] || "";
+    $("keyHelp").innerHTML = p.keyHelp || "";
     $("setModel").value = settings.models[id] || p.models[0];
     $("modelList").innerHTML = p.models.map((m) => `<option value="${m}">`).join("");
-    $("keyHelp").innerHTML = p.keyHelp;
     $("modelHelp").textContent = p.modelHelp;
   }
   $("setProvider").addEventListener("change", () => { saveProviderFields(); fillProvider(); });
+
+  async function paintPuterUser() {
+    const box = $("puterUser"), btn = $("puterLogin");
+    try {
+      const puter = await loadPuter();
+      if (!puter.auth.isSignedIn()) { box.value = "Chưa đăng nhập"; btn.hidden = false; return; }
+      const u = await puter.auth.getUser();
+      box.value = "Đã đăng nhập: " + (u?.username || "Puter"); btn.hidden = true;
+    } catch (e) { box.value = e.message; }
+  }
+  $("puterLogin").onclick = async () => {
+    try {
+      // Phải gọi ngay trong cú bấm, nếu không trình duyệt sẽ chặn cửa sổ đăng nhập.
+      if (!window.puter) await loadPuter();
+      await window.puter.auth.signIn();
+    } catch {}
+    paintPuterUser();
+  };
 
   function renderMemories() {
     const list = $("memList");
@@ -1147,7 +1232,7 @@
   async function checkServer() {
     if (isCloud()) {
       const p = PROVIDERS[settings.provider];
-      if (settings.keys[settings.provider]) setStatus("ok", `${p.name} · ${cloudModel()}`);
+      if (!p.needsKey || settings.keys[settings.provider]) setStatus("ok", `${p.name} · ${cloudModel()}`);
       else setStatus("err", `Chưa nhập API key ${p.name}`);
       return;
     }
@@ -1161,6 +1246,8 @@
   }
   function setStatus(cls, text) { els.statusDot.className = "dot " + cls; els.statusText.textContent = text; }
   paintProvider();
+  // Tải sẵn Puter.js để lần gửi đầu tiên mở được cửa sổ đăng nhập ngay (trình duyệt chặn cửa sổ mở quá muộn).
+  if (settings.provider === "puter") loadPuter().catch(() => {});
   checkServer();
   setInterval(checkServer, 10000);
 

@@ -48,7 +48,9 @@ Mở http://127.0.0.1:8080. Server cũng có API tương thích OpenAI tại `ht
 
 Trang web chỉ là giao diện. Mô hình vẫn chạy trên máy bạn qua `./server.sh`, nên không có dữ liệu nào bị gửi lên mạng.
 
-**Dùng online, không cần bật Mac:** vào **Cài đặt → Nguồn mô hình**, chọn **Z.ai**, rồi dán API key tạo miễn phí tại [z.ai](https://z.ai/manage-apikey/apikey-list). Các mô hình `glm-4.7-flash` và `glm-4.5-flash` miễn phí, `glm-5.3-flash` và `glm-5.3` mạnh hơn nhưng tính phí. Cách này dùng được cả trên điện thoại, nhưng tin nhắn sẽ được gửi tới máy chủ của Z.ai. Key chỉ lưu trong trình duyệt của bạn, không nằm trong code.
+**Dùng online, không cần API key:** khi mở link trên, trang mặc định dùng **Puter**. Lần đầu gửi tin (hoặc bấm **Cài đặt → Đăng nhập Puter**), bạn đăng nhập tài khoản Puter miễn phí trong cửa sổ hiện ra là chat được với GLM, trên cả máy tính lẫn điện thoại. Lượt dùng tính vào tài khoản Puter của bạn.
+
+**Dùng online với API key của riêng bạn:** vào **Cài đặt → Nguồn mô hình**, chọn **Z.ai**, rồi dán API key tạo miễn phí tại [z.ai](https://z.ai/manage-apikey/apikey-list). Các mô hình `glm-4.7-flash` và `glm-4.5-flash` miễn phí, `glm-5.3-flash` và `glm-5.3` mạnh hơn nhưng tính phí. Cách này dùng được cả trên điện thoại, nhưng tin nhắn sẽ được gửi tới máy chủ của Z.ai. Key chỉ lưu trong trình duyệt của bạn, không nằm trong code.
 
 Giao diện có lịch sử chat (lưu trong trình duyệt), hiện quá trình suy nghĩ của mô hình, nút dừng và tạo lại câu trả lời, chế độ sáng/tối. Vào **Cài đặt** để đổi địa chỉ server, lời nhắc hệ thống hoặc nhiệt độ.
 
