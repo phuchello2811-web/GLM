@@ -15,8 +15,8 @@ GLM-Z1 suy nghĩ từng bước trước khi trả lời, nên làm tốt các b
 ## Cài đặt
 
 ```bash
-git clone https://github.com/phuchello2811-web/AI.git
-cd AI
+git clone https://github.com/phuchello2811-web/GLM.git
+cd GLM
 ./setup.sh
 ```
 
@@ -43,7 +43,7 @@ Mở http://127.0.0.1:8080. Server cũng có API tương thích OpenAI tại `ht
 **Giao diện chat riêng (`index.html`):**
 
 1. Chạy `./server.sh` và để Terminal đó mở.
-2. Mở https://phuchello2811-web.github.io/AI/ bằng Chrome. Lần đầu, nếu Chrome hỏi quyền truy cập thiết bị trong mạng cục bộ, chọn **Cho phép**. Cũng có thể mở `index.html` bằng **Go Live** trong VS Code.
+2. Mở https://phuchello2811-web.github.io/GLM/ bằng Chrome. Lần đầu, nếu Chrome hỏi quyền truy cập thiết bị trong mạng cục bộ, chọn **Cho phép**. Cũng có thể mở `index.html` bằng **Go Live** trong VS Code.
 3. Muốn dùng như ứng dụng riêng, bấm **Cài thành ứng dụng** ở góc dưới thanh bên.
 
 Trang web chỉ là giao diện. Mô hình vẫn chạy trên máy bạn qua `./server.sh`, nên không có dữ liệu nào bị gửi lên mạng.
