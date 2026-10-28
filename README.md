@@ -48,7 +48,9 @@ Mở http://127.0.0.1:8080. Server cũng có API tương thích OpenAI tại `ht
 
 Trang web chỉ là giao diện. Mô hình vẫn chạy trên máy bạn qua `./server.sh`, nên không có dữ liệu nào bị gửi lên mạng.
 
-**Dùng online, không cần API key:** khi mở link trên, trang mặc định dùng **Puter**. Lần đầu gửi tin (hoặc bấm **Cài đặt → Đăng nhập Puter**), bạn đăng nhập tài khoản Puter miễn phí trong cửa sổ hiện ra là chat được với GLM, trên cả máy tính lẫn điện thoại. Lượt dùng tính vào tài khoản Puter của bạn.
+**Dùng online, không cần API key hay tài khoản:** khi mở link trên, trang mặc định dùng **Pollinations**. Bạn chat được ngay trên cả máy tính lẫn điện thoại. Mô hình ở đây là GPT-OSS 20B (không phải GLM), và người dùng ẩn danh bị giới hạn số lượt hỏi.
+
+**Dùng GLM online qua tài khoản Puter:** chọn **Puter** trong **Cài đặt → Nguồn mô hình**, rồi bấm **Đăng nhập Puter**. Lượt dùng tính vào tài khoản Puter của bạn.
 
 **Dùng online với API key của riêng bạn:** vào **Cài đặt → Nguồn mô hình**, chọn **Z.ai**, rồi dán API key tạo miễn phí tại [z.ai](https://z.ai/manage-apikey/apikey-list). Các mô hình `glm-4.7-flash` và `glm-4.5-flash` miễn phí, `glm-5.3-flash` và `glm-5.3` mạnh hơn nhưng tính phí. Cách này dùng được cả trên điện thoại, nhưng tin nhắn sẽ được gửi tới máy chủ của Z.ai. Key chỉ lưu trong trình duyệt của bạn, không nằm trong code.
 

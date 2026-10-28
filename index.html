@@ -342,7 +342,8 @@
       <label>Nguồn mô hình
         <select id="setProvider">
           <option value="local">Máy này (offline, cần chạy ./server.sh)</option>
-          <option value="puter">Puter (online, không cần API key)</option>
+          <option value="pollinations">Pollinations (online, không cần key hay tài khoản)</option>
+          <option value="puter">Puter (online, cần tài khoản Puter)</option>
           <option value="zai">Z.ai (online, cần API key miễn phí)</option>
           <option value="openrouter">OpenRouter (online, trả phí)</option>
         </select>
@@ -435,12 +436,21 @@
 
   const settings = Object.assign(
     { server: "http://127.0.0.1:8080", system: "", temperature: 0.6, maxTokens: 4096, think: "collapsed", deep: false, tools: true,
-      provider: location.protocol === "https:" ? "puter" : "local", keys: {}, models: {} },
+      provider: location.protocol === "https:" ? "pollinations" : "local", keys: {}, models: {} },
     store.get("glm.settings", {})
   );
   // Các nguồn mô hình. Tất cả đều dùng API kiểu OpenAI nên chung một cách gọi.
   const PROVIDERS = {
     local: { name: "Máy này" },
+    pollinations: {
+      name: "Pollinations",
+      url: "https://text.pollinations.ai/openai",
+      models: ["openai-fast"],
+      titles: { "openai-fast": "GPT-OSS 20B" },
+      modelHelp: "Không cần API key hay tài khoản. Mô hình là GPT-OSS 20B (không phải GLM), có giới hạn số lượt hỏi cho người dùng ẩn danh.",
+      // Nghĩ ngắn: Pollinations giới hạn độ dài câu trả lời cho người dùng ẩn danh, nghĩ dài sẽ bị cắt trước khi kịp trả lời.
+      extra: { referrer: "phuchello2811-web.github.io", reasoning_effort: "low" },
+    },
     puter: {
       name: "Puter",
       models: ["z-ai/glm-4.7-flash", "z-ai/glm-5.3-flash", "z-ai/glm-5.3", "z-ai/glm-4.5-air"],
@@ -468,7 +478,7 @@
 
   function paintProvider() {
     const cloud = isCloud();
-    $("modelTitle").textContent = cloud ? cloudModel().replace(/^z-ai\//, "").split("-").map((w) => (w === "glm" ? "GLM" : w[0].toUpperCase() + w.slice(1))).join("-") : "GLM-Z1";
+    $("modelTitle").textContent = cloud ? PROVIDERS[settings.provider].titles?.[cloudModel()] || cloudModel().replace(/^z-ai\//, "").split("-").map((w) => (w === "glm" ? "GLM" : w[0].toUpperCase() + w.slice(1))).join("-") : "GLM-Z1";
     $("modelSub").textContent = cloud ? `· ${PROVIDERS[settings.provider].name}` : "9B · offline";
     $("footnote").textContent = cloud
       ? `Tin nhắn được gửi tới máy chủ của ${PROVIDERS[settings.provider].name}. Mô hình có thể trả lời sai, hãy kiểm tra thông tin quan trọng.`
@@ -700,6 +710,7 @@
     if (m.notice) html += `<div class="shimmer" style="font-size:14px">${esc(m.notice)}</div>`;
     if (m.remembered) html += m.remembered.map((t) => `<div class="memo">${ICON_CHECK}Đã ghi nhớ: ${esc(t)}</div>`).join("");
     if (m.error) html += `<div class="error">${esc(m.error)}</div>`;
+    else if (m.truncated && !streaming) html += `<div class="error">Câu trả lời bị cắt vì đạt giới hạn độ dài. Bấm Tạo lại, hoặc tăng Số token tối đa trong Cài đặt.</div>`;
     if (!streaming) {
       html += `<div class="actions">` +
         `<button class="icon-btn" data-act="copy" title="Sao chép">${ICON_COPY}</button>` +
@@ -765,7 +776,8 @@
     "Bạn có thể chạy JavaScript để tính toán chính xác. Khi cần tính (số học, phần trăm, ngày tháng, thống kê, " +
     "kiểm tra code…), viết một khối:\n```js-run\n// code, dùng console.log để in kết quả\n```\n" +
     "rồi DỪNG viết ngay sau khối đó. Hệ thống sẽ chạy code và gửi lại kết quả để bạn trả lời tiếp. " +
-    "Không tự đoán kết quả của code. Câu hỏi không cần tính toán thì trả lời bình thường.";
+    "Không tự đoán kết quả của code. Với số nguyên lớn (trên 15 chữ số) dùng BigInt, ví dụ 123n * 456n. " +
+    "Câu hỏi không cần tính toán thì trả lời bình thường.";
 
   const MEMORY_PROMPT =
     "CHỈ KHI người dùng yêu cầu rõ ràng bạn ghi nhớ điều gì (ví dụ \"hãy nhớ…\", \"nhớ giúp tôi…\"), thêm vào cuối " +
@@ -817,7 +829,7 @@
             ? `Không kết nối được tới ${PROVIDERS[settings.provider].name}. Kiểm tra kết nối mạng rồi thử lại.`
             : `Không kết nối được tới ${settings.server}. Hãy chạy ./server.sh trong Terminal rồi thử lại.` +
               (location.protocol === "https:" ? " Nếu trình duyệt hỏi quyền truy cập thiết bị trong mạng cục bộ, hãy chọn Cho phép." : "") +
-              " Hoặc vào Cài đặt, chọn nguồn mô hình Puter để dùng online không cần API key.")
+              " Hoặc vào Cài đặt, chọn nguồn mô hình Pollinations để dùng online không cần API key.")
           : e.message;
       }
       // Dừng hoặc lỗi giữa bước kiểm tra: giữ lại bản nháp làm câu trả lời.
@@ -933,7 +945,9 @@
     };
     try {
       const stream = settings.provider === "puter" ? puterDeltas(messages, pass.signal) : apiDeltas(messages, reply, node, pass.signal);
-      for await (const { think, text, tps } of stream) {
+      reply.truncated = false;
+      for await (const { think, text, tps, finish } of stream) {
+        if (finish) reply.truncated = finish === "length";
         if (think) reply.reasoning += think;
         if (text) { reply.content += text; delete reply.notice; }
         if (think || text) {
@@ -968,7 +982,7 @@
     });
     const url = cloud ? p.url : settings.server.replace(/\/+$/, "") + "/v1/chat/completions";
     const headers = { "Content-Type": "application/json" };
-    if (cloud) headers.Authorization = "Bearer " + settings.keys[settings.provider];
+    if (p.needsKey) headers.Authorization = "Bearer " + settings.keys[settings.provider];
     if (settings.provider === "openrouter") headers["X-Title"] = "GLM Local";
     const notice = reply.notice;
     let res;
@@ -991,9 +1005,18 @@
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buf = "";
+    // Một số mô hình (GPT-OSS) gọi công cụ js-run qua tool_calls thay vì viết khối code: gom lại rồi đổi thành khối ```js-run.
+    const calls = [];
     while (true) {
       const { value, done } = await reader.read();
-      if (done) return;
+      if (done) {
+        for (const c of calls) {
+          let code = c.args;
+          try { const a = JSON.parse(c.args); code = typeof a === "string" ? a : a.code ?? a.script ?? a.input ?? c.args; } catch {}
+          if (String(code).trim()) yield { text: "\n\n```js-run\n" + String(code).trim() + "\n```\n" };
+        }
+        return;
+      }
       buf += decoder.decode(value, { stream: true });
       const parts = buf.split("\n"); buf = parts.pop();
       for (const line of parts) {
@@ -1002,8 +1025,12 @@
         if (data === "[DONE]") continue;
         let j; try { j = JSON.parse(data); } catch { continue; }
         const delta = j.choices?.[0]?.delta || {};
+        for (const tc of delta.tool_calls || []) {
+          const c = (calls[tc.index ?? 0] ??= { args: "" });
+          c.args += tc.function?.arguments || "";
+        }
         // llama.cpp và Z.ai dùng reasoning_content, OpenRouter dùng reasoning.
-        yield { think: delta.reasoning_content || delta.reasoning, text: delta.content, tps: j.timings?.predicted_per_second };
+        yield { think: delta.reasoning_content || delta.reasoning, text: delta.content, tps: j.timings?.predicted_per_second, finish: j.choices?.[0]?.finish_reason };
       }
     }
   }

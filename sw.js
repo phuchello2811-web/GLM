@@ -1,6 +1,6 @@
 // Lưu sẵn giao diện để web app mở được cả khi không có mạng.
 // Đổi VERSION mỗi khi cập nhật index.html để máy người dùng nhận bản mới.
-const VERSION = "glm-v3";
+const VERSION = "glm-v4";
 const SHELL = [
   "./",
   "./index.html",
