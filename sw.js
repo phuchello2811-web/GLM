@@ -19,7 +19,8 @@ self.addEventListener("install", (e) => {
 self.addEventListener("activate", (e) => {
   e.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== VERSION).map((k) => caches.delete(k))))
+      // Chỉ xoá cache cũ của app này: các app khác cùng tên miền github.io dùng chung kho cache.
+      .then((keys) => Promise.all(keys.filter((k) => k.startsWith("glm-") && k !== VERSION).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
