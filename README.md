@@ -40,23 +40,22 @@ Gõ câu hỏi rồi nhấn Enter. Nhấn `Ctrl+C` để thoát.
 
 Mở http://127.0.0.1:8080. Server cũng có API tương thích OpenAI tại `http://127.0.0.1:8080/v1`, nên có thể nối với các ứng dụng hỗ trợ OpenAI API.
 
-**Giao diện chat riêng (`index.html`):**
+**Trang chat online (`index.html`):**
 
-1. Chạy `./server.sh` và để Terminal đó mở.
-2. Mở https://phuchello2811-web.github.io/GLM/ bằng Chrome. Lần đầu, nếu Chrome hỏi quyền truy cập thiết bị trong mạng cục bộ, chọn **Cho phép**. Cũng có thể mở `index.html` bằng **Go Live** trong VS Code.
-3. Muốn dùng như ứng dụng riêng, bấm **Cài thành ứng dụng** ở góc dưới thanh bên.
+Mở https://phuchello2811-web.github.io/GLM/ (hoặc mở `index.html` bằng **Go Live** trong VS Code). Muốn dùng như ứng dụng riêng, bấm **Cài thành ứng dụng** ở góc dưới thanh bên.
 
-Trang web chỉ là giao diện. Mô hình vẫn chạy trên máy bạn qua `./server.sh`, nên không có dữ liệu nào bị gửi lên mạng.
+Trang dùng **GLM miễn phí** qua máy chủ chung (dựng theo [worker/README.md](worker/README.md)). Ai mở link cũng chat được ngay, không cần key hay tài khoản. Bấm nút tên mô hình trong khung chat (hoặc ở đầu trang) để chọn:
 
-**GLM miễn phí cho mọi người:** khi đã dựng máy chủ chung theo [worker/README.md](worker/README.md), trang mặc định dùng **GLM miễn phí**. Ai mở link cũng chat được với GLM ngay, không cần key hay tài khoản. Bấm tên mô hình ở đầu trang để đổi giữa **GLM-4.7 Flash** (mạnh nhất), **GLM-4.5 Flash** (ít quá tải hơn) và **GLM-4.6V Flash**. Mô hình nào quá tải thì máy chủ tự chuyển sang mô hình còn lại.
+- **GLM-4.7 Flash**: mạnh nhất, mặc định.
+- **GLM-4.5 Flash**: ít quá tải hơn, trả lời nhanh.
+- **GLM-4.6V Flash**: bản đa phương thức, hay bị quá tải.
+- **GPT-OSS 20B** (qua Pollinations, không phải GLM): dự phòng khi GLM lỗi.
 
-**Dự phòng:** nếu chưa có máy chủ chung, hoặc GLM đang lỗi, chọn **GPT-OSS 20B** (qua Pollinations, không phải GLM). Mô hình này cũng không cần key, nhưng người dùng ẩn danh bị giới hạn số lượt hỏi.
+Mô hình nào quá tải thì máy chủ tự chuyển sang mô hình GLM còn lại. Trang chỉ dùng mô hình miễn phí, không có chỗ nhập API key. Trang không dùng mô hình tải về máy; muốn chạy offline thì dùng `./chat.sh` hoặc `./server.sh` ở trên.
 
-Trang chỉ dùng các mô hình miễn phí, không có chỗ nhập API key hay mô hình tính phí.
+Giao diện có lịch sử chat (lưu trong trình duyệt), hiện quá trình suy nghĩ của mô hình, nút dừng và tạo lại câu trả lời, chế độ sáng/tối. Vào **Cài đặt** để đổi lời nhắc hệ thống hoặc nhiệt độ.
 
-Giao diện có lịch sử chat (lưu trong trình duyệt), hiện quá trình suy nghĩ của mô hình, nút dừng và tạo lại câu trả lời, chế độ sáng/tối. Vào **Cài đặt** để đổi địa chỉ server, lời nhắc hệ thống hoặc nhiệt độ.
-
-Bật nút **Nghĩ kỹ** cạnh ô nhập để mô hình tự kiểm tra và viết lại câu trả lời trước khi đưa ra kết quả cuối. Cách này chính xác hơn với toán và code, nhưng chậm gấp 2–3 lần.
+Bật nút **Nghĩ kỹ** trong khung chat để mô hình tự kiểm tra và viết lại câu trả lời trước khi đưa ra kết quả cuối. Cách này chính xác hơn với toán và code, nhưng chậm gấp 2–3 lần.
 
 Khi cần tính toán, mô hình tự viết code JavaScript. Trang chạy code đó ngay trong trình duyệt (cách ly, không truy cập mạng) rồi đưa kết quả cho mô hình, nên phép tính luôn chính xác. Muốn mô hình nhớ điều gì ở mọi đoạn chat, cứ nói "hãy nhớ: …". Danh sách ghi nhớ nằm trong **Cài đặt → Bộ nhớ**.
 

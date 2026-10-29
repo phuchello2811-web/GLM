@@ -1,7 +1,7 @@
 {
-  "name": "GLM Local",
+  "name": "GLM Chat",
   "short_name": "GLM",
-  "description": "Trò chuyện với mô hình GLM chạy offline ngay trên máy của bạn.",
+  "description": "Trò chuyện miễn phí với các mô hình GLM, không cần API key hay tài khoản.",
   "lang": "vi",
   "start_url": "./",
   "scope": "./",
