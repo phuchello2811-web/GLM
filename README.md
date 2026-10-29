@@ -48,13 +48,11 @@ Mở http://127.0.0.1:8080. Server cũng có API tương thích OpenAI tại `ht
 
 Trang web chỉ là giao diện. Mô hình vẫn chạy trên máy bạn qua `./server.sh`, nên không có dữ liệu nào bị gửi lên mạng.
 
-**GLM miễn phí cho mọi người:** khi đã dựng máy chủ chung theo [worker/README.md](worker/README.md), trang mặc định dùng **GLM miễn phí**. Ai mở link cũng chat được với GLM ngay, không cần key hay tài khoản.
+**GLM miễn phí cho mọi người:** khi đã dựng máy chủ chung theo [worker/README.md](worker/README.md), trang mặc định dùng **GLM miễn phí**. Ai mở link cũng chat được với GLM ngay, không cần key hay tài khoản. Bấm tên mô hình ở đầu trang để đổi giữa **GLM-4.7 Flash** (mạnh nhất), **GLM-4.5 Flash** (ít quá tải hơn) và **GLM-4.6V Flash**. Mô hình nào quá tải thì máy chủ tự chuyển sang mô hình còn lại.
 
-**Dùng online, không cần API key hay tài khoản:** khi chưa có máy chủ chung, trang mặc định dùng **Pollinations**. Bạn chat được ngay trên cả máy tính lẫn điện thoại. Mô hình ở đây là GPT-OSS 20B (không phải GLM), và người dùng ẩn danh bị giới hạn số lượt hỏi.
+**Dự phòng:** nếu chưa có máy chủ chung, hoặc GLM đang lỗi, chọn **GPT-OSS 20B** (qua Pollinations, không phải GLM). Mô hình này cũng không cần key, nhưng người dùng ẩn danh bị giới hạn số lượt hỏi.
 
-**Dùng GLM online qua tài khoản Puter:** chọn **Puter** trong **Cài đặt → Nguồn mô hình**, rồi bấm **Đăng nhập Puter**. Lượt dùng tính vào tài khoản Puter của bạn.
-
-**Dùng online với API key của riêng bạn:** vào **Cài đặt → Nguồn mô hình**, chọn **Z.ai**, rồi dán API key tạo miễn phí tại [z.ai](https://z.ai/manage-apikey/apikey-list). Các mô hình `glm-4.7-flash` và `glm-4.5-flash` miễn phí, `glm-5.3-flash` và `glm-5.3` mạnh hơn nhưng tính phí. Cách này dùng được cả trên điện thoại, nhưng tin nhắn sẽ được gửi tới máy chủ của Z.ai. Key chỉ lưu trong trình duyệt của bạn, không nằm trong code.
+Trang chỉ dùng các mô hình miễn phí, không có chỗ nhập API key hay mô hình tính phí.
 
 Giao diện có lịch sử chat (lưu trong trình duyệt), hiện quá trình suy nghĩ của mô hình, nút dừng và tạo lại câu trả lời, chế độ sáng/tối. Vào **Cài đặt** để đổi địa chỉ server, lời nhắc hệ thống hoặc nhiệt độ.
 

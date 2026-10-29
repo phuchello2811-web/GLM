@@ -7,7 +7,7 @@
 // - Giới hạn số lượt hỏi mỗi phút cho mỗi địa chỉ IP.
 
 const UPSTREAM = "https://api.z.ai/api/paas/v4/chat/completions";
-const FREE_MODELS = ["glm-4.7-flash", "glm-4.5-flash"];
+const FREE_MODELS = ["glm-4.7-flash", "glm-4.5-flash", "glm-4.6v-flash"];
 const DEFAULT_ORIGINS = [
   "https://phuchello2811-web.github.io",
   "http://127.0.0.1:5500", // Live Server trong VS Code
