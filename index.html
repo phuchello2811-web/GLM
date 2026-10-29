@@ -30,6 +30,7 @@
     --ok: #10a37f;
     --shadow: 0 2px 12px rgba(0,0,0,.06);
     --scroll: #c8c8c8;
+    --hl-kw: #a626a4; --hl-str: #50a14f; --hl-num: #b76b01; --hl-fn: #4078f2; --hl-type: #c18401; --hl-meta: #0184bc;
     color-scheme: light;
   }
   @media (prefers-color-scheme: dark) {
@@ -38,6 +39,7 @@
       --border: #3a3a3a; --text: #ececec; --muted: #a0a0a0; --accent: #ececec;
       --accent-text: #0d0d0d; --code-bg: #171717; --shadow: 0 2px 12px rgba(0,0,0,.3);
       --scroll: #4a4a4a; color-scheme: dark;
+    --hl-kw: #c678dd; --hl-str: #98c379; --hl-num: #d19a66; --hl-fn: #61afef; --hl-type: #e5c07b; --hl-meta: #56b6c2;
     }
   }
   :root[data-theme="dark"] {
@@ -45,6 +47,7 @@
     --border: #3a3a3a; --text: #ececec; --muted: #a0a0a0; --accent: #ececec;
     --accent-text: #0d0d0d; --code-bg: #171717; --shadow: 0 2px 12px rgba(0,0,0,.3);
     --scroll: #4a4a4a; color-scheme: dark;
+    --hl-kw: #c678dd; --hl-str: #98c379; --hl-num: #d19a66; --hl-fn: #61afef; --hl-type: #e5c07b; --hl-meta: #56b6c2;
   }
 
   * { box-sizing: border-box; }
@@ -222,6 +225,14 @@
   .codeblock .code-head svg { width: 14px; height: 14px; }
   .codeblock pre { margin: 0; padding: 14px 16px; overflow-x: auto; }
   .codeblock code { background: none; padding: 0; font-size: 13px; line-height: 1.55; }
+  /* Màu code (highlight.js), theo giao diện sáng/tối. */
+  .hljs-keyword, .hljs-built_in, .hljs-selector-tag, .hljs-meta .hljs-keyword { color: var(--hl-kw); }
+  .hljs-string, .hljs-regexp, .hljs-addition, .hljs-attribute .hljs-string { color: var(--hl-str); }
+  .hljs-number, .hljs-literal, .hljs-symbol, .hljs-bullet { color: var(--hl-num); }
+  .hljs-comment, .hljs-quote, .hljs-deletion { color: var(--muted); font-style: italic; }
+  .hljs-title, .hljs-title.function_, .hljs-section, .hljs-name { color: var(--hl-fn); }
+  .hljs-type, .hljs-title.class_, .hljs-attr, .hljs-attribute, .hljs-variable.language_, .hljs-params { color: var(--hl-type); }
+  .hljs-meta, .hljs-tag, .hljs-selector-class, .hljs-selector-id { color: var(--hl-meta); }
 
   /* Composer */
   .composer-wrap { padding: 0 24px 12px; }
@@ -385,7 +396,7 @@
           <option value="open">Luôn mở</option>
         </select>
       </label>
-      <label class="check"><input type="checkbox" id="setTools"> Cho AI dùng công cụ: tính toán bằng JavaScript và tra cứu Wikipedia</label>
+      <label class="check"><input type="checkbox" id="setTools"> Cho AI dùng công cụ: chạy JavaScript, chạy Python và tra cứu Wikipedia</label>
       <label>Dữ liệu train
         <small>Bấm nút thích dưới câu trả lời tốt để lưu lại. Khi đủ vài trăm câu, xuất file rồi làm theo FINETUNE.md để dạy mô hình trên Google Colab.</small>
         <div class="mem-add">
@@ -595,7 +606,32 @@
     return s.replace(/\u0000(\d+)\u0000/g, (_, i) => `<code>${esc(codes[i])}</code>`);
   }
 
-  const CODE_LABELS = { "js-run": "JavaScript · đã chạy", search: "Tra cứu Wikipedia", output: "Kết quả" };
+  const CODE_LABELS = { "js-run": "JavaScript · đã chạy", "py-run": "Python · đã chạy", "python-run": "Python · đã chạy", search: "Tra cứu Wikipedia", output: "Kết quả" };
+  // Ngôn ngữ để tô màu code; khối không có tên ngôn ngữ thì để highlight.js tự đoán.
+  const HL_LANG = new Proxy({ "js-run": "javascript", "py-run": "python", "python-run": "python", search: null, output: null, "": "auto" }, {
+    get: (t, k) => (k in t ? t[k] : String(k).toLowerCase()),
+  });
+
+  // Tô màu code bằng highlight.js, chỉ khi câu trả lời đã xong (tô lúc đang stream sẽ làm trang giật).
+  let hljsLoading = null;
+  function highlightCode(node) {
+    const blocks = node.querySelectorAll("pre code[class^='language-']:not([data-hl])");
+    if (!blocks.length) return;
+    hljsLoading ??= new Promise((ok, fail) => {
+      const sc = document.createElement("script");
+      sc.src = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js";
+      sc.onload = ok; sc.onerror = () => { hljsLoading = null; fail(); };
+      document.head.append(sc);
+    });
+    hljsLoading.then(() => {
+      for (const el of blocks) {
+        if (!el.isConnected) continue;
+        const lang = el.className.slice(9);
+        const r = lang !== "auto" && hljs.getLanguage(lang) ? hljs.highlight(el.textContent, { language: lang }) : hljs.highlightAuto(el.textContent);
+        el.innerHTML = r.value; el.dataset.hl = "1";
+      }
+    }, () => {});
+  }
 
   function markdown(src) {
     const lines = src.replace(/\r\n?/g, "\n").split("\n");
@@ -611,7 +647,7 @@
         while (i < lines.length && !/^\s*```\s*$/.test(lines[i])) buf.push(lines[i++]);
         i++;
         html += `<div class="codeblock"><div class="code-head"><span>${esc(CODE_LABELS[lang] || lang || "code")}</span>` +
-          `<button type="button" data-copy>${ICON_COPY}Sao chép</button></div><pre><code>${esc(buf.join("\n"))}</code></pre></div>`;
+          `<button type="button" data-copy>${ICON_COPY}Sao chép</button></div><pre><code${HL_LANG[lang] ? ` class="language-${HL_LANG[lang]}"` : ""}>${esc(buf.join("\n"))}</code></pre></div>`;
         continue;
       }
       if ((m = line.match(/^\s*(\\\[|\$\$)(.*)$/))) {
@@ -769,6 +805,7 @@
     if (det && keepOpen !== null) { det.open = keepOpen; det.dataset.user = "1"; }
     if (det) det.querySelector("summary").addEventListener("click", () => { det.dataset.user = "1"; });
     if (det && streaming && thinking) det.dataset.live = "1";
+    if (!streaming) highlightCode(node);
   }
 
   function nearBottom() {
@@ -809,35 +846,49 @@
   }
 
   const REVIEW_PROMPT =
-    "Hãy xem lại câu trả lời vừa rồi một cách nghiêm khắc: kiểm tra từng bước lập luận, phép tính, code, " +
+    "Hãy xem lại câu trả lời vừa rồi một cách nghiêm khắc: kiểm tra từng bước lập luận, phép tính, code " +
+    "(chạy lại code bằng công cụ nếu cần), " +
     "và xem đã trả lời đúng trọng tâm câu hỏi chưa. Sau đó viết câu trả lời cuối cùng hoàn chỉnh cho câu hỏi ban đầu, " +
     "đã sửa nếu có lỗi. Chỉ viết câu trả lời cuối cùng như thể trả lời lần đầu, không nhắc tới việc kiểm tra, " +
     "và dùng cùng ngôn ngữ với câu hỏi.";
 
   const THINK_PROMPT =
-    "Cách suy nghĩ: với câu hỏi khó (toán, logic, code, phân tích), trước hết xác định chính xác người dùng cần gì, " +
+    "Cách suy nghĩ: với câu hỏi khó (toán, logic, code, phân tích), trước hết xác định chính xác người dùng cần gì " +
+    "(đầu vào, đầu ra, ràng buộc), " +
     "chia bài toán thành các bước nhỏ, cân nhắc ít nhất hai cách làm và các trường hợp đặc biệt, rồi tự kiểm tra lại " +
     "kết quả (thử lại bằng cách khác, thay số, hoặc chạy code) trước khi trả lời. Nếu không chắc thì nói rõ là không chắc, " +
     "không bịa. Câu hỏi đơn giản thì trả lời ngắn gọn, không cần nghĩ dài. Trả lời bằng ngôn ngữ của người dùng.";
 
   const TOOL_PROMPT =
-    "Bạn có hai công cụ. Mỗi lần chỉ dùng một công cụ: viết khối lệnh rồi DỪNG viết ngay sau khối đó. " +
+    "Bạn có ba công cụ. Mỗi lần chỉ dùng một công cụ: viết khối lệnh rồi DỪNG viết ngay sau khối đó. " +
     "Hệ thống sẽ chạy và gửi lại kết quả để bạn trả lời tiếp. Không tự đoán kết quả.\n\n" +
     "1. Tính toán bằng JavaScript (số học, phần trăm, ngày tháng, thống kê, kiểm tra code…):\n" +
     "```js-run\n// code, dùng console.log để in kết quả\n```\n" +
     "Với số nguyên lớn (trên 15 chữ số) dùng BigInt, ví dụ 123n * 456n.\n\n" +
-    "2. Tra cứu Wikipedia (sự kiện, nhân vật, địa danh, số liệu, định nghĩa mà bạn không chắc, hoặc thông tin có thể đã thay đổi):\n" +
+    "2. Chạy Python 3 (có sẵn thư viện chuẩn; numpy, pandas, sympy, scipy được tự cài khi import):\n" +
+    "```py-run\n# code, dùng print để in kết quả\n```\n" +
+    "Code chạy trong trình duyệt: không có mạng, không đọc/ghi file của người dùng, không có input().\n\n" +
+    "3. Tra cứu Wikipedia (sự kiện, nhân vật, địa danh, số liệu, định nghĩa mà bạn không chắc, hoặc thông tin có thể đã thay đổi):\n" +
     "```search\ntừ khoá ngắn gọn\n```\n" +
     "Từ khoá tiếng Việt có dấu sẽ tra Wikipedia tiếng Việt; viết từ khoá tiếng Anh (ví dụ 2016 Nobel Prize in Literature) " +
     "để tra Wikipedia tiếng Anh, thường đầy đủ hơn. Tra tối đa 3 lần; khi kết quả đã đủ thì trả lời ngay. " +
     "Dựa vào kết quả tra cứu khi trả lời và ghi nguồn bài Wikipedia đã dùng.\n\n" +
-    "Câu hỏi không cần tính toán hay tra cứu thì trả lời bình thường.";
+    "Khi người dùng nhờ viết code Python hoặc JavaScript: BẮT BUỘC chạy thử trước khi trả lời. Bước đầu tiên của câu trả lời " +
+    "là một khối py-run hoặc js-run chứa code kèm vài lệnh in kết quả với ví dụ, gồm cả trường hợp đặc biệt (rỗng, số âm, rất lớn…). " +
+    "Nếu lỗi hoặc kết quả sai, tìm nguyên nhân, sửa rồi chạy lại. Không bao giờ tự viết kết quả chạy thử mà chưa chạy. " +
+    "Khi đã chạy đúng, trình bày code cuối cùng trong khối ```python hoặc ```javascript bình thường (không có -run), " +
+    "giải thích ngắn cách hoạt động và độ phức tạp nếu liên quan. Code dùng thư viện không chạy được trong trình duyệt " +
+    "(ví dụ requests, tkinter, đọc file) thì không cần chạy thử, chỉ kiểm tra kỹ bằng đầu.\n\n" +
+    "Ví dụ, người dùng nhờ \"viết hàm Python đảo ngược chuỗi\", bạn bắt đầu bằng:\n" +
+    "```py-run\ndef dao_nguoc(s):\n    return s[::-1]\n\nprint(dao_nguoc(\"abc\"), dao_nguoc(\"\"), dao_nguoc(\"a\"))\n```\n" +
+    "rồi dừng, chờ kết quả; khi kết quả đúng mới viết code cuối trong khối ```python kèm giải thích.\n\n" +
+    "Câu hỏi không cần tính toán, code hay tra cứu thì trả lời bình thường.";
 
   const MEMORY_PROMPT =
     "CHỈ KHI người dùng yêu cầu rõ ràng bạn ghi nhớ điều gì (ví dụ \"hãy nhớ…\", \"nhớ giúp tôi…\"), thêm vào cuối " +
     "câu trả lời một dòng: [[NHỚ: nội dung cần nhớ, viết ngắn gọn]]. Không bao giờ dùng dòng này trong các trường hợp khác.";
 
-  const RUN_BLOCK = /```(js-run|search)[^\n]*\n([\s\S]*?)\n\s*```/;
+  const RUN_BLOCK = /```(js-run|py-run|python-run|search)[^\n]*\n([\s\S]*?)\n\s*```/;
   const MEMO_TAG = /\[\[\s*[Nn][Hh][ỚớOo]\s*:\s*([^\]]+?)\s*\]\]/g;
 
   function systemPrompt() {
@@ -912,7 +963,7 @@
   }
 
   // Trả lời, và mỗi khi mô hình viết khối ```js-run hoặc ```search thì chạy công cụ rồi cho nó viết tiếp với kết quả (tối đa 5 lần).
-  const TOOL_ROUNDS = 5;
+  const TOOL_ROUNDS = 6;
   async function answerWithTools(messages, reply, node) {
     for (let round = 0; ; round++) {
       const start = reply.content.length;
@@ -940,9 +991,9 @@
       const cut = start + m.index + m[0].length;
       reply.content = reply.content.slice(0, cut);
       const search = m[1] === "search";
-      reply.notice = search ? "Đang tra cứu Wikipedia…" : "Đang chạy code…";
+      reply.notice = search ? "Đang tra cứu Wikipedia…" : m[1] !== "js-run" && !pyReady ? "Đang tải Python (lần đầu mất khoảng 10–20 giây)…" : "Đang chạy code…";
       paintAssistant(node, reply, true);
-      const out = search ? await searchWiki(m[2].trim()) : await runJs(m[2]);
+      const out = search ? await searchWiki(m[2].trim()) : m[1] !== "js-run" ? await runPy(m[2]) : await runJs(m[2]);
       reply.content += "\n\n```output\n" + out + "\n```\n\n";
       reply.notice = "Đang đọc kết quả…";
       paintAssistant(node, reply, true);
@@ -1029,6 +1080,60 @@
     });
   }
 
+  // Python chạy bằng Pyodide trong một Web Worker riêng, giữ lại giữa các lần chạy để khỏi tải lại.
+  // Sau khi tải xong, Worker bị tắt mạng (trừ lúc tự cài thư viện khi code có import), dừng sau 15 giây.
+  const PYODIDE = "https://cdn.jsdelivr.net/pyodide/v0.29.5/full/";
+  function pyMain() {
+    importScripts(PYODIDE + "pyodide.js");
+    const realFetch = self.fetch.bind(self);
+    const ready = loadPyodide({ indexURL: PYODIDE }).then((py) => {
+      self.fetch = self.XMLHttpRequest = self.WebSocket = undefined;
+      return py;
+    });
+    onmessage = async (e) => {
+      const out = [];
+      try {
+        const py = await ready;
+        postMessage({ ready: true });
+        py.setStdout({ batched: (t) => out.push(t) });
+        py.setStderr({ batched: (t) => out.push(t) });
+        py.setStdin({ stdin: () => { throw new Error("input() không dùng được ở đây, hãy gán giá trị trực tiếp trong code."); } });
+        self.fetch = realFetch;
+        try { await py.loadPackagesFromImports(e.data, { messageCallback: () => {} }); } finally { self.fetch = undefined; }
+        let r = await py.runPythonAsync(e.data, { globals: py.globals.get("dict")() });
+        if (r !== undefined && r !== null && !out.length) out.push(String(r?.toString?.() ?? r));
+        r?.destroy?.();
+      } catch (err) {
+        // Chỉ giữ phần cuối của traceback Python (phần đầu là code nội bộ của Pyodide).
+        const msg = String(err.message || err).split("\n").filter((l) => !/\/lib\/python3|_pyodide|pyodide\//.test(l));
+        out.push(msg.slice(-12).join("\n"));
+      }
+      postMessage({ out: out.join("\n") });
+    };
+  }
+  let pyWorker = null, pyReady = false;
+  function runPy(code) {
+    pyWorker ??= new Worker(URL.createObjectURL(new Blob([`const PYODIDE = ${JSON.stringify(PYODIDE)};(${pyMain})()`], { type: "text/javascript" })));
+    const w = pyWorker;
+    return new Promise((resolve) => {
+      let timer = null;
+      const done = (text) => {
+        clearTimeout(timer); w.onmessage = w.onerror = null;
+        resolve(text.length > 4000 ? text.slice(0, 4000) + "\n…(đã cắt bớt)" : text);
+      };
+      // Code chạy quá lâu thì bỏ Worker này, lần sau tạo Worker mới.
+      const kill = (msg) => { w.terminate(); pyWorker = null; pyReady = false; done(msg); };
+      const arm = (ms, msg) => { clearTimeout(timer); timer = setTimeout(() => kill(msg), ms); };
+      arm(90000, "Lỗi: không tải được Python. Kiểm tra kết nối mạng rồi thử lại.");
+      w.onmessage = (e) => {
+        if (e.data.ready) { pyReady = true; arm(15000 + (/^\s*(import|from)\s/m.test(code) ? 45000 : 0), "Lỗi: code chạy quá lâu nên đã bị dừng."); return; }
+        done(String(e.data.out).trim() || "(không có gì được in ra, hãy dùng print)");
+      };
+      w.onerror = (e) => { e.preventDefault(); kill("Lỗi: " + e.message); };
+      w.postMessage(code);
+    });
+  }
+
   async function apiError(res) {
     const text = await res.text();
     let msg = text;
@@ -1087,7 +1192,22 @@
       temperature: Number(settings.temperature), max_tokens: Number(settings.maxTokens), top_p: 0.95,
       model: cloudModel(), ...p.extra,
     });
-    const res = await fetch(p.url, { method: "POST", headers: { "Content-Type": "application/json" }, body, signal });
+    const notice = reply.notice;
+    let res;
+    // Bản GLM miễn phí hay bị quá tải (429) trong chốc lát: chờ rồi thử lại, tối đa 3 lần.
+    for (let attempt = 0; ; attempt++) {
+      res = await fetch(p.url, { method: "POST", headers: { "Content-Type": "application/json" }, body, signal });
+      if (res.status !== 429 || attempt >= 3) break;
+      await res.body?.cancel();
+      reply.notice = `Máy chủ đang quá tải, tự thử lại lần ${attempt + 1}/3…`;
+      setStatus("", "Máy chủ đang quá tải…");
+      paintAssistant(node, reply, true);
+      await new Promise((ok, fail) => {
+        const t = setTimeout(ok, 5000 * (attempt + 1));
+        signal.addEventListener("abort", () => { clearTimeout(t); fail(new DOMException("", "AbortError")); }, { once: true });
+      });
+    }
+    reply.notice = notice;
     if (!res.ok) throw new Error(await apiError(res));
     setStatus("ok", `${p.name} · ${modelTitle(settings.provider, cloudModel())}`);
 
