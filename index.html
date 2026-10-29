@@ -215,6 +215,15 @@
   .content table { border-collapse: collapse; margin: 0 0 12px; font-size: 14px; display: block; overflow-x: auto; }
   .content th, .content td { border: 1px solid var(--border); padding: 6px 12px; text-align: left; }
   .content th { background: var(--surface); font-weight: 600; }
+  .code-btns { display: inline-flex; gap: 12px; }
+  .svg-preview { margin: 0 0 8px; padding: 12px; border: 1px solid var(--border); border-radius: 12px; background: #fff; text-align: center; }
+  .svg-preview img { max-width: 100%; max-height: 480px; }
+  .preview { margin: -4px 0 12px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+  .preview-bar { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; font-size: 12px; color: var(--muted); background: var(--surface); }
+  .preview-bar button { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); }
+  .preview-bar button:hover { color: var(--text); }
+  .preview-bar svg { width: 14px; height: 14px; }
+  .preview iframe { display: block; width: 100%; height: 460px; border: 0; background: #fff; resize: vertical; }
   .codeblock { margin: 0 0 12px; border-radius: 12px; overflow: hidden; background: var(--code-bg); border: 1px solid var(--border); }
   .codeblock .code-head {
     display: flex; justify-content: space-between; align-items: center; padding: 6px 12px;
@@ -435,6 +444,9 @@
   const ICON_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
   const ICON_REDO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>';
   const ICON_THUMB = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>';
+  const ICON_PLAY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16l13-8z"/></svg>';
+  const ICON_DOWN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M6 10l6 6 6-6M5 20h14"/></svg>';
+  const ICON_FULL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
   const ICON_TRASH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>';
 
   // ---------- Lưu trữ ----------
@@ -450,7 +462,7 @@
 
   const settings = Object.assign(
     { system: "", temperature: 0.6, maxTokens: 8192, think: "collapsed", deep: false, tools: true,
-      provider: SHARED_URL ? "shared" : "pollinations", models: {} },
+      provider: "shared", models: {} },
     store.get("glm.settings", {})
   );
   // Các nguồn mô hình, đều miễn phí và không cần API key. Tất cả dùng API kiểu OpenAI nên chung một cách gọi.
@@ -468,22 +480,12 @@
       modelHelp: "Dùng chung máy chủ của trang, không cần key hay tài khoản. Tối đa 20 câu hỏi mỗi phút. Mô hình đang quá tải thì tự chuyển sang mô hình khác.",
       extra: { thinking: { type: "enabled" } },
     },
-    pollinations: {
-      name: "Pollinations",
-      url: "https://text.pollinations.ai/openai",
-      models: ["openai-fast"],
-      titles: { "openai-fast": ["GPT-OSS 20B", "Dự phòng khi GLM lỗi (không phải GLM)"] },
-      modelHelp: "Không cần API key hay tài khoản. Mô hình là GPT-OSS 20B (không phải GLM), có giới hạn số lượt hỏi cho người dùng ẩn danh.",
-      // Nghĩ ngắn: Pollinations giới hạn độ dài câu trả lời cho người dùng ẩn danh, nghĩ dài sẽ bị cắt trước khi kịp trả lời.
-      extra: { referrer: "phuchello2811-web.github.io", reasoning_effort: "low" },
-    },
   };
-  if (!SHARED_URL) delete PROVIDERS.shared;
-  // Cài đặt cũ có thể còn trỏ tới nguồn đã bỏ (máy này, Z.ai, OpenRouter, Puter) hoặc còn lưu API key.
+  // Cài đặt cũ có thể còn trỏ tới nguồn đã bỏ (máy này, Pollinations, Z.ai, OpenRouter, Puter) hoặc còn lưu API key.
   delete settings.keys; delete settings.server;
   // Mặc định cũ 4096 hay làm câu trả lời bị cắt khi mô hình nghĩ lâu; máy chủ chung cho tối đa 8192.
   if (settings.maxTokens === 4096) settings.maxTokens = 8192;
-  if (!PROVIDERS[settings.provider]) settings.provider = SHARED_URL ? "shared" : "pollinations";
+  if (!PROVIDERS[settings.provider]) settings.provider = "shared";
   for (const id in settings.models) if (!PROVIDERS[id]?.models.includes(settings.models[id])) delete settings.models[id];
   store.set("glm.settings", settings);
   const cloudModel = () => settings.models[settings.provider] || PROVIDERS[settings.provider].models[0];
@@ -646,8 +648,14 @@
         const lang = m[1]; const buf = []; i++;
         while (i < lines.length && !/^\s*```\s*$/.test(lines[i])) buf.push(lines[i++]);
         i++;
-        html += `<div class="codeblock"><div class="code-head"><span>${esc(CODE_LABELS[lang] || lang || "code")}</span>` +
-          `<button type="button" data-copy>${ICON_COPY}Sao chép</button></div><pre><code${HL_LANG[lang] ? ` class="language-${HL_LANG[lang]}"` : ""}>${esc(buf.join("\n"))}</code></pre></div>`;
+        const code = buf.join("\n"), kind = lang.toLowerCase();
+        // Hình SVG đã viết xong thì hiện ảnh luôn (thẻ <img> không chạy được script trong SVG).
+        if (kind === "svg" && /<\/svg>\s*$/.test(code)) html += `<div class="svg-preview"><img alt="Hình do mô hình vẽ" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(code)}"></div>`;
+        const preview = kind === "html" || kind === "svg"
+          ? `<button type="button" data-preview>${ICON_PLAY}Xem trước</button><button type="button" data-download>${ICON_DOWN}Tải về</button>` : "";
+        html += `<div class="codeblock"${preview ? ` data-kind="${kind}"` : ""}><div class="code-head"><span>${esc(CODE_LABELS[lang] || lang || "code")}</span>` +
+          `<span class="code-btns">${preview}<button type="button" data-copy>${ICON_COPY}Sao chép</button></span></div>` +
+          `<pre><code${HL_LANG[lang] ? ` class="language-${HL_LANG[lang]}"` : ""}>${esc(code)}</code></pre></div>`;
         continue;
       }
       if ((m = line.match(/^\s*(\\\[|\$\$)(.*)$/))) {
@@ -891,11 +899,69 @@
   const RUN_BLOCK = /```(js-run|py-run|python-run|search)[^\n]*\n([\s\S]*?)\n\s*```/;
   const MEMO_TAG = /\[\[\s*[Nn][Hh][ỚớOo]\s*:\s*([^\]]+?)\s*\]\]/g;
 
-  function systemPrompt() {
+  // Kỹ năng chuyên sâu: chỉ thêm vào lời nhắc khi câu hỏi gần đây đúng chủ đề, để mô hình tập trung.
+  const SKILLS = [
+    {
+      test: /web|html|css|javascript|\bjs\b|giao diện|trang|website|landing|ứng dụng|app|game|form|nút|responsive/i,
+      prompt:
+        "Kỹ năng làm trang web: viết MỘT file HTML hoàn chỉnh trong một khối ```html (CSS trong <style>, JS trong <script>), " +
+        "không dùng file ngoài; chỉ dùng thư viện qua CDN (cdnjs.cloudflare.com, cdn.jsdelivr.net) khi thật cần. " +
+        "Thiết kế hiện đại và đẹp: bố cục flex/grid, responsive (có meta viewport, chạy tốt trên điện thoại), bảng màu hài hoà " +
+        "khai báo bằng biến CSS, font hệ thống, khoảng trắng thoáng, bo góc, bóng nhẹ, hiệu ứng hover/transition mượt, " +
+        "chữ đủ tương phản. JS không có lỗi console, xử lý dữ liệu rỗng/sai, không dùng alert() trừ khi được yêu cầu. " +
+        "Người dùng bấm Xem trước để chạy thử ngay, nên khi sửa cũng luôn đưa lại TRỌN file, không chỉ đoạn thay đổi.",
+      remind: "đưa trọn một file HTML trong một khối ```html",
+    },
+    {
+      test: /slide|thuyết trình|trình chiếu|bài giảng|powerpoint|pptx?|presentation|deck/i,
+      prompt:
+        "Kỹ năng làm slide: viết MỘT file HTML trong khối ```html. Mỗi slide là một <section> 16:9 phủ kín màn hình, " +
+        "mỗi lúc chỉ hiện một slide; chuyển slide bằng phím ←/→, Space, PageUp/PageDown, và bấm chuột/chạm (nửa trái lùi, nửa phải tiến); " +
+        "có số trang ở góc và thanh tiến độ. Có slide tiêu đề, các slide nội dung, slide kết. Mỗi slide một ý chính: " +
+        "tiêu đề ngắn, tối đa 3–5 gạch đầu dòng, chữ to (dùng clamp/vw để co theo màn hình), màu và font đồng bộ, " +
+        "hiệu ứng chuyển nhẹ. Minh hoạ bằng SVG hoặc biểu đồ CSS ngay trong file, không dùng ảnh ngoài.",
+    },
+    {
+      test: /vẽ|hình|ảnh|logo|icon|biểu tượng|svg|minh hoạ|minh họa|poster|banner|biểu đồ|đồ thị|chart|image|draw/i,
+      prompt:
+        "Kỹ năng vẽ hình: bạn không tạo được ảnh chụp, nhưng vẽ được bằng SVG và trang sẽ hiện ảnh ngay. " +
+        "Viết một khối ```svg hoàn chỉnh (<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"...\">), " +
+        "dùng hình khối, path, gradient, bóng; bố cục cân đối, màu hài hoà, chi tiết vừa đủ; không dùng ảnh hay font ngoài. " +
+        "Biểu đồ số liệu thì vẽ trục, nhãn, chú thích rõ ràng (có thể tính toạ độ bằng py-run trước). " +
+        "Cần hoạt hình hoặc hình phức tạp (fractal, hạt, mô phỏng) thì viết ```html với <canvas> và JS.",
+      remind: "vẽ bằng một khối ```svg hoàn chỉnh",
+    },
+    {
+      test: /ioi|icpc|olympic|hsg|học sinh giỏi|codeforces|atcoder|leetcode|vnoi|thi đấu|competitive|thuật toán|algorithm|độ phức tạp|c\+\+|cpp|subtask|testcase|quy hoạch động|đồ thị/i,
+      prompt:
+        "Kỹ năng lập trình thi đấu (IOI, ICPC, Codeforces, VNOI, HSG Tin):\n" +
+        "1) Đọc kỹ đề, tóm tắt input, output, ràng buộc và các subtask.\n" +
+        "2) Từ ràng buộc suy ra độ phức tạp cần đạt (khoảng 10^8 phép tính mỗi giây): n ≤ 20 → 2^n·n; n ≤ 500 → n^3; " +
+        "n ≤ 5000 → n^2; n ≤ 2·10^5 → n log n; n ≤ 10^18 → log n hoặc công thức.\n" +
+        "3) Nhận diện dạng bài và chọn thuật toán: tham lam (có chứng minh), quy hoạch động (trạng thái, công thức, thứ tự tính, tối ưu bộ nhớ), " +
+        "đồ thị (BFS, DFS, Dijkstra, DSU, cây khung, topo, LCA), chặt nhị phân theo đáp án, hai con trỏ, tổng tiền tố, " +
+        "Fenwick/segment tree (lazy), xâu (KMP, Z, hash), số học (modulo, nghịch đảo, sàng, tổ hợp), hình học. " +
+        "Giải thích ngắn vì sao thuật toán đúng; nếu chỉ đạt một phần subtask thì nói rõ.\n" +
+        "4) Viết lời giải C++17 (trừ khi người dùng muốn ngôn ngữ khác): ios::sync_with_stdio(false); cin.tie(nullptr); " +
+        "dùng long long khi có thể tràn số, lấy modulo đúng chỗ, mảng đủ kích thước, khởi tạo lại dữ liệu giữa các test.\n" +
+        "5) Kiểm tra: C++ không chạy được ở đây, nên viết cùng thuật toán bằng Python kèm một lời giải vét cạn, " +
+        "rồi dùng py-run so sánh hai lời giải trên vài trăm test ngẫu nhiên nhỏ và các test biên (stress test). Sai thì sửa rồi chạy lại.\n" +
+        "6) Trình bày: ý tưởng, độ phức tạp thời gian và bộ nhớ, code C++ cuối cùng trong khối ```cpp.",
+      remind: "lời giải cuối bằng C++17 trong khối ```cpp; trước đó chạy py-run so sánh thuật toán (viết bằng Python) với lời giải vét cạn trên nhiều test ngẫu nhiên nhỏ",
+    },
+  ];
+
+  const activeSkills = (chat) => {
+    const recent = chat.messages.filter((m) => m.role === "user").slice(-2).map((m) => m.content).join("\n");
+    return SKILLS.filter((k) => k.test.test(recent));
+  };
+
+  function systemPrompt(chat) {
     const today = new Date().toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "numeric", year: "numeric" });
     const parts = [`Hôm nay là ${today}.`, THINK_PROMPT];
     if (settings.system.trim()) parts.push(settings.system.trim());
     if (settings.tools) parts.push(TOOL_PROMPT);
+    for (const k of activeSkills(chat)) parts.push(k.prompt);
     let mem = MEMORY_PROMPT;
     if (memories.length) mem += "\n\nNhững điều bạn đã ghi nhớ về người dùng:\n" + memories.map((m) => "- " + m.text).join("\n");
     parts.push(mem);
@@ -914,7 +980,11 @@
       role: m.role,
       content: m.role === "assistant" ? splitThink(m.content).answer.trim() : m.content,
     }));
-    history.unshift({ role: "system", content: systemPrompt() });
+    history.unshift({ role: "system", content: systemPrompt(chat) });
+    // Mô hình làm theo lời dặn ngay trong câu hỏi tốt hơn lời dặn chung, nên nhắc ngắn kỹ năng đang dùng (người dùng không thấy).
+    const reminds = activeSkills(chat).map((k) => k.remind).filter(Boolean);
+    const lastUser = history.findLast((m) => m.role === "user");
+    if (reminds.length && lastUser) lastUser.content += `\n\n(Yêu cầu thêm: ${reminds.join("; ")}.)`;
 
     controller = new AbortController();
     setBusy(true);
@@ -1184,58 +1254,61 @@
     }
   }
 
-  // API kiểu OpenAI (máy chủ chung, Pollinations): đọc luồng SSE, trả ra từng mẩu suy nghĩ/chữ.
+  // API kiểu OpenAI (máy chủ chung): đọc luồng SSE, trả ra từng mẩu suy nghĩ/chữ.
   async function* apiDeltas(messages, reply, node, signal) {
     const notice = reply.notice;
-    const busy = (r) => r.status === 429 || r.status === 503;
+    const show = (text) => { reply.notice = text; setStatus("", text); paintAssistant(node, reply, true); };
     const wait = (ms) => new Promise((ok, fail) => {
       const t = setTimeout(ok, ms);
       signal.addEventListener("abort", () => { clearTimeout(t); fail(new DOMException("", "AbortError")); }, { once: true });
     });
-    const show = (text) => { reply.notice = text; setStatus("", text); paintAssistant(node, reply, true); };
-    // Máy chủ miễn phí hay bị quá tải (429/503) trong chốc lát: chờ rồi thử lại. Vẫn bận thì chuyển sang nguồn còn lại cho câu này.
-    const order = [settings.provider, ...Object.keys(PROVIDERS).filter((id) => id !== settings.provider)];
-    let res, used, model;
-    for (const id of order) {
-      const p = PROVIDERS[id];
-      used = id; model = id === settings.provider ? cloudModel() : p.models[0];
+    // Bản miễn phí hay bị quá tải: 429/503 thì chờ rồi thử lại; máy chủ treo (502/504/524, hoặc 60 giây chưa trả lời)
+    // thì chuyển ngay sang mô hình khác. Thứ tự: mô hình đang chọn trước, rồi các mô hình còn lại.
+    const order = [[settings.provider, cloudModel()]];
+    for (const id of Object.keys(PROVIDERS)) for (const m of PROVIDERS[id].models) if (id !== order[0][0] || m !== order[0][1]) order.push([id, m]);
+    let res = null, used, model;
+    for (let i = 0; i < order.length; i++) {
+      const [id, m] = order[i], p = PROVIDERS[id];
+      used = id; model = m;
       const body = JSON.stringify({
         messages, stream: true,
         temperature: Number(settings.temperature), max_tokens: Number(settings.maxTokens), top_p: 0.95,
         model, ...p.extra,
       });
+      let hung = false;
       for (let attempt = 0; ; attempt++) {
-        res = await fetch(p.url, { method: "POST", headers: { "Content-Type": "application/json" }, body, signal });
-        if (!busy(res) || attempt >= 2) break;
+        const slow = new AbortController(), timer = setTimeout(() => slow.abort(), 60000);
+        const both = AbortSignal.any ? AbortSignal.any([signal, slow.signal]) : signal;
+        try {
+          res = await fetch(p.url, { method: "POST", headers: { "Content-Type": "application/json" }, body, signal: both });
+        } catch (e) {
+          if (signal.aborted || !slow.signal.aborted) throw e;
+          res = null;
+        } finally { clearTimeout(timer); }
+        hung = !res || [502, 504, 524].includes(res.status);
+        if (hung || (res.status !== 429 && res.status !== 503) || attempt >= 1) break;
         const text = await res.text().catch(() => "");
-        const secs = Number(res.headers.get("Retry-After")) || Number(text.match(/retry after (\d+)/i)?.[1]) || 5 * (attempt + 1);
-        show(`${p.name} đang quá tải, tự thử lại sau ${Math.min(secs, 30)} giây…`);
-        await wait(Math.min(secs, 30) * 1000);
+        const secs = Math.min(30, Number(res.headers.get("Retry-After")) || Number(text.match(/retry after (\d+)/i)?.[1]) || 5);
+        show(`${modelTitle(id, m)} đang quá tải, tự thử lại sau ${secs} giây…`);
+        await wait(secs * 1000);
       }
-      if (!busy(res) || id === order.at(-1)) break;
-      await res.body?.cancel();
-      show(`${p.name} đang quá tải, chuyển sang ${PROVIDERS[order[order.indexOf(id) + 1]].name}…`);
+      const busy = hung || res.status === 429 || res.status === 503;
+      if (!busy || i === order.length - 1) break;
+      await res?.body?.cancel();
+      show(`${modelTitle(id, m)} đang quá tải, chuyển sang ${modelTitle(...order[i + 1])}…`);
     }
+    if (!res) throw new Error("Máy chủ GLM không phản hồi. Đợi một lúc rồi thử lại.");
     reply.notice = notice;
     if (!res.ok) throw new Error(await apiError(res));
-    if (used !== settings.provider) reply.via = modelTitle(used, model);
+    if (used !== settings.provider || model !== cloudModel()) reply.via = modelTitle(used, model);
     setStatus("ok", `${PROVIDERS[used].name} · ${modelTitle(used, model)}`);
 
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buf = "";
-    // Một số mô hình (GPT-OSS) gọi công cụ js-run qua tool_calls thay vì viết khối code: gom lại rồi đổi thành khối ```js-run.
-    const calls = [];
     while (true) {
       const { value, done } = await reader.read();
-      if (done) {
-        for (const c of calls) {
-          let code = c.args;
-          try { const a = JSON.parse(c.args); code = typeof a === "string" ? a : a.code ?? a.script ?? a.input ?? c.args; } catch {}
-          if (String(code).trim()) yield { text: "\n\n```js-run\n" + String(code).trim() + "\n```\n" };
-        }
-        return;
-      }
+      if (done) return;
       buf += decoder.decode(value, { stream: true });
       const parts = buf.split("\n"); buf = parts.pop();
       for (const line of parts) {
@@ -1244,11 +1317,7 @@
         if (data === "[DONE]") continue;
         let j; try { j = JSON.parse(data); } catch { continue; }
         const delta = j.choices?.[0]?.delta || {};
-        for (const tc of delta.tool_calls || []) {
-          const c = (calls[tc.index ?? 0] ??= { args: "" });
-          c.args += tc.function?.arguments || "";
-        }
-        // llama.cpp và Z.ai dùng reasoning_content, Pollinations dùng reasoning.
+        // Z.ai dùng reasoning_content, một số máy chủ khác dùng reasoning.
         yield { think: delta.reasoning_content || delta.reasoning, text: delta.content, tps: j.timings?.predicted_per_second, finish: j.choices?.[0]?.finish_reason };
       }
     }
@@ -1286,6 +1355,8 @@
   if (innerWidth <= 768) els.sidebar.classList.add("hidden");
 
   els.thread.addEventListener("click", async (e) => {
+    const prevBtn = e.target.closest("[data-preview], [data-download], [data-full]");
+    if (prevBtn) { codePreview(prevBtn); return; }
     const copyBtn = e.target.closest("[data-copy]");
     if (copyBtn) {
       const code = copyBtn.closest(".codeblock").querySelector("code").textContent;
@@ -1315,6 +1386,37 @@
       const t = document.createElement("textarea"); t.value = text; document.body.append(t);
       t.select(); document.execCommand("copy"); t.remove();
     }
+  }
+  // Xem trước trang web/slide/hình trong khung riêng: sandbox không có allow-same-origin nên code không đọc được dữ liệu của trang chat.
+  function codePreview(btn) {
+    const block = btn.closest(".codeblock");
+    if (!block) {
+      const frame = btn.closest(".preview").querySelector("iframe");
+      frame.requestFullscreen?.().then(() => frame.focus(), () => {});
+      return;
+    }
+    const code = block.querySelector("code").textContent, kind = block.dataset.kind;
+    if (btn.matches("[data-download]")) {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([code], { type: kind === "svg" ? "image/svg+xml" : "text/html" }));
+      a.download = kind === "svg" ? "hinh.svg" : "trang.html";
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      return;
+    }
+    const open = block.nextElementSibling?.classList.contains("preview") && block.nextElementSibling;
+    if (open) { open.remove(); btn.innerHTML = `${ICON_PLAY}Xem trước`; return; }
+    const box = document.createElement("div");
+    box.className = "preview";
+    box.innerHTML = `<div class="preview-bar"><span>Xem trước</span><button type="button" data-full>${ICON_FULL}Toàn màn hình</button></div>`;
+    const frame = document.createElement("iframe");
+    frame.sandbox = "allow-scripts allow-modals allow-forms allow-pointer-lock";
+    frame.allow = "fullscreen";
+    frame.srcdoc = kind === "svg" ? `<body style="margin:0;display:grid;place-items:center;min-height:100vh">${code}` : code;
+    frame.onload = () => frame.focus();
+    box.append(frame);
+    block.after(box);
+    btn.innerHTML = `${ICON_PLAY}Đóng xem trước`;
   }
   function flash(btn, on, off) { btn.innerHTML = on; setTimeout(() => (btn.innerHTML = off), 1500); }
 

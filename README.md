@@ -49,15 +49,21 @@ Trang dùng **GLM miễn phí** qua máy chủ chung (dựng theo [worker/README
 - **GLM-4.7 Flash**: mạnh nhất, mặc định.
 - **GLM-4.5 Flash**: ít quá tải hơn, trả lời nhanh.
 - **GLM-4.6V Flash**: bản đa phương thức, hay bị quá tải.
-- **GPT-OSS 20B** (qua Pollinations, không phải GLM): dự phòng khi GLM lỗi.
 
-Mô hình nào quá tải thì máy chủ tự chuyển sang mô hình GLM còn lại. Trang chỉ dùng mô hình miễn phí, không có chỗ nhập API key. Trang không dùng mô hình tải về máy; muốn chạy offline thì dùng `./chat.sh` hoặc `./server.sh` ở trên.
+Mô hình nào quá tải hoặc trả lời quá chậm thì trang tự chuyển sang mô hình GLM khác. Trang chỉ dùng mô hình miễn phí, không có chỗ nhập API key. Trang không dùng mô hình tải về máy; muốn chạy offline thì dùng `./chat.sh` hoặc `./server.sh` ở trên.
 
 Giao diện có lịch sử chat (lưu trong trình duyệt), hiện quá trình suy nghĩ của mô hình, nút dừng và tạo lại câu trả lời, chế độ sáng/tối. Vào **Cài đặt** để đổi lời nhắc hệ thống hoặc nhiệt độ.
 
 Bật nút **Nghĩ kỹ** trong khung chat để mô hình tự kiểm tra và viết lại câu trả lời trước khi đưa ra kết quả cuối. Cách này chính xác hơn với toán và code, nhưng chậm gấp 2–3 lần.
 
 Khi cần tính toán, mô hình tự viết code JavaScript hoặc Python. Trang chạy code đó ngay trong trình duyệt (cách ly, không truy cập mạng; Python chạy bằng [Pyodide](https://pyodide.org), có sẵn numpy, pandas, sympy) rồi đưa kết quả cho mô hình, nên phép tính luôn chính xác. Khi bạn nhờ viết code, mô hình chạy thử với vài ví dụ, tự sửa nếu lỗi, rồi mới đưa code cuối cùng. Code trong câu trả lời được tô màu cho dễ đọc. Khi cần thông tin thực tế (sự kiện, nhân vật, số liệu), mô hình tự tra Wikipedia tiếng Việt hoặc tiếng Anh rồi trả lời kèm nguồn. Mô hình cũng được dạy cách suy nghĩ: chia nhỏ bài toán, thử nhiều cách và tự kiểm tra trước khi trả lời. Nếu máy chủ ngắt kết nối giữa chừng, trang tự nối lại và cho mô hình viết tiếp. Muốn mô hình nhớ điều gì ở mọi đoạn chat, cứ nói "hãy nhớ: …". Danh sách ghi nhớ nằm trong **Cài đặt → Bộ nhớ**.
+
+GLM được dạy thêm vài kỹ năng, tự bật khi câu hỏi đúng chủ đề:
+
+- **Làm trang web:** viết trọn một file HTML. Bấm **Xem trước** dưới khối code để chạy thử ngay trong khung chat, hoặc **Tải về** để lấy file.
+- **Làm slide:** slide dạng HTML, chuyển trang bằng phím mũi tên hoặc chạm; bấm **Toàn màn hình** để trình chiếu.
+- **Vẽ hình:** logo, icon, biểu đồ được vẽ bằng SVG và hiện ảnh ngay trong chat.
+- **Lập trình thi đấu (IOI, ICPC, Codeforces, HSG Tin):** phân tích ràng buộc và độ phức tạp, chọn thuật toán, viết C++17, rồi kiểm tra bằng cách so sánh với lời giải vét cạn trên test ngẫu nhiên (chạy bằng Python).
 
 Muốn dạy mô hình theo văn phong hoặc kiến thức riêng của bạn, xem [FINETUNE.md](FINETUNE.md).
 

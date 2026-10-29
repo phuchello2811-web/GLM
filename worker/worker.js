@@ -16,6 +16,7 @@ const DEFAULT_ORIGINS = [
 const PER_MINUTE = 20; // số lượt hỏi tối đa mỗi phút cho mỗi IP
 const MAX_BODY = 256 * 1024; // đoạn chat dài quá 256KB thì từ chối
 const MAX_TOKENS = 8192;
+const BUSY = [429, 502, 503, 504, 524]; // mã lỗi khi Z.ai quá tải hoặc treo
 
 // Đếm lượt trong bộ nhớ: mỗi máy chủ Cloudflare đếm riêng nên chỉ là chặn tương đối.
 // Nếu có gắn binding Rate Limiting tên LIMITER (xem README) thì dùng cái đó, chính xác hơn.
@@ -77,7 +78,7 @@ export default {
       thinking: { type: body.thinking?.type === "disabled" ? "disabled" : "enabled" },
     };
 
-    // Bản miễn phí hay bị quá tải (429): thử lần lượt các mô hình miễn phí còn lại.
+    // Bản miễn phí hay bị quá tải (429) hoặc treo (502/503/504/524): thử lần lượt các mô hình miễn phí còn lại.
     let upstream;
     for (const m of [model, ...FREE_MODELS.filter((x) => x !== model)]) {
       if (upstream) await upstream.body?.cancel();
@@ -86,9 +87,9 @@ export default {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${env.ZAI_API_KEY}` },
         body: JSON.stringify({ ...clean, model: m }),
       });
-      if (upstream.status !== 429) break;
+      if (!BUSY.includes(upstream.status)) break;
     }
-    if (upstream.status === 429) return fail(429, "Máy chủ GLM miễn phí đang quá tải. Đợi một lúc rồi thử lại.");
+    if (BUSY.includes(upstream.status)) return fail(429, "Máy chủ GLM miễn phí đang quá tải. Đợi một lúc rồi thử lại.");
     // Không trả nguyên lỗi xác thực của Z.ai về trình duyệt để khỏi lộ chi tiết về key.
     if (upstream.status === 401 || upstream.status === 403) return fail(502, "API key trên máy chủ chung bị sai hoặc đã bị thu hồi.");
     const headers = new Headers(cors);
