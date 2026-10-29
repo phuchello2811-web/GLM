@@ -391,7 +391,7 @@
           <option value="open">Luôn mở</option>
         </select>
       </label>
-      <label class="check"><input type="checkbox" id="setTools"> Cho AI chạy JavaScript để tính toán chính xác</label>
+      <label class="check"><input type="checkbox" id="setTools"> Cho AI dùng công cụ: tính toán bằng JavaScript và tra cứu Wikipedia</label>
       <label>Dữ liệu train
         <small>Bấm nút thích dưới câu trả lời tốt để lưu lại. Khi đủ vài trăm câu, xuất file rồi làm theo FINETUNE.md để dạy mô hình trên Google Colab.</small>
         <div class="mem-add">
@@ -444,7 +444,7 @@
   const SHARED_URL = "https://glm.phuchello2811.workers.dev/";
 
   const settings = Object.assign(
-    { system: "", temperature: 0.6, maxTokens: 4096, think: "collapsed", deep: false, tools: true,
+    { system: "", temperature: 0.6, maxTokens: 8192, think: "collapsed", deep: false, tools: true,
       provider: SHARED_URL ? "shared" : "pollinations", models: {} },
     store.get("glm.settings", {})
   );
@@ -476,6 +476,8 @@
   if (!SHARED_URL) delete PROVIDERS.shared;
   // Cài đặt cũ có thể còn trỏ tới nguồn đã bỏ (máy này, Z.ai, OpenRouter, Puter) hoặc còn lưu API key.
   delete settings.keys; delete settings.server;
+  // Mặc định cũ 4096 hay làm câu trả lời bị cắt khi mô hình nghĩ lâu; máy chủ chung cho tối đa 8192.
+  if (settings.maxTokens === 4096) settings.maxTokens = 8192;
   if (!PROVIDERS[settings.provider]) settings.provider = SHARED_URL ? "shared" : "pollinations";
   for (const id in settings.models) if (!PROVIDERS[id]?.models.includes(settings.models[id])) delete settings.models[id];
   store.set("glm.settings", settings);
@@ -599,7 +601,7 @@
     return s.replace(/\u0000(\d+)\u0000/g, (_, i) => `<code>${esc(codes[i])}</code>`);
   }
 
-  const CODE_LABELS = { "js-run": "JavaScript · đã chạy", output: "Kết quả" };
+  const CODE_LABELS = { "js-run": "JavaScript · đã chạy", search: "Tra cứu Wikipedia", output: "Kết quả" };
 
   function markdown(src) {
     const lines = src.replace(/\r\n?/g, "\n").split("\n");
@@ -818,22 +820,35 @@
     "đã sửa nếu có lỗi. Chỉ viết câu trả lời cuối cùng như thể trả lời lần đầu, không nhắc tới việc kiểm tra, " +
     "và dùng cùng ngôn ngữ với câu hỏi.";
 
+  const THINK_PROMPT =
+    "Cách suy nghĩ: với câu hỏi khó (toán, logic, code, phân tích), trước hết xác định chính xác người dùng cần gì, " +
+    "chia bài toán thành các bước nhỏ, cân nhắc ít nhất hai cách làm và các trường hợp đặc biệt, rồi tự kiểm tra lại " +
+    "kết quả (thử lại bằng cách khác, thay số, hoặc chạy code) trước khi trả lời. Nếu không chắc thì nói rõ là không chắc, " +
+    "không bịa. Câu hỏi đơn giản thì trả lời ngắn gọn, không cần nghĩ dài. Trả lời bằng ngôn ngữ của người dùng.";
+
   const TOOL_PROMPT =
-    "Bạn có thể chạy JavaScript để tính toán chính xác. Khi cần tính (số học, phần trăm, ngày tháng, thống kê, " +
-    "kiểm tra code…), viết một khối:\n```js-run\n// code, dùng console.log để in kết quả\n```\n" +
-    "rồi DỪNG viết ngay sau khối đó. Hệ thống sẽ chạy code và gửi lại kết quả để bạn trả lời tiếp. " +
-    "Không tự đoán kết quả của code. Với số nguyên lớn (trên 15 chữ số) dùng BigInt, ví dụ 123n * 456n. " +
-    "Câu hỏi không cần tính toán thì trả lời bình thường.";
+    "Bạn có hai công cụ. Mỗi lần chỉ dùng một công cụ: viết khối lệnh rồi DỪNG viết ngay sau khối đó. " +
+    "Hệ thống sẽ chạy và gửi lại kết quả để bạn trả lời tiếp. Không tự đoán kết quả.\n\n" +
+    "1. Tính toán bằng JavaScript (số học, phần trăm, ngày tháng, thống kê, kiểm tra code…):\n" +
+    "```js-run\n// code, dùng console.log để in kết quả\n```\n" +
+    "Với số nguyên lớn (trên 15 chữ số) dùng BigInt, ví dụ 123n * 456n.\n\n" +
+    "2. Tra cứu Wikipedia (sự kiện, nhân vật, địa danh, số liệu, định nghĩa mà bạn không chắc, hoặc thông tin có thể đã thay đổi):\n" +
+    "```search\ntừ khoá ngắn gọn\n```\n" +
+    "Từ khoá tiếng Việt có dấu sẽ tra Wikipedia tiếng Việt; viết từ khoá tiếng Anh (ví dụ 2016 Nobel Prize in Literature) " +
+    "để tra Wikipedia tiếng Anh, thường đầy đủ hơn. Tra tối đa 3 lần; khi kết quả đã đủ thì trả lời ngay. " +
+    "Dựa vào kết quả tra cứu khi trả lời và ghi nguồn bài Wikipedia đã dùng.\n\n" +
+    "Câu hỏi không cần tính toán hay tra cứu thì trả lời bình thường.";
 
   const MEMORY_PROMPT =
     "CHỈ KHI người dùng yêu cầu rõ ràng bạn ghi nhớ điều gì (ví dụ \"hãy nhớ…\", \"nhớ giúp tôi…\"), thêm vào cuối " +
     "câu trả lời một dòng: [[NHỚ: nội dung cần nhớ, viết ngắn gọn]]. Không bao giờ dùng dòng này trong các trường hợp khác.";
 
-  const RUN_BLOCK = /```js-run[^\n]*\n([\s\S]*?)\n\s*```/;
+  const RUN_BLOCK = /```(js-run|search)[^\n]*\n([\s\S]*?)\n\s*```/;
   const MEMO_TAG = /\[\[\s*[Nn][Hh][ỚớOo]\s*:\s*([^\]]+?)\s*\]\]/g;
 
   function systemPrompt() {
-    const parts = [];
+    const today = new Date().toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "numeric", year: "numeric" });
+    const parts = [`Hôm nay là ${today}.`, THINK_PROMPT];
     if (settings.system.trim()) parts.push(settings.system.trim());
     if (settings.tools) parts.push(TOOL_PROMPT);
     let mem = MEMORY_PROMPT;
@@ -902,28 +917,87 @@
     reply.remembered = found;
   }
 
-  // Trả lời, và mỗi khi mô hình viết khối ```js-run thì chạy code rồi cho nó viết tiếp với kết quả (tối đa 4 lần).
+  // Trả lời, và mỗi khi mô hình viết khối ```js-run hoặc ```search thì chạy công cụ rồi cho nó viết tiếp với kết quả (tối đa 5 lần).
+  const TOOL_ROUNDS = 5;
   async function answerWithTools(messages, reply, node) {
     for (let round = 0; ; round++) {
       const start = reply.content.length;
-      const allowTool = settings.tools && round < 4;
-      await runPass(messages, reply, node, allowTool ? (text) => RUN_BLOCK.test(text.slice(start)) : null);
+      const allowTool = settings.tools && round < TOOL_ROUNDS;
+      // Máy chủ đôi khi ngắt luồng giữa chừng ("network error"): gửi lại tối đa 2 lần, cho mô hình viết tiếp từ chỗ dừng.
+      for (let retry = 0; ; retry++) {
+        const partial = reply.content.slice(start).trim();
+        const pass = retry && partial
+          ? [...messages, { role: "assistant", content: partial }, { role: "user", content: "Kết nối bị gián đoạn. Viết tiếp đúng từ chỗ bạn dừng, không lặp lại phần đã viết." }]
+          : messages;
+        try {
+          await runPass(pass, reply, node, allowTool ? (text) => RUN_BLOCK.test(text.slice(start)) : null);
+          break;
+        } catch (e) {
+          if (e.name !== "TypeError" || retry >= 2) throw e;
+          if (!partial) reply.content = reply.content.slice(0, start);
+          if (reply.reasoning) reply.reasoning += "\n\n· · ·\n\n";
+          reply.notice = "Mất kết nối, đang nối lại…";
+          paintAssistant(node, reply, true);
+        }
+      }
       const m = allowTool && reply.content.slice(start).match(RUN_BLOCK);
       if (!m) return;
       // Bỏ phần mô hình viết sau khối code (thường là đoán kết quả).
       const cut = start + m.index + m[0].length;
       reply.content = reply.content.slice(0, cut);
-      reply.notice = "Đang chạy code…";
+      const search = m[1] === "search";
+      reply.notice = search ? "Đang tra cứu Wikipedia…" : "Đang chạy code…";
       paintAssistant(node, reply, true);
-      const out = await runJs(m[1]);
+      const out = search ? await searchWiki(m[2].trim()) : await runJs(m[2]);
       reply.content += "\n\n```output\n" + out + "\n```\n\n";
       reply.notice = "Đang đọc kết quả…";
       paintAssistant(node, reply, true);
       messages = [...messages,
         { role: "assistant", content: reply.content.slice(start, cut).trim() },
-        { role: "user", content: "Kết quả chạy code:\n```\n" + out + "\n```\nTiếp tục trả lời dựa trên kết quả này, không viết lại code đã chạy." },
+        { role: "user", content: (search ? "Kết quả tra cứu Wikipedia:\n```\n" : "Kết quả chạy code:\n```\n") + out +
+          "\n```\nTiếp tục trả lời dựa trên kết quả này, không lặp lại khối lệnh vừa chạy." +
+          // Lượt cuối: không chạy công cụ nữa, nên bắt mô hình trả lời luôn.
+          (round + 1 >= TOOL_ROUNDS ? " Đã hết lượt dùng công cụ: không viết thêm khối lệnh nào, trả lời ngay bằng thông tin đã có." : "") },
       ];
       if (reply.reasoning) reply.reasoning += "\n\n· · ·\n\n";
+    }
+  }
+
+  // Tra Wikipedia: tìm bài phù hợp, rồi lấy phần mở đầu và các đoạn chứa từ khoá (bảng biểu không có trong bản chữ).
+  // Từ khoá có dấu tiếng Việt thì tra Wikipedia tiếng Việt trước, không thì tiếng Anh trước.
+  async function searchWiki(query) {
+    if (!query) return "Lỗi: thiếu từ khoá tra cứu.";
+    const api = async (lang, params) => {
+      const url = `https://${lang}.wikipedia.org/w/api.php?` + new URLSearchParams({ ...params, format: "json", formatversion: "2", origin: "*" });
+      const signal = AbortSignal.any ? AbortSignal.any([controller.signal, AbortSignal.timeout(10000)]) : controller.signal;
+      const res = await fetch(url, { signal });
+      if (!res.ok) throw new Error(`Wikipedia trả lỗi ${res.status}`);
+      return (await res.json()).query;
+    };
+    const terms = query.toLowerCase().split(/[\s,.;:!?()"']+/).filter((w) => w.length > 2 || /\d/.test(w));
+    const excerpt = (text) => {
+      const paras = text.split(/\n+/).map((t) => t.trim()).filter((t) => t.length > 30);
+      const intro = paras.slice(0, 2).join("\n").slice(0, 700);
+      const hits = paras.slice(2)
+        .map((t, i) => ({ t, i, score: terms.filter((w) => t.toLowerCase().includes(w)).length }))
+        .filter((x) => x.score).sort((a, b) => b.score - a.score || a.i - b.i).slice(0, 4)
+        .sort((a, b) => a.i - b.i).map((x) => (x.t.length > 600 ? x.t.slice(0, 600) + "…" : x.t));
+      return [intro, ...hits].join("\n…\n");
+    };
+    const lookup = async (lang) => {
+      const titles = ((await api(lang, { action: "query", list: "search", srsearch: query, srlimit: "2", srprop: "" })).search || []).map((r) => r.title);
+      const pages = await Promise.all(titles.map((t) => api(lang, { action: "query", prop: "extracts", explaintext: "1", titles: t, redirects: "1" })));
+      return pages.map((q) => q.pages?.[0]).filter((p) => p?.extract?.trim()).map((p) =>
+        `### ${p.title}\n${excerpt(p.extract)}\nNguồn: https://${lang}.wikipedia.org/wiki/${encodeURIComponent(p.title.replace(/ /g, "_"))}`);
+    };
+    const langs = /[^\x00-\x7F]/.test(query) ? ["vi", "en"] : ["en", "vi"];
+    try {
+      let found = await lookup(langs[0]);
+      if (!found.length) found = await lookup(langs[1]);
+      return found.length ? found.join("\n\n") : `Không tìm thấy bài Wikipedia nào cho "${query}". Thử từ khoá khác hoặc từ khoá tiếng Anh.`;
+    } catch (e) {
+      if (e.name === "AbortError" && controller?.signal.aborted) throw e;
+      return "Lỗi khi tra cứu: " + (e.name === "TimeoutError" ? "Wikipedia không phản hồi." : e.message);
     }
   }
 
@@ -1138,7 +1212,7 @@
     chooseModel($("setProvider").value);
     settings.system = $("setSystem").value;
     settings.temperature = parseFloat($("setTemp").value) || 0.6;
-    settings.maxTokens = parseInt($("setMax").value) || 4096;
+    settings.maxTokens = parseInt($("setMax").value) || 8192;
     settings.think = $("setThink").value;
     settings.tools = $("setTools").checked;
     store.set("glm.settings", settings);
