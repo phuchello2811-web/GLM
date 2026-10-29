@@ -58,6 +58,15 @@ Bật nút **Nghĩ kỹ** trong khung chat để mô hình giải hai lần đ�
 
 Khi cần tính toán, mô hình tự viết code JavaScript hoặc Python. Trang chạy code đó ngay trong trình duyệt (cách ly, không truy cập mạng; Python chạy bằng [Pyodide](https://pyodide.org), có sẵn numpy, pandas, sympy) rồi đưa kết quả cho mô hình, nên phép tính luôn chính xác. Khi bạn nhờ viết code, mô hình chạy thử với vài ví dụ, tự sửa nếu lỗi, rồi mới đưa code cuối cùng. Code trong câu trả lời được tô màu cho dễ đọc. Khi cần thông tin thực tế, mô hình tự tra cứu rồi trả lời kèm nguồn: Wikipedia tiếng Việt hoặc tiếng Anh cho kiến thức chung, tìm kiếm web (DuckDuckGo) cho tin tức, giá cả, tài liệu mới, và đọc nội dung trang web (qua [Jina Reader](https://jina.ai/reader)). Bạn cũng có thể dán đường dẫn để mô hình đọc trang đó. Từ khoá tìm kiếm và đường dẫn được gửi tới DuckDuckGo và Jina. Mô hình cũng được dạy cách suy nghĩ: chia nhỏ bài toán, thử nhiều cách và tự kiểm tra trước khi trả lời. Nếu máy chủ ngắt kết nối giữa chừng, trang tự nối lại và cho mô hình viết tiếp. Muốn mô hình nhớ điều gì ở mọi đoạn chat, cứ nói "hãy nhớ: …". Danh sách ghi nhớ nằm trong **Cài đặt → Bộ nhớ**.
 
+**Tiện ích khác:**
+
+- **Công thức toán** hiển thị như trong sách (KaTeX).
+- **Nói thay vì gõ:** bấm nút micro trong khung chat và nói tiếng Việt (Chrome, Edge, Safari).
+- **Đọc to** câu trả lời: bấm nút loa dưới câu trả lời, bấm lần nữa để dừng.
+- **Sửa câu hỏi đã gửi:** rê chuột vào câu hỏi rồi bấm nút bút chì; các câu phía sau bị bỏ và GLM trả lời lại.
+- **Tìm trong lịch sử chat** theo tên hoặc nội dung, không cần gõ dấu.
+- **Tải đoạn chat về** dạng Markdown bằng nút tải xuống ở góc trên.
+
 **Gửi ảnh và file:** bấm nút kẹp giấy trong khung chat, kéo thả vào khung chat, hoặc dán ảnh bằng `Cmd+V`.
 
 - **Ảnh** (tối đa 4 ảnh mỗi tin): trang tự chuyển sang **GLM-4.6V Flash**, mô hình miễn phí duy nhất đọc được ảnh. Ảnh được thu nhỏ trước khi gửi.
