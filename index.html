@@ -388,7 +388,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 11-8.6 8.6a5 5 0 0 1-7.1-7.1l8.6-8.6a3.3 3.3 0 0 1 4.7 4.7L10 17.2a1.7 1.7 0 0 1-2.4-2.4l8-8"/></svg>
       </button>
       <input type="file" id="fileInput" multiple hidden>
-      <button class="icon-btn attach mic" id="micBtn" type="button" title="Nói thay vì gõ" hidden>
+      <button class="icon-btn attach mic" id="micBtn" type="button" title="Nói thay vì gõ">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
       </button>
       <button class="deep chip" id="modelChip" type="button" aria-haspopup="menu" aria-expanded="false" title="Chọn mô hình">
@@ -1600,13 +1600,17 @@
   };
 
   // ---------- Nói thay vì gõ ----------
-  // Dùng nhận giọng nói có sẵn của trình duyệt (Chrome, Edge, Safari). Trình duyệt không hỗ trợ thì ẩn nút.
+  // Dùng nhận giọng nói có sẵn của trình duyệt (Chrome, Edge, Safari). Trình duyệt không có (Firefox, Brave,
+  // ứng dụng đã cài trên iPhone) thì bấm nút sẽ hiện cách nói bằng bàn phím của máy.
   const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (Recognition) {
+  const NO_MIC = /iPhone|iPad|Android/i.test(navigator.userAgent)
+    ? "Trình duyệt này chưa hỗ trợ nhận giọng nói. Hãy bấm vào ô nhập tin nhắn rồi bấm nút micro trên bàn phím điện thoại để nói, hoặc mở trang bằng Chrome hay Safari (không mở từ ứng dụng đã cài)."
+    : "Trình duyệt này chưa hỗ trợ nhận giọng nói. Hãy mở trang bằng Chrome, Edge hoặc Safari. Trên Mac cũng có thể bấm phím Fn hai lần (hoặc phím micro) để đọc chính tả vào ô nhập.";
+  {
     const mic = $("micBtn");
-    mic.hidden = false;
     let rec = null;
     mic.onclick = () => {
+      if (!Recognition) { alert(NO_MIC); return; }
       if (rec) { rec.stop(); return; }
       rec = new Recognition();
       rec.lang = "vi-VN"; rec.interimResults = true; rec.continuous = true;
@@ -1618,7 +1622,8 @@
         autosize();
       };
       rec.onerror = (e) => {
-        if (e.error === "not-allowed" || e.error === "service-not-allowed") alert("Trình duyệt chưa cho dùng micro. Hãy cho phép quyền micro cho trang này rồi thử lại.");
+        if (e.error === "not-allowed") alert("Trình duyệt chưa cho dùng micro. Hãy cho phép quyền micro cho trang này rồi thử lại.");
+        else if (e.error === "service-not-allowed" || e.error === "network" || e.error === "language-not-supported") alert(NO_MIC);
       };
       rec.onend = () => { rec = null; mic.classList.remove("on"); mic.title = "Nói thay vì gõ"; els.input.focus(); };
       rec.start();
