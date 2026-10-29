@@ -101,14 +101,7 @@
   /* Main */
   .main { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; }
   .topbar { display: flex; align-items: center; gap: 4px; padding: 8px 12px; height: 56px; }
-  .model-name { font-size: 18px; font-weight: 600; padding: 6px 10px; display: flex; align-items: center; gap: 8px; }
-  .logo { width: 26px; height: 26px; border-radius: 7px; }
   .hero-logo { width: 56px; height: 56px; border-radius: 15px; margin-bottom: -12px; }
-  .model-name #modelSub { color: var(--muted); font-weight: 400; }
-  .model-picker { position: relative; }
-  .model-name { border-radius: 10px; color: var(--text); }
-  .model-name:hover, .model-name[aria-expanded="true"] { background: var(--hover); }
-  .model-name .chev { width: 16px; height: 16px; color: var(--muted); }
   .model-menu { position: fixed; z-index: 30; max-height: calc(100vh - 32px); overflow-y: auto; width: min(340px, calc(100vw - 32px)); padding: 6px;
     background: var(--bg); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 8px 28px rgba(0,0,0,.16); }
   .model-menu .group { font-size: 12px; color: var(--muted); padding: 8px 10px 4px; }
@@ -116,7 +109,6 @@
   .model-menu button:hover { background: var(--hover); }
   .model-menu b { display: block; font-weight: 600; font-size: 14px; }
   .model-menu small { display: block; color: var(--muted); font-size: 12px; margin-top: 1px; }
-  @media (max-width: 480px) { .model-name #modelSub { display: none; } }
   .model-menu .tick { margin-left: auto; width: 18px; height: 18px; flex: none; visibility: hidden; }
   .model-menu [aria-checked="true"] .tick { visibility: visible; }
   .topbar .spacer { flex: 1; }
@@ -352,11 +344,7 @@
     <button class="icon-btn open-side" id="openSide" title="Mở thanh bên">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg>
     </button>
-    <div class="model-picker">
-      <button class="model-name" id="modelBtn" aria-haspopup="menu" aria-expanded="false" title="Chọn mô hình"><img class="logo" src="icons/icon.svg" alt=""><span id="modelTitle">GLM</span> <span id="modelSub"></span>
-        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
-      <div class="model-menu" id="modelMenu" role="menu" hidden></div>
-    </div>
+    <div class="model-menu" id="modelMenu" role="menu" hidden></div>
     <div class="spacer"></div>
     <button class="icon-btn" id="themeBtn" title="Đổi giao diện sáng/tối">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg>
@@ -385,7 +373,7 @@
         <span id="chipTitle">GLM-4.7 Flash</span>
         <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
       </button>
-      <button class="deep" id="deep" type="button" title="Mô hình trả lời xong sẽ tự kiểm tra và sửa lại. Chính xác hơn nhưng chậm gấp 2–3 lần.">
+      <button class="deep" id="deep" type="button" title="Mô hình giải hai lần độc lập, rồi so sánh, kiểm tra và viết câu trả lời cuối. Chính xác hơn nhưng chậm gấp 3–4 lần.">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2Z"/></svg>
         Nghĩ kỹ
       </button>
@@ -521,8 +509,7 @@
   const currentChoice = () => `${settings.provider}:${cloudModel()}`;
 
   function paintProvider() {
-    $("modelTitle").textContent = $("chipTitle").textContent = modelTitle(settings.provider, cloudModel());
-    $("modelSub").textContent = `· ${PROVIDERS[settings.provider].name}`;
+    $("chipTitle").textContent = modelTitle(settings.provider, cloudModel());
     $("footnote").textContent = `Tin nhắn được gửi tới máy chủ của ${PROVIDERS[settings.provider].name}. Mô hình có thể trả lời sai, hãy kiểm tra thông tin quan trọng.`;
   }
   function chooseModel(key) {
@@ -533,7 +520,7 @@
     paintProvider(); checkServer();
   }
 
-  // Menu chọn mô hình, mở từ tên mô hình ở đầu trang hoặc từ nút trong khung chat.
+  // Menu chọn mô hình, mở từ nút trong khung chat.
   const TICK = '<svg class="tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
   let menuAnchor = null;
   function toggleModelMenu(anchor) {
@@ -557,7 +544,7 @@
     menu.style.left = Math.max(16, Math.min(r.left, innerWidth - w - 16)) + "px";
     menu.style.top = (r.top > innerHeight / 2 ? Math.max(16, r.top - h - 6) : r.bottom + 6) + "px";
   }
-  for (const id of ["modelBtn", "modelChip"]) $(id).onclick = (e) => { e.stopPropagation(); toggleModelMenu(e.currentTarget); };
+  $("modelChip").onclick = (e) => { e.stopPropagation(); toggleModelMenu(e.currentTarget); };
   $("modelMenu").onclick = (e) => {
     const b = e.target.closest("[data-key]");
     if (b) { chooseModel(b.dataset.key); toggleModelMenu(null); }
@@ -646,9 +633,9 @@
     return s.replace(/\u0000(\d+)\u0000/g, (_, i) => `<code>${esc(codes[i])}</code>`);
   }
 
-  const CODE_LABELS = { "js-run": "JavaScript · đã chạy", "py-run": "Python · đã chạy", "python-run": "Python · đã chạy", search: "Tra cứu Wikipedia", output: "Kết quả" };
+  const CODE_LABELS = { "js-run": "JavaScript · đã chạy", "py-run": "Python · đã chạy", "python-run": "Python · đã chạy", search: "Tra cứu Wikipedia", web: "Tìm trên web", read: "Đọc trang web", output: "Kết quả" };
   // Ngôn ngữ để tô màu code; khối không có tên ngôn ngữ thì để highlight.js tự đoán.
-  const HL_LANG = new Proxy({ "js-run": "javascript", "py-run": "python", "python-run": "python", search: null, output: null, "": "auto" }, {
+  const HL_LANG = new Proxy({ "js-run": "javascript", "py-run": "python", "python-run": "python", search: null, web: null, read: null, output: null, "": "auto" }, {
     get: (t, k) => (k in t ? t[k] : String(k).toLowerCase()),
   });
 
@@ -817,17 +804,19 @@
     const live = node.querySelector(".think[data-live] > .think-body");
     if (streaming && thinking && live && !m.notice) { live.textContent = think.trim(); return; }
     let html = "";
-    if (m.draft) {
-      const d = splitThink((m.draft.reasoning ? `<think>${m.draft.reasoning}</think>` : "") + m.draft.content);
-      const secs = m.draft.thinkSecs ? `, suy nghĩ ${m.draft.thinkSecs} giây` : "";
-      html += `<details class="think"><summary>Bản nháp đầu tiên${secs}</summary><div class="think-body draft">` +
+    const drafts = m.drafts || (m.draft ? [m.draft] : []);
+    drafts.forEach((dr, i) => {
+      const d = splitThink((dr.reasoning ? `<think>${dr.reasoning}</think>` : "") + dr.content);
+      const secs = dr.thinkSecs ? `, suy nghĩ ${dr.thinkSecs} giây` : "";
+      const name = drafts.length > 1 ? `Lời giải nháp ${i + 1}` : "Bản nháp đầu tiên";
+      html += `<details class="think"><summary>${name}${secs}</summary><div class="think-body draft">` +
         `<div class="content">${markdown(d.answer.trim())}</div></div></details>`;
-    }
+    });
     if (think.trim() || thinking) {
       const secs = m.thinkSecs ? ` trong ${m.thinkSecs} giây` : "";
       const label = thinking
-        ? `<span class="shimmer">${m.review ? "Đang kiểm tra lại…" : "Đang suy nghĩ…"}</span>`
-        : `${m.review ? "Đã kiểm tra lại" : "Đã suy nghĩ"}${secs}`;
+        ? `<span class="shimmer">${m.review ? "Đang so sánh và kiểm tra lại…" : m.second ? "Đang giải lại theo cách khác…" : "Đang suy nghĩ…"}</span>`
+        : `${m.review ? "Đã kiểm tra lại" : m.second ? "Đã giải lại" : "Đã suy nghĩ"}${secs}`;
       const open = thinking || settings.think === "open" ? " open" : "";
       html += `<details class="think"${open}><summary>${label}</summary><div class="think-body">${esc(think.trim())}</div></details>`;
     }
@@ -847,7 +836,7 @@
     const prev = node.querySelector(".think:not(.is-draft)");
     const keepOpen = prev && prev.dataset.user ? prev.open : null;
     node.innerHTML = html;
-    node.querySelector(".draft")?.parentElement.classList.add("is-draft");
+    node.querySelectorAll(".draft").forEach((el) => el.parentElement.classList.add("is-draft"));
     const det = node.querySelector(".think:not(.is-draft)");
     if (det && keepOpen !== null) { det.open = keepOpen; det.dataset.user = "1"; }
     if (det) det.querySelector("summary").addEventListener("click", () => { det.dataset.user = "1"; });
@@ -907,15 +896,27 @@
     "đã sửa nếu có lỗi. Chỉ viết câu trả lời cuối cùng như thể trả lời lần đầu, không nhắc tới việc kiểm tra, " +
     "và dùng cùng ngôn ngữ với câu hỏi.";
 
+  const REVIEW_TWO_PROMPT =
+    "Dưới đây là một lời giải khác, được làm độc lập cho cùng câu hỏi (gọi là lời giải B; câu trả lời vừa rồi của bạn là lời giải A):\n\n" +
+    "<loi_giai_B>\n{B}\n</loi_giai_B>\n\n" +
+    "Hãy làm như một giám khảo nghiêm khắc: liệt kê các điểm A và B khác nhau (kết quả, lập luận, code), xác định bên nào đúng " +
+    "bằng cách tự kiểm tra lại từng bước, thay số, hoặc chạy code/tra cứu bằng công cụ; tìm cả lỗi mà hai bên cùng mắc " +
+    "và trường hợp đặc biệt bị bỏ sót. Sau đó viết câu trả lời cuối cùng hoàn chỉnh và đúng nhất cho câu hỏi ban đầu, " +
+    "như thể trả lời lần đầu: không nhắc tới A, B hay việc so sánh, dùng cùng ngôn ngữ với câu hỏi.";
+
   const THINK_PROMPT =
-    "Cách suy nghĩ: với câu hỏi khó (toán, logic, code, phân tích), trước hết xác định chính xác người dùng cần gì " +
-    "(đầu vào, đầu ra, ràng buộc), " +
-    "chia bài toán thành các bước nhỏ, cân nhắc ít nhất hai cách làm và các trường hợp đặc biệt, rồi tự kiểm tra lại " +
-    "kết quả (thử lại bằng cách khác, thay số, hoặc chạy code) trước khi trả lời. Nếu không chắc thì nói rõ là không chắc, " +
-    "không bịa. Câu hỏi đơn giản thì trả lời ngắn gọn, không cần nghĩ dài. Trả lời bằng ngôn ngữ của người dùng.";
+    "Cách suy nghĩ với câu hỏi khó (toán, logic, code, khoa học, phân tích, lập kế hoạch):\n" +
+    "1) Hiểu đề: xác định chính xác người dùng cần gì (đầu vào, đầu ra, ràng buộc, điều kiện ngầm). Đề mơ hồ thì nêu giả định hợp lý.\n" +
+    "2) Lập kế hoạch: chia thành các bước nhỏ; nghĩ ít nhất hai hướng giải và chọn hướng chắc chắn nhất.\n" +
+    "3) Giải cẩn thận từng bước, không nhảy cóc; mọi phép tính quan trọng đều kiểm bằng code.\n" +
+    "4) Tự phản biện: tìm phản ví dụ, thử trường hợp biên, kiểm tra đơn vị, thay kết quả ngược vào đề, " +
+    "hỏi \"nếu mình sai thì sai ở đâu?\". Phát hiện lỗi thì quay lại sửa.\n" +
+    "5) Trả lời: kết luận rõ ràng trước, rồi giải thích ngắn gọn các bước chính.\n" +
+    "Không bịa thông tin; không chắc thì tra cứu hoặc nói rõ mức độ chắc chắn. " +
+    "Câu hỏi đơn giản thì trả lời ngắn gọn, không cần nghĩ dài. Trả lời bằng ngôn ngữ của người dùng.";
 
   const TOOL_PROMPT =
-    "Bạn có ba công cụ. Mỗi lần chỉ dùng một công cụ: viết khối lệnh rồi DỪNG viết ngay sau khối đó. " +
+    "Bạn có năm công cụ. Mỗi lần chỉ dùng một công cụ: viết khối lệnh rồi DỪNG viết ngay sau khối đó. " +
     "Hệ thống sẽ chạy và gửi lại kết quả để bạn trả lời tiếp. Không tự đoán kết quả.\n\n" +
     "1. Tính toán bằng JavaScript (số học, phần trăm, ngày tháng, thống kê, kiểm tra code…):\n" +
     "```js-run\n// code, dùng console.log để in kết quả\n```\n" +
@@ -926,8 +927,15 @@
     "3. Tra cứu Wikipedia (sự kiện, nhân vật, địa danh, số liệu, định nghĩa mà bạn không chắc, hoặc thông tin có thể đã thay đổi):\n" +
     "```search\ntừ khoá ngắn gọn\n```\n" +
     "Từ khoá tiếng Việt có dấu sẽ tra Wikipedia tiếng Việt; viết từ khoá tiếng Anh (ví dụ 2016 Nobel Prize in Literature) " +
-    "để tra Wikipedia tiếng Anh, thường đầy đủ hơn. Tra tối đa 3 lần; khi kết quả đã đủ thì trả lời ngay. " +
-    "Dựa vào kết quả tra cứu khi trả lời và ghi nguồn bài Wikipedia đã dùng.\n\n" +
+    "để tra Wikipedia tiếng Anh, thường đầy đủ hơn.\n\n" +
+    "4. Tìm trên web (tin tức, sự kiện gần đây, giá cả, thời tiết, phiên bản phần mềm, tài liệu kỹ thuật, những gì Wikipedia không có):\n" +
+    "```web\ntừ khoá tìm kiếm\n```\n" +
+    "Kết quả là danh sách tiêu đề, đường dẫn và đoạn mô tả ngắn.\n\n" +
+    "5. Đọc một trang web (khi cần chi tiết từ một kết quả tìm kiếm, hoặc người dùng đưa đường dẫn):\n" +
+    "```read\nhttps://đường-dẫn-đầy-đủ\n```\n\n" +
+    "Kiến thức của bạn có thể đã cũ: với thông tin có thể đã thay đổi hoặc bạn không chắc, hãy tra cứu thay vì đoán. " +
+    "Tổng cộng tra cứu tối đa 4 lần cho một câu hỏi; khi thông tin đã đủ thì trả lời ngay. " +
+    "Khi trả lời dựa trên tra cứu, ghi nguồn (tên trang và đường dẫn), và ưu tiên nguồn chính thống, mới nhất.\n\n" +
     "Khi người dùng nhờ viết code Python hoặc JavaScript: BẮT BUỘC chạy thử trước khi trả lời. Bước đầu tiên của câu trả lời " +
     "là một khối py-run hoặc js-run chứa code kèm vài lệnh in kết quả với ví dụ, gồm cả trường hợp đặc biệt (rỗng, số âm, rất lớn…). " +
     "Nếu lỗi hoặc kết quả sai, tìm nguyên nhân, sửa rồi chạy lại. Không bao giờ tự viết kết quả chạy thử mà chưa chạy. " +
@@ -943,13 +951,14 @@
     "CHỈ KHI người dùng yêu cầu rõ ràng bạn ghi nhớ điều gì (ví dụ \"hãy nhớ…\", \"nhớ giúp tôi…\"), thêm vào cuối " +
     "câu trả lời một dòng: [[NHỚ: nội dung cần nhớ, viết ngắn gọn]]. Không bao giờ dùng dòng này trong các trường hợp khác.";
 
-  const RUN_BLOCK = /```(js-run|py-run|python-run|search)[^\n]*\n([\s\S]*?)\n\s*```/;
+  const RUN_BLOCK = /```(js-run|py-run|python-run|search|web|read)[^\n]*\n([\s\S]*?)\n\s*```/;
   const MEMO_TAG = /\[\[\s*[Nn][Hh][ỚớOo]\s*:\s*([^\]]+?)\s*\]\]/g;
 
   // Kỹ năng chuyên sâu: chỉ thêm vào lời nhắc khi câu hỏi gần đây đúng chủ đề, để mô hình tập trung.
   const SKILLS = [
     {
-      test: /web|html|css|javascript|\bjs\b|giao diện|trang|website|landing|ứng dụng|app|game|form|nút|responsive/i,
+      // Chỉ bật khi người dùng muốn làm/sửa trang (câu "tìm trên web" không tính).
+      test: /\bhtml\b|\bcss\b|landing page|responsive|(làm|tạo|viết|code|thiết kế|xây dựng|sửa|lập trình)\s.{0,40}(web|trang|giao diện|game|app|ứng dụng|form|nút|menu|portfolio)/i,
       prompt:
         "Kỹ năng làm trang web: viết MỘT file HTML hoàn chỉnh trong một khối ```html (CSS trong <style>, JS trong <script>), " +
         "không dùng file ngoài; chỉ dùng thư viện qua CDN (cdnjs.cloudflare.com, cdn.jsdelivr.net) khi thật cần. " +
@@ -969,7 +978,8 @@
         "hiệu ứng chuyển nhẹ. Minh hoạ bằng SVG hoặc biểu đồ CSS ngay trong file, không dùng ảnh ngoài.",
     },
     {
-      test: /vẽ|hình|ảnh|logo|icon|biểu tượng|svg|minh hoạ|minh họa|poster|banner|biểu đồ|đồ thị|chart|image|draw/i,
+      // Chỉ bật khi người dùng muốn vẽ/tạo hình (hỏi về ảnh gửi kèm như "ảnh này là gì" không tính).
+      test: /\bsvg\b|\bdraw\b|\blogo\b|\bicon\b|vẽ|(tạo|thiết kế|làm)\s.{0,30}(hình|ảnh|biểu tượng|poster|banner|biểu đồ|minh hoạ|minh họa|hình nền)/i,
       prompt:
         "Kỹ năng vẽ hình: bạn không tạo được ảnh chụp, nhưng vẽ được bằng SVG và trang sẽ hiện ảnh ngay. " +
         "Viết một khối ```svg hoàn chỉnh (<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"...\">), " +
@@ -1043,11 +1053,27 @@
     try {
       await answerWithTools(history, reply, node);
       const draft = splitThink(reply.content).answer.trim();
-      // Chế độ Nghĩ kỹ: cho mô hình tự kiểm tra bản nháp rồi viết lại câu trả lời cuối cùng.
+      // Chế độ Nghĩ kỹ: giải thêm một lần độc lập (không thấy lời giải đầu), rồi so sánh hai lời giải,
+      // kiểm tra chỗ khác nhau và viết câu trả lời cuối cùng. Lần giải thứ hai lỗi thì chỉ tự kiểm tra lời giải đầu.
       if (settings.deep && draft) {
-        reply.draft = { content: reply.content, reasoning: reply.reasoning, thinkSecs: reply.thinkSecs };
-        Object.assign(reply, { content: "", reasoning: "", thinkSecs: null, tps: null, review: true });
-        await answerWithTools([...history, { role: "assistant", content: draft }, { role: "user", content: REVIEW_PROMPT }], reply, node);
+        const keep = () => ({ content: reply.content, reasoning: reply.reasoning, thinkSecs: reply.thinkSecs });
+        reply.drafts = [keep()];
+        Object.assign(reply, { content: "", reasoning: "", thinkSecs: null, tps: null, second: true });
+        let draft2 = "";
+        try {
+          const again = history.map((m) => ({ ...m }));
+          const last = again.findLast((m) => m.role === "user");
+          const add = "\n\n(Hãy giải lại từ đầu một cách độc lập và cẩn thận, thử một hướng tiếp cận khác nếu có.)";
+          if (typeof last.content === "string") last.content += add; else last.content = [{ ...last.content[0], text: last.content[0].text + add }, ...last.content.slice(1)];
+          await answerWithTools(again, reply, node);
+          draft2 = splitThink(reply.content).answer.trim();
+          if (draft2) reply.drafts.push(keep());
+        } catch (e) { if (e.name === "AbortError") throw e; console.warn("Lần giải thứ hai bị lỗi:", e); }
+        Object.assign(reply, { content: "", reasoning: "", thinkSecs: null, tps: null, second: false, review: true });
+        const review = draft2
+          ? REVIEW_TWO_PROMPT.replace("{B}", draft2)
+          : REVIEW_PROMPT;
+        await answerWithTools([...history, { role: "assistant", content: draft }, { role: "user", content: review }], reply, node);
         if (!splitThink(reply.content).answer.trim()) throw new Error("Bước kiểm tra lại không trả về kết quả.");
       }
     } catch (e) {
@@ -1056,10 +1082,10 @@
           ? `Không kết nối được tới ${PROVIDERS[settings.provider].name}. Kiểm tra kết nối mạng rồi thử lại.`
           : e.message;
       }
-      // Dừng hoặc lỗi giữa bước kiểm tra: giữ lại bản nháp làm câu trả lời.
-      if (reply.draft && !splitThink(reply.content).answer.trim()) {
-        Object.assign(reply, reply.draft, { review: false });
-        delete reply.draft;
+      // Dừng hoặc lỗi giữa chừng: lấy lời giải đầu tiên làm câu trả lời.
+      if (reply.drafts && !splitThink(reply.content).answer.trim()) {
+        Object.assign(reply, reply.drafts[0], { review: false, second: false });
+        delete reply.drafts;
       }
     } finally {
       controller = null;
@@ -1085,7 +1111,7 @@
   }
 
   // Trả lời, và mỗi khi mô hình viết khối ```js-run hoặc ```search thì chạy công cụ rồi cho nó viết tiếp với kết quả (tối đa 5 lần).
-  const TOOL_ROUNDS = 6;
+  const TOOL_ROUNDS = 8;
   async function answerWithTools(messages, reply, node) {
     for (let round = 0; ; round++) {
       const start = reply.content.length;
@@ -1112,16 +1138,17 @@
       // Bỏ phần mô hình viết sau khối code (thường là đoán kết quả).
       const cut = start + m.index + m[0].length;
       reply.content = reply.content.slice(0, cut);
-      const search = m[1] === "search";
-      reply.notice = search ? "Đang tra cứu Wikipedia…" : m[1] !== "js-run" && !pyReady ? "Đang tải Python (lần đầu mất khoảng 10–20 giây)…" : "Đang chạy code…";
+      const tool = TOOLS[m[1]] || TOOLS["py-run"];
+      const search = tool.lookup;
+      reply.notice = m[1] !== "js-run" && !tool.lookup && !pyReady ? "Đang tải Python (lần đầu mất khoảng 10–20 giây)…" : tool.notice;
       paintAssistant(node, reply, true);
-      const out = search ? await searchWiki(m[2].trim()) : m[1] !== "js-run" ? await runPy(m[2]) : await runJs(m[2]);
+      const out = await tool.run(m[2].trim() ? m[2] : "");
       reply.content += "\n\n```output\n" + out + "\n```\n\n";
       reply.notice = "Đang đọc kết quả…";
       paintAssistant(node, reply, true);
       messages = [...messages,
         { role: "assistant", content: reply.content.slice(start, cut).trim() },
-        { role: "user", content: (search ? "Kết quả tra cứu Wikipedia:\n```\n" : "Kết quả chạy code:\n```\n") + out +
+        { role: "user", content: (search ? `Kết quả ${tool.label.toLowerCase()}:\n\`\`\`\n` : "Kết quả chạy code:\n```\n") + out +
           "\n```\nTiếp tục trả lời dựa trên kết quả này, không lặp lại khối lệnh vừa chạy." +
           // Lượt cuối: không chạy công cụ nữa, nên bắt mô hình trả lời luôn.
           (round + 1 >= TOOL_ROUNDS ? " Đã hết lượt dùng công cụ: không viết thêm khối lệnh nào, trả lời ngay bằng thông tin đã có." : "") },
@@ -1167,6 +1194,70 @@
       return "Lỗi khi tra cứu: " + (e.name === "TimeoutError" ? "Wikipedia không phản hồi." : e.message);
     }
   }
+
+  // Tìm trên web (DuckDuckGo) và đọc trang web, đều qua Jina Reader (r.jina.ai, miễn phí, có CORS, chuyển trang thành chữ).
+  const READER = "https://r.jina.ai/";
+  async function jina(url) {
+    const signal = AbortSignal.any ? AbortSignal.any([controller.signal, AbortSignal.timeout(25000)]) : controller.signal;
+    const res = await fetch(READER + url, { signal });
+    if (res.status === 429) throw new Error("dịch vụ đọc web đang bị giới hạn lượt, đợi một phút rồi thử lại");
+    if (!res.ok) throw new Error(`dịch vụ đọc web trả lỗi ${res.status}`);
+    return res.text();
+  }
+  const toolError = (e) => {
+    if (e.name === "AbortError" && controller?.signal.aborted) throw e;
+    return "Lỗi: " + (e.name === "TimeoutError" ? "trang web không phản hồi." : e.message);
+  };
+
+  async function searchWeb(query) {
+    if (!query.trim()) return "Lỗi: thiếu từ khoá tìm kiếm.";
+    try {
+      const md = await jina("https://html.duckduckgo.com/html/?q=" + encodeURIComponent(query.trim()));
+      // Mỗi kết quả: một dòng "## [tiêu đề](link chuyển hướng ?uddg=...)" rồi một dòng mô tả dạng "[...](...)".
+      const results = [];
+      const lines = md.split("\n");
+      for (let i = 0; i < lines.length && results.length < 6; i++) {
+        const h = lines[i].match(/^## \[(.+?)\]\((\S+?)\)\s*$/);
+        if (!h) continue;
+        let url = h[2];
+        try { url = new URL(url).searchParams.get("uddg") || url; } catch {}
+        if (/duckduckgo\.com\/y\.js|ad_domain|ad_provider/.test(h[2])) continue; // bỏ quảng cáo
+        let snippet = "";
+        for (let j = i + 1; j < Math.min(i + 6, lines.length); j++) {
+          if (lines[j].startsWith("## ")) break;
+          const sm = lines[j].match(/^\[(.+)\]\(\S+\)\s*$/);
+          if (sm && !sm[1].startsWith("![") && !/^[\w.-]+\.[a-z]{2,}\//i.test(sm[1])) { snippet = sm[1]; break; }
+        }
+        const clean = (t) => t.replace(/\*\*/g, "").replace(/\s+/g, " ").trim();
+        results.push(`${results.length + 1}. ${clean(h[1])}\n${url}\n${clean(snippet)}`);
+      }
+      return results.length
+        ? results.join("\n\n") + "\n\n(Muốn xem chi tiết một kết quả thì dùng công cụ read với đường dẫn của nó.)"
+        : `Không tìm thấy kết quả nào cho "${query.trim()}".`;
+    } catch (e) { return toolError(e); }
+  }
+
+  async function readPage(url) {
+    url = url.trim().split(/\s+/)[0];
+    if (!/^https?:\/\//i.test(url)) return "Lỗi: cần một đường dẫn bắt đầu bằng http:// hoặc https://.";
+    try {
+      let text = (await jina(url))
+        .replace(/!\[[^\]]*\]\([^)]*\)/g, "") // bỏ ảnh
+        .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1") // giữ chữ của link, bỏ đường dẫn
+        .replace(/\n{3,}/g, "\n\n").trim();
+      if (text.length > 12000) text = text.slice(0, 12000) + "\n…(trang dài, phần sau đã bị cắt)";
+      return text || "Trang này không có nội dung chữ.";
+    } catch (e) { return toolError(e); }
+  }
+
+  const TOOLS = {
+    "js-run": { notice: "Đang chạy code…", run: (c) => runJs(c) },
+    "py-run": { notice: "Đang chạy code…", run: (c) => runPy(c) },
+    "python-run": { notice: "Đang chạy code…", run: (c) => runPy(c) },
+    search: { lookup: true, label: "Tra cứu Wikipedia", notice: "Đang tra cứu Wikipedia…", run: (q) => searchWiki(q.trim()) },
+    web: { lookup: true, label: "Tìm trên web", notice: "Đang tìm trên web…", run: (q) => searchWeb(q) },
+    read: { lookup: true, label: "Đọc trang web", notice: "Đang đọc trang web…", run: (u) => readPage(u) },
+  };
 
   // Chạy code của mô hình trong Web Worker riêng: không có DOM, không có mạng, dừng sau 5 giây.
   function workerMain() {
