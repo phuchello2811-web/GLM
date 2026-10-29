@@ -104,10 +104,19 @@
   .history-item .title {
     flex: 1; padding: 8px 12px; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  .history-item .del { opacity: 0; padding: 6px; margin-right: 4px; border-radius: 6px; color: var(--muted); }
-  .history-item:hover .del { opacity: 1; }
-  .history-item .del:hover { color: var(--danger); }
-  .history-item .del svg { width: 16px; height: 16px; }
+  .history-item .more { opacity: 0; padding: 6px; margin-right: 4px; border-radius: 6px; color: var(--muted); }
+  .history-item:hover .more, .history-item.active .more { opacity: 1; }
+  .history-item .more:hover { color: var(--text); }
+  .history-item .more svg { width: 16px; height: 16px; }
+  @media (hover: none) { .history-item .more { opacity: .7; } }
+  .history-item .pin { width: 12px; height: 12px; color: var(--muted); flex-shrink: 0; margin-left: 10px; }
+  .chat-menu { position: fixed; z-index: 40; min-width: 180px; padding: 6px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 8px 28px rgba(0,0,0,.16); display: flex; flex-direction: column; }
+  .chat-menu button { text-align: left; padding: 8px 10px; border-radius: 8px; font-size: 14px; }
+  .chat-menu button:hover { background: var(--hover); }
+  .chat-menu .danger { color: var(--danger); }
+  .gen-img { display: block; max-width: min(100%, 512px); border-radius: 12px; margin: 0 0 12px; border: 1px solid var(--border); background: var(--surface); min-height: 120px; }
+  .gen-img-gone { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+  .sync-code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .05em; }
   .side-bottom { border-top: 1px solid var(--border); padding-top: 8px; display: flex; flex-direction: column; gap: 2px; }
   .status { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); padding: 8px 12px; }
   .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
@@ -341,7 +350,6 @@
     Đoạn chat mới
   </button>
   <input class="history-search" id="historySearch" type="search" placeholder="Tìm trong lịch sử chat" aria-label="Tìm trong lịch sử chat">
-  <div class="history-label">Gần đây</div>
   <div class="history" id="history"></div>
   <div class="side-bottom">
     <button class="new-chat" id="installBtn" hidden>
@@ -423,6 +431,38 @@
         <select id="setProvider"></select>
         <small id="modelHelp"></small>
       </label>
+      <label>Nhân vật của bạn
+        <small>Chọn nhân vật trong menu mô hình ở khung chat. Có sẵn Thầy dạy Toán, Huấn luyện viên IOI, Dịch giả, Gia sư tiếng Anh, Trợ lý viết văn; tạo thêm ở đây.</small>
+        <ul class="mem-list" id="personaList"></ul>
+        <input id="personaName" placeholder="Tên nhân vật, ví dụ: Thầy dạy Lý">
+        <textarea id="personaPrompt" placeholder="Lời dặn cho nhân vật, ví dụ: Bạn là thầy giáo Vật lý, giải thích bằng ví dụ đời thường, luôn vẽ sơ đồ lực…"></textarea>
+        <button class="btn" id="personaAdd" type="button">Thêm nhân vật</button>
+      </label>
+      <label>Kho kiến thức
+        <small>Thêm sách, đề thi, ghi chú (PDF, Word, Excel, văn bản). Mỗi câu hỏi, GLM tự tìm đoạn liên quan trong kho rồi trả lời dựa trên đó. Tài liệu chỉ lưu trong trình duyệt này.</small>
+        <ul class="mem-list" id="kbList"></ul>
+        <div class="mem-add">
+          <input id="kbStatus" readonly placeholder="Chưa thêm tài liệu">
+          <button class="btn" id="kbAddBtn" type="button">Thêm tài liệu</button>
+        </div>
+        <input type="file" id="kbInput" multiple hidden>
+      </label>
+      <label>Đồng bộ giữa các máy
+        <small>Dùng chung lịch sử chat, bộ nhớ và nhân vật trên nhiều máy (Mac, điện thoại, trình duyệt khác). Ảnh trong chat không đồng bộ. Ai có mã đều xem được chat của bạn, nên đừng chia sẻ mã.</small>
+        <div id="syncOff" class="mem-add">
+          <button class="btn" id="syncNew" type="button">Bật đồng bộ (tạo mã mới)</button>
+        </div>
+        <div id="syncOffJoin" class="mem-add">
+          <input id="syncInput" placeholder="Hoặc nhập mã từ máy khác">
+          <button class="btn" id="syncJoin" type="button">Kết nối</button>
+        </div>
+        <div id="syncOn" class="mem-add" hidden>
+          <input id="syncCode" class="sync-code" readonly>
+          <button class="btn" id="syncCopy" type="button">Chép mã</button>
+          <button class="btn" id="syncStop" type="button">Tắt</button>
+        </div>
+        <small id="syncStatus">Đồng bộ đang tắt.</small>
+      </label>
       <label>Lời nhắc hệ thống
         <textarea id="setSystem" placeholder="Ví dụ: Luôn trả lời bằng tiếng Việt."></textarea>
       </label>
@@ -484,6 +524,9 @@
   const ICON_FULL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
   const ICON_SPEAK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
   const ICON_EDIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+  const ICON_MORE = '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>';
+  const ICON_PIN = '<svg class="pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 17v5M9 3h6l-1 7 4 3v2H6v-2l4-3z"/></svg>';
+  const ICON_BOOK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg>';
   const ICON_TRASH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg>';
 
   // ---------- Lưu trữ ----------
@@ -534,7 +577,8 @@
   const currentChoice = () => `${settings.provider}:${cloudModel()}`;
 
   function paintProvider() {
-    $("chipTitle").textContent = modelTitle(settings.provider, cloudModel());
+    const persona = currentPersona();
+    $("chipTitle").textContent = modelTitle(settings.provider, cloudModel()) + (persona.id === "default" ? "" : ` · ${persona.name}`);
     $("footnote").textContent = `Tin nhắn được gửi tới máy chủ của ${PROVIDERS[settings.provider].name}. Mô hình có thể trả lời sai, hãy kiểm tra thông tin quan trọng.`;
   }
   function chooseModel(key) {
@@ -560,6 +604,11 @@
         html += `<button role="menuitemradio" data-key="${id}:${m}" aria-checked="${`${id}:${m}` === currentChoice()}"><span><b>${title}</b><small>${desc}</small></span>${TICK}</button>`;
       }
     }
+    html += `<div class="group">Nhân vật</div>`;
+    for (const p of allPersonas()) {
+      html += `<button role="menuitemradio" data-persona="${p.id}" aria-checked="${p.id === currentPersona().id}"><span><b>${esc(p.name)}</b><small>${esc(p.desc)}</small></span>${TICK}</button>`;
+    }
+    html += `<button data-persona-new><span><b>+ Tạo nhân vật mới</b><small>Trong Cài đặt</small></span></button>`;
     menu.innerHTML = html;
     menu.hidden = false;
     menuAnchor = anchor;
@@ -573,6 +622,9 @@
   $("modelMenu").onclick = (e) => {
     const b = e.target.closest("[data-key]");
     if (b) { chooseModel(b.dataset.key); toggleModelMenu(null); }
+    const pb = e.target.closest("[data-persona]");
+    if (pb) { settings.persona = pb.dataset.persona; store.set("glm.settings", settings); paintProvider(); toggleModelMenu(null); }
+    if (e.target.closest("[data-persona-new]")) { toggleModelMenu(null); $("openSettings").click(); setTimeout(() => $("personaName").focus(), 50); }
   };
   document.addEventListener("click", (e) => { if (!e.target.closest("#modelMenu")) toggleModelMenu(null); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") toggleModelMenu(null); });
@@ -580,7 +632,7 @@
 
   let chats = store.get("glm.chats", []);
   let memories = store.get("glm.memory", []);
-  const saveMemories = () => store.set("glm.memory", memories);
+  const saveMemories = () => { store.set("glm.memory", memories); markSynced("memory"); };
   function addMemory(text) {
     text = text.trim();
     if (!text || memories.some((m) => m.text.toLowerCase() === text.toLowerCase())) return;
@@ -591,14 +643,16 @@
   let controller = null;
 
   // Ảnh và file làm bộ nhớ trình duyệt (khoảng 5MB) đầy nhanh: hết chỗ thì bỏ dần ảnh/file của các đoạn chat cũ nhất.
-  function saveChats() {
+  function saveChats(sync = true) {
+    if (sync) scheduleSync();
     for (;;) {
       try { localStorage.setItem("glm.chats", JSON.stringify(chats)); return; } catch (e) {
         if (e.name !== "QuotaExceededError" && e.code !== 22) return;
         const order = [...chats.filter((c) => c.id !== currentId), ...chats.filter((c) => c.id === currentId)];
-        const victim = order.flatMap((c) => c.messages).find((m) => m.images?.length || m.files?.some((f) => f.text));
+        const victim = order.flatMap((c) => c.messages).find((m) => m.images?.length || m.genImages?.some((u) => u?.startsWith("data:")) || m.files?.some((f) => f.text));
         if (!victim) return;
-        if (victim.images?.length) { victim.imagesDropped = (victim.imagesDropped || 0) + victim.images.length; victim.images = []; }
+        if (victim.genImages?.some((u) => u?.startsWith("data:"))) victim.genImages = victim.genImages.map((u) => (u?.startsWith("data:") ? null : u));
+        else if (victim.images?.length) { victim.imagesDropped = (victim.imagesDropped || 0) + victim.images.length; victim.images = []; }
         else for (const f of victim.files) if (f.text) { f.text = ""; f.dropped = true; }
       }
     }
@@ -658,6 +712,8 @@
       maths.push(m); return `\u0001${maths.length - 1}\u0001`;
     });
     s = esc(s)
+      .replace(/!\[([^\]]*)\]\(genimg:(\d+)\)/g, '<img class="gen-img" data-gen="$2" alt="$1">')
+      .replace(/!\[([^\]]*)\]\((https:\/\/[^\s)]+)\)/g, '<img class="gen-img" src="$2" alt="$1" loading="lazy" referrerpolicy="no-referrer">')
       .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
       .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
       .replace(/__([^_]+)__/g, "<strong>$1</strong>")
@@ -667,11 +723,18 @@
       .replace(/\u0001(\d+)\u0001/g, (_, i) => mathSpan(maths[i], false));
   }
 
-  const CODE_LABELS = { "js-run": "JavaScript · đã chạy", "py-run": "Python · đã chạy", "python-run": "Python · đã chạy", search: "Tra cứu Wikipedia", web: "Tìm trên web", read: "Đọc trang web", output: "Kết quả" };
+  const CODE_LABELS = { "js-run": "JavaScript · đã chạy", "py-run": "Python · đã chạy", "python-run": "Python · đã chạy", search: "Tra cứu Wikipedia", web: "Tìm trên web", read: "Đọc trang web", image: "Tạo ảnh", output: "Kết quả" };
   // Ngôn ngữ để tô màu code; khối không có tên ngôn ngữ thì để highlight.js tự đoán.
-  const HL_LANG = new Proxy({ "js-run": "javascript", "py-run": "python", "python-run": "python", search: null, web: null, read: null, output: null, "": "auto" }, {
+  const HL_LANG = new Proxy({ "js-run": "javascript", "py-run": "python", "python-run": "python", search: null, web: null, read: null, image: null, output: null, "": "auto" }, {
     get: (t, k) => (k in t ? t[k] : String(k).toLowerCase()),
   });
+
+  // Mở ảnh cỡ lớn trong tab mới (ảnh data: phải chuyển sang blob vì trình duyệt chặn mở thẳng).
+  async function openImage(url) {
+    if (!url.startsWith("data:")) { open(url, "_blank", "noopener"); return; }
+    const blob = await (await fetch(url)).blob();
+    open(URL.createObjectURL(blob), "_blank", "noopener");
+  }
 
   // Vẽ công thức toán bằng KaTeX (tải từ cdnjs lần đầu cần), chỉ khi câu trả lời đã xong.
   const KATEX = "https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.11/";
@@ -799,22 +862,29 @@
     const list = [...chats].sort((a, b) => b.updated - a.updated)
       .filter((c) => !q || fold(c.title || "").includes(q) || c.messages.some((m) => fold(m.content || "").includes(q)));
     if (q && !list.length) els.history.innerHTML = '<div class="no-result">Không tìm thấy đoạn chat nào.</div>';
-    for (const c of list) {
-      const item = document.createElement("div");
-      item.className = "history-item" + (c.id === currentId ? " active" : "");
-      const title = document.createElement("button");
-      title.className = "title"; title.textContent = c.title || "Đoạn chat mới";
-      title.onclick = () => openChat(c.id);
-      const del = document.createElement("button");
-      del.className = "del"; del.title = "Xoá"; del.innerHTML = ICON_TRASH;
-      del.onclick = (e) => {
-        e.stopPropagation();
-        if (!confirm("Xoá đoạn chat này?")) return;
-        chats = chats.filter((x) => x.id !== c.id); saveChats();
-        if (c.id === currentId) newChat(); else renderHistory();
-      };
-      item.append(title, del);
-      els.history.append(item);
+    // Nhóm: đã ghim, rồi từng thư mục (theo tên), rồi các đoạn chat còn lại.
+    const groups = [["Đã ghim", list.filter((c) => c.pinned)]];
+    const folders = [...new Set(list.filter((c) => !c.pinned && c.folder).map((c) => c.folder))].sort((a, b) => a.localeCompare(b, "vi"));
+    for (const f of folders) groups.push([`📁 ${f}`, list.filter((c) => !c.pinned && c.folder === f)]);
+    groups.push(["Gần đây", list.filter((c) => !c.pinned && !c.folder)]);
+    for (const [label, items] of groups) {
+      if (!items.length) continue;
+      const h = document.createElement("div");
+      h.className = "history-label"; h.textContent = label;
+      els.history.append(h);
+      for (const c of items) {
+        const item = document.createElement("div");
+        item.className = "history-item" + (c.id === currentId ? " active" : "");
+        const title = document.createElement("button");
+        title.className = "title"; title.textContent = c.title || "Đoạn chat mới";
+        title.onclick = () => openChat(c.id);
+        const more = document.createElement("button");
+        more.className = "more"; more.title = "Tuỳ chọn"; more.innerHTML = ICON_MORE;
+        more.onclick = (e) => { e.stopPropagation(); chatMenu(more, c); };
+        if (c.pinned) item.insertAdjacentHTML("afterbegin", ICON_PIN);
+        item.append(title, more);
+        els.history.append(item);
+      }
     }
   }
 
@@ -917,6 +987,7 @@
     }
     html += `<div class="content${streaming && !thinking ? " cursor" : ""}">${markdown(answer.replace(MEMO_TAG, "").replace(/\[\[[^\]]*$/, "").trim())}</div>`;
     if (m.notice) html += `<div class="shimmer" style="font-size:14px">${esc(m.notice)}</div>`;
+    if (m.kb?.length) html += `<div class="memo">${ICON_BOOK}Dùng kho kiến thức: ${esc(m.kb.join(", "))}</div>`;
     if (m.remembered) html += m.remembered.map((t) => `<div class="memo">${ICON_CHECK}Đã ghi nhớ: ${esc(t)}</div>`).join("");
     if (m.error) html += `<div class="error">${esc(m.error)}</div>`;
     else if (m.truncated && !streaming) html += `<div class="error">Câu trả lời bị cắt vì đạt giới hạn độ dài. Bấm Tạo lại, hoặc tăng Số token tối đa trong Cài đặt.</div>`;
@@ -937,6 +1008,12 @@
     if (det && keepOpen !== null) { det.open = keepOpen; det.dataset.user = "1"; }
     if (det) det.querySelector("summary").addEventListener("click", () => { det.dataset.user = "1"; });
     if (det && streaming && thinking) det.dataset.live = "1";
+    // Ảnh do công cụ tạo: gắn ảnh thật vào chỗ đánh dấu; ảnh đã bị xoá cho đỡ bộ nhớ thì ghi chú.
+    node.querySelectorAll("img[data-gen]").forEach((img) => {
+      const url = m.genImages?.[Number(img.dataset.gen)];
+      if (url) { img.src = url; img.title = "Bấm để mở ảnh cỡ lớn"; img.onclick = () => openImage(url); }
+      else img.outerHTML = '<div class="gen-img-gone">(Ảnh đã được xoá khỏi máy này để tiết kiệm bộ nhớ.)</div>';
+    });
     if (!streaming) { highlightCode(node); renderMath(node); }
   }
 
@@ -1012,7 +1089,7 @@
     "Câu hỏi đơn giản thì trả lời ngắn gọn, không cần nghĩ dài. Trả lời bằng ngôn ngữ của người dùng.";
 
   const TOOL_PROMPT =
-    "Bạn có năm công cụ. Mỗi lần chỉ dùng một công cụ: viết khối lệnh rồi DỪNG viết ngay sau khối đó. " +
+    "Bạn có sáu công cụ. Mỗi lần chỉ dùng một công cụ: viết khối lệnh rồi DỪNG viết ngay sau khối đó. " +
     "Hệ thống sẽ chạy và gửi lại kết quả để bạn trả lời tiếp. Không tự đoán kết quả.\n\n" +
     "1. Tính toán bằng JavaScript (số học, phần trăm, ngày tháng, thống kê, kiểm tra code…):\n" +
     "```js-run\n// code, dùng console.log để in kết quả\n```\n" +
@@ -1029,6 +1106,9 @@
     "Kết quả là danh sách tiêu đề, đường dẫn và đoạn mô tả ngắn.\n\n" +
     "5. Đọc một trang web (khi cần chi tiết từ một kết quả tìm kiếm, hoặc người dùng đưa đường dẫn):\n" +
     "```read\nhttps://đường-dẫn-đầy-đủ\n```\n\n" +
+    "6. Tạo ảnh bằng AI (tranh vẽ, ảnh minh hoạ, ảnh phong cảnh, nhân vật… khi người dùng muốn một bức ảnh):\n" +
+    "```image\nmô tả chi tiết bằng tiếng Anh: chủ thể, bối cảnh, phong cách, ánh sáng, góc chụp\n```\n" +
+    "Ảnh sẽ hiện cho người dùng. Logo, icon, sơ đồ, biểu đồ thì vẽ bằng SVG thay vì dùng công cụ này.\n\n" +
     "Kiến thức của bạn có thể đã cũ: với thông tin có thể đã thay đổi hoặc bạn không chắc, hãy tra cứu thay vì đoán. " +
     "Tổng cộng tra cứu tối đa 4 lần cho một câu hỏi; khi thông tin đã đủ thì trả lời ngay. " +
     "Khi trả lời dựa trên tra cứu, ghi nguồn (tên trang và đường dẫn), và ưu tiên nguồn chính thống, mới nhất.\n\n" +
@@ -1047,7 +1127,7 @@
     "CHỈ KHI người dùng yêu cầu rõ ràng bạn ghi nhớ điều gì (ví dụ \"hãy nhớ…\", \"nhớ giúp tôi…\"), thêm vào cuối " +
     "câu trả lời một dòng: [[NHỚ: nội dung cần nhớ, viết ngắn gọn]]. Không bao giờ dùng dòng này trong các trường hợp khác.";
 
-  const RUN_BLOCK = /```(js-run|py-run|python-run|search|web|read)[^\n]*\n([\s\S]*?)\n\s*```/;
+  const RUN_BLOCK = /```(js-run|py-run|python-run|search|web|read|image)[^\n]*\n([\s\S]*?)\n\s*```/;
   const MEMO_TAG = /\[\[\s*[Nn][Hh][ỚớOo]\s*:\s*([^\]]+?)\s*\]\]/g;
 
   // Kỹ năng chuyên sâu: chỉ thêm vào lời nhắc khi câu hỏi gần đây đúng chủ đề, để mô hình tập trung.
@@ -1075,14 +1155,14 @@
     },
     {
       // Chỉ bật khi người dùng muốn vẽ/tạo hình (hỏi về ảnh gửi kèm như "ảnh này là gì" không tính).
-      test: /\bsvg\b|\bdraw\b|\blogo\b|\bicon\b|vẽ|(tạo|thiết kế|làm)\s.{0,30}(hình|ảnh|biểu tượng|poster|banner|biểu đồ|minh hoạ|minh họa|hình nền)/i,
+      test: /\bsvg\b|\bdraw\b|\blogo\b|\bicon\b|vẽ|(tạo|thiết kế|làm|sinh)\s.{0,30}(hình|ảnh|biểu tượng|poster|banner|biểu đồ|minh hoạ|minh họa|hình nền|tranh)/i,
       prompt:
-        "Kỹ năng vẽ hình: bạn không tạo được ảnh chụp, nhưng vẽ được bằng SVG và trang sẽ hiện ảnh ngay. " +
+        "Kỹ năng vẽ hình: ảnh chụp, tranh vẽ, ảnh minh hoạ giàu chi tiết thì dùng công cụ image. Logo, icon, sơ đồ, biểu đồ thì vẽ bằng SVG và trang sẽ hiện ảnh ngay. " +
         "Viết một khối ```svg hoàn chỉnh (<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"...\">), " +
         "dùng hình khối, path, gradient, bóng; bố cục cân đối, màu hài hoà, chi tiết vừa đủ; không dùng ảnh hay font ngoài. " +
         "Biểu đồ số liệu thì vẽ trục, nhãn, chú thích rõ ràng (có thể tính toạ độ bằng py-run trước). " +
         "Cần hoạt hình hoặc hình phức tạp (fractal, hạt, mô phỏng) thì viết ```html với <canvas> và JS.",
-      remind: "vẽ bằng một khối ```svg hoàn chỉnh",
+      remind: "logo/icon/biểu đồ/sơ đồ thì vẽ bằng một khối ```svg hoàn chỉnh; tranh, ảnh minh hoạ thì dùng công cụ ```image",
     },
     {
       test: /ioi|icpc|olympic|hsg|học sinh giỏi|codeforces|atcoder|leetcode|vnoi|thi đấu|competitive|thuật toán|algorithm|độ phức tạp|c\+\+|cpp|subtask|testcase|quy hoạch động|đồ thị/i,
@@ -1135,7 +1215,9 @@
       role: m.role,
       content: m.role === "assistant" ? splitThink(m.content).answer.trim() : apiContent(m, withImages.has(m)),
     }));
-    history.unshift({ role: "system", content: systemPrompt(chat) });
+    const extra = extraContext(chat);
+    if (extra.kb.length) reply.kb = extra.kb;
+    history.unshift({ role: "system", content: systemPrompt(chat) + extra.text });
     // Mô hình làm theo lời dặn ngay trong câu hỏi tốt hơn lời dặn chung, nên nhắc ngắn kỹ năng đang dùng (người dùng không thấy).
     const reminds = activeSkills(chat).map((k) => k.remind).filter(Boolean);
     const lastUser = history.findLast((m) => m.role === "user");
@@ -1192,6 +1274,7 @@
       saveChats();
       paintAssistant(node, reply, false);
       scrollDown();
+      if (!reply.error) autoTitle(chat);
     }
   }
 
@@ -1238,7 +1321,15 @@
       const search = tool.lookup;
       reply.notice = m[1] !== "js-run" && !tool.lookup && !pyReady ? "Đang tải Python (lần đầu mất khoảng 10–20 giây)…" : tool.notice;
       paintAssistant(node, reply, true);
-      const out = await tool.run(m[2].trim() ? m[2] : "");
+      let out = await tool.run(m[2].trim() ? m[2] : "");
+      if (typeof out === "object") {
+        // Ảnh tạo ra nằm trong reply.genImages; nội dung chỉ giữ một chỗ đánh dấu nhỏ để gửi lại cho mô hình.
+        if (out.image) {
+          reply.genImages = [...(reply.genImages || []), out.image];
+          reply.content += `\n\n![${m[2].trim().replace(/[\[\]\n]/g, " ").slice(0, 200)}](genimg:${reply.genImages.length - 1})\n\n`;
+        }
+        out = out.out;
+      }
       reply.content += "\n\n```output\n" + out + "\n```\n\n";
       reply.notice = "Đang đọc kết quả…";
       paintAssistant(node, reply, true);
@@ -1353,6 +1444,7 @@
     search: { lookup: true, label: "Tra cứu Wikipedia", notice: "Đang tra cứu Wikipedia…", run: (q) => searchWiki(q.trim()) },
     web: { lookup: true, label: "Tìm trên web", notice: "Đang tìm trên web…", run: (q) => searchWeb(q) },
     read: { lookup: true, label: "Đọc trang web", notice: "Đang đọc trang web…", run: (u) => readPage(u) },
+    image: { lookup: true, label: "Tạo ảnh", notice: "Đang tạo ảnh (khoảng 10–30 giây)…", run: (p) => makeImage(p) },
   };
 
   // Chạy code của mô hình trong Web Worker riêng: không có DOM, không có mạng, dừng sau 5 giây.
@@ -1631,6 +1723,371 @@
     };
   }
 
+  // ---------- Nhân vật ----------
+  // Mỗi nhân vật là một lời dặn thêm vào lời nhắc hệ thống. Có sẵn vài nhân vật, người dùng tạo thêm trong Cài đặt.
+  const BUILTIN_PERSONAS = [
+    { id: "default", name: "Mặc định", desc: "Trợ lý đa năng", prompt: "" },
+    { id: "math", name: "Thầy dạy Toán", desc: "Giảng từng bước, dễ hiểu",
+      prompt: "Bạn là một thầy giáo dạy Toán tận tâm. Giải thích từng bước, nêu rõ công thức và lý do của mỗi bước, dùng ví dụ số cụ thể. Nếu người dùng gửi bài tập, hỏi họ đã thử cách nào trước khi đưa lời giải đầy đủ chỉ khi họ muốn tự làm; còn không thì giải chi tiết rồi gợi ý một bài tương tự để luyện thêm." },
+    { id: "ioi", name: "Huấn luyện viên IOI", desc: "Lập trình thi đấu, C++",
+      prompt: "Bạn là huấn luyện viên đội tuyển tin học (IOI, ICPC). Với mỗi bài: phân tích ràng buộc, đưa ra từ ý tưởng ngây thơ đến tối ưu, giải thích độ phức tạp, viết C++17 sạch, chỉ ra lỗi hay gặp, và gợi ý bài luyện tập liên quan trên VNOI hoặc Codeforces." },
+    { id: "translate", name: "Dịch giả Anh–Việt", desc: "Dịch tự nhiên, giữ ý",
+      prompt: "Bạn là dịch giả Anh–Việt chuyên nghiệp. Người dùng gửi tiếng Việt thì dịch sang tiếng Anh, gửi tiếng Anh (hoặc ngôn ngữ khác) thì dịch sang tiếng Việt. Dịch tự nhiên như người bản xứ viết, giữ đúng ý và giọng văn, giữ nguyên thuật ngữ chuyên ngành khi cần. Chỉ đưa bản dịch, sau đó ghi chú ngắn những chỗ có nhiều cách hiểu." },
+    { id: "english", name: "Gia sư tiếng Anh", desc: "Sửa lỗi, luyện hội thoại",
+      prompt: "Bạn là gia sư tiếng Anh thân thiện. Trò chuyện với người dùng bằng tiếng Anh đơn giản; sau mỗi tin nhắn của họ, sửa lỗi ngữ pháp và từ vựng (giải thích ngắn bằng tiếng Việt), gợi ý cách nói tự nhiên hơn, rồi tiếp tục cuộc trò chuyện bằng một câu hỏi." },
+    { id: "writer", name: "Trợ lý viết văn", desc: "Văn, bài luận, email",
+      prompt: "Bạn là trợ lý viết văn. Giúp người dùng lập dàn ý, viết, sửa và nâng cấp bài văn, bài luận, email, bài đăng. Viết mạch lạc, giàu hình ảnh, đúng chính tả tiếng Việt; khi sửa bài thì chỉ ra chỗ đã sửa và lý do." },
+  ];
+  let customPersonas = store.get("glm.personas", []);
+  const allPersonas = () => [...BUILTIN_PERSONAS, ...customPersonas];
+  const currentPersona = () => allPersonas().find((p) => p.id === settings.persona) || BUILTIN_PERSONAS[0];
+  function savePersonas() { store.set("glm.personas", customPersonas); markSynced("personas"); }
+
+  function renderPersonas() {
+    const list = $("personaList");
+    list.innerHTML = customPersonas.length ? "" : '<li class="empty-mem">Chưa có nhân vật tự tạo.</li>';
+    for (const p of customPersonas) {
+      const li = document.createElement("li");
+      const text = document.createElement("span"); text.textContent = p.name;
+      const del = document.createElement("button");
+      del.type = "button"; del.className = "icon-btn"; del.title = "Xoá"; del.innerHTML = ICON_TRASH;
+      del.onclick = () => {
+        customPersonas = customPersonas.filter((x) => x.id !== p.id);
+        if (settings.persona === p.id) { settings.persona = "default"; store.set("glm.settings", settings); paintProvider(); }
+        savePersonas(); renderPersonas();
+      };
+      li.append(text, del); list.append(li);
+    }
+  }
+  $("personaAdd").onclick = () => {
+    const name = $("personaName").value.trim(), prompt = $("personaPrompt").value.trim();
+    if (!name || !prompt) { alert("Hãy nhập cả tên và lời dặn cho nhân vật."); return; }
+    customPersonas.push({ id: "p" + Date.now().toString(36), name: name.slice(0, 40), desc: "Nhân vật của bạn", prompt });
+    $("personaName").value = $("personaPrompt").value = "";
+    savePersonas(); renderPersonas();
+  };
+
+  // ---------- Tìm đoạn văn liên quan (BM25) ----------
+  // Dùng chung cho kho kiến thức và cho các câu trả lời đã thích. Bỏ dấu tiếng Việt để "phuong trinh" vẫn khớp "phương trình".
+  const fold = (t) => t.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "d").toLowerCase();
+  const STOP = new Set("la va cua co cho cac nhung mot duoc trong khong nay thi voi de nhu khi den tu ra vao the gi nao lam toi ban hay hoac neu vi tren duoi sau truoc the the is are the a an of to in and or for on with what how".split(" "));
+  const tokens = (t) => fold(t).split(/[^a-z0-9]+/).filter((w) => w.length > 1 && !STOP.has(w));
+  function rank(query, docs, k = 4) {
+    const q = [...new Set(tokens(query))];
+    if (!q.length || !docs.length) return [];
+    const toks = docs.map((d) => tokens(d.text));
+    const avg = toks.reduce((n, t) => n + t.length, 0) / toks.length || 1;
+    const df = Object.fromEntries(q.map((w) => [w, toks.filter((t) => t.includes(w)).length]));
+    return docs.map((d, i) => {
+      const tf = {};
+      for (const w of toks[i]) if (w in df) tf[w] = (tf[w] || 0) + 1;
+      let score = 0, hit = 0;
+      for (const w of q) {
+        if (!tf[w]) continue;
+        hit++;
+        const idf = Math.log(1 + (docs.length - df[w] + 0.5) / (df[w] + 0.5));
+        score += idf * (tf[w] * 2.2) / (tf[w] + 1.2 * (0.25 + 0.75 * toks[i].length / avg));
+      }
+      // ratio: tỉ lệ từ của câu hỏi có trong đoạn văn; dùng để lọc đoạn lạc đề (điểm BM25 tuyệt đối thay đổi theo số tài liệu).
+      return { ...d, score, ratio: hit / q.length };
+    }).filter((d) => d.score > 0).sort((a, b) => b.score - a.score).slice(0, k);
+  }
+
+  // Câu trả lời đã thích làm ví dụ mẫu: tìm những câu hỏi cũ giống câu đang hỏi.
+  function likedExamples(question, chat) {
+    const pool = [];
+    for (const c of chats) c.messages.forEach((m, i) => {
+      const q = c.messages[i - 1];
+      if (m.role === "assistant" && m.good && q?.role === "user" && !(c === chat && i >= chat.messages.length - 2)) {
+        pool.push({ text: q.content, answer: splitThink(m.content).answer.replace(MEMO_TAG, "").trim() });
+      }
+    });
+    return rank(question, pool, 2).filter((d) => d.ratio >= 0.6);
+  }
+
+  // ---------- Kho kiến thức ----------
+  // Tài liệu được chia thành đoạn khoảng 900 ký tự và lưu trong IndexedDB (dung lượng lớn hơn localStorage nhiều).
+  const KB_DB = "glm-kb";
+  let kbDocs = [];
+  const idb = () => new Promise((ok, fail) => {
+    const r = indexedDB.open(KB_DB, 1);
+    r.onupgradeneeded = () => r.result.createObjectStore("docs", { keyPath: "id" });
+    r.onsuccess = () => ok(r.result); r.onerror = () => fail(r.error);
+  });
+  async function kbTx(mode, fn) {
+    const db = await idb();
+    return new Promise((ok, fail) => {
+      const tx = db.transaction("docs", mode), store = tx.objectStore("docs");
+      const req = fn(store);
+      tx.oncomplete = () => ok(req?.result); tx.onerror = () => fail(tx.error);
+    });
+  }
+  async function kbLoad() {
+    try { kbDocs = (await kbTx("readonly", (s) => s.getAll())) || []; } catch { kbDocs = []; }
+    renderKb();
+  }
+  function chunk(text) {
+    const paras = text.split(/\n\s*\n|\n(?=\[Trang )/).map((p) => p.trim()).filter(Boolean);
+    const out = [];
+    let cur = "";
+    for (const p of paras) {
+      if (cur && cur.length + p.length > 900) { out.push(cur); cur = ""; }
+      if (p.length > 1400) { for (let i = 0; i < p.length; i += 900) out.push(p.slice(i, i + 1000)); continue; }
+      cur += (cur ? "\n\n" : "") + p;
+    }
+    if (cur) out.push(cur);
+    return out;
+  }
+  async function kbAdd(files) {
+    for (const file of files) {
+      const status = $("kbStatus");
+      status.value = `Đang đọc ${file.name}…`;
+      try {
+        const { text } = await readFileText(file);
+        const chunks = chunk(text);
+        if (!chunks.length) throw new Error("file không có chữ");
+        const doc = { id: "d" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), name: file.name, added: Date.now(), chars: text.length, chunks };
+        await kbTx("readwrite", (s) => s.put(doc));
+        kbDocs.push(doc);
+        status.value = `Đã thêm ${file.name} (${chunks.length} đoạn).`;
+      } catch (e) { status.value = `Không đọc được ${file.name}: ${e.message}.`; }
+      renderKb();
+    }
+  }
+  function renderKb() {
+    const list = $("kbList");
+    if (!list) return;
+    list.innerHTML = kbDocs.length ? "" : '<li class="empty-mem">Chưa có tài liệu nào.</li>';
+    for (const d of kbDocs) {
+      const li = document.createElement("li");
+      const text = document.createElement("span");
+      text.textContent = `${d.name} · ${d.chars.toLocaleString("vi-VN")} ký tự`;
+      const del = document.createElement("button");
+      del.type = "button"; del.className = "icon-btn"; del.title = "Xoá"; del.innerHTML = ICON_TRASH;
+      del.onclick = async () => {
+        await kbTx("readwrite", (s) => s.delete(d.id)).catch(() => {});
+        kbDocs = kbDocs.filter((x) => x.id !== d.id); renderKb();
+      };
+      li.append(text, del); list.append(li);
+    }
+  }
+  $("kbAddBtn").onclick = () => $("kbInput").click();
+  $("kbInput").onchange = (e) => { kbAdd([...e.target.files]); e.target.value = ""; };
+  function kbSearch(question) {
+    const pool = kbDocs.flatMap((d) => d.chunks.map((text) => ({ text, name: d.name })));
+    return rank(question, pool, 4).filter((d) => d.ratio >= 0.5);
+  }
+  kbLoad();
+
+  // Phần lời nhắc thêm cho từng câu hỏi: nhân vật, câu trả lời mẫu đã thích, đoạn tài liệu liên quan.
+  function extraContext(chat) {
+    const q = chat.messages.filter((m) => m.role === "user").at(-1)?.content || "";
+    const parts = [], kb = [];
+    const persona = currentPersona();
+    if (persona.prompt) parts.push(`Vai trò của bạn (${persona.name}): ${persona.prompt}`);
+    const liked = likedExamples(q, chat);
+    if (liked.length) {
+      parts.push("Người dùng đã đánh giá cao những câu trả lời sau cho câu hỏi tương tự. Hãy học văn phong, độ chi tiết và cách trình bày của chúng (không chép nguyên văn nếu câu hỏi khác):\n\n" +
+        liked.map((d, i) => `Ví dụ ${i + 1}\nCâu hỏi: ${d.text.slice(0, 500)}\nCâu trả lời: ${d.answer.slice(0, 1500)}`).join("\n\n"));
+    }
+    const hits = kbSearch(q);
+    if (hits.length) {
+      parts.push("Các đoạn liên quan trong kho kiến thức riêng của người dùng. Ưu tiên dùng thông tin này khi trả lời và ghi rõ tên tài liệu đã dùng:\n\n" +
+        hits.map((d) => `<tai_lieu ten="${d.name}">\n${d.text}\n</tai_lieu>`).join("\n\n"));
+      kb.push(...new Set(hits.map((d) => d.name)));
+    }
+    return { text: parts.length ? "\n\n" + parts.join("\n\n") : "", kb };
+  }
+
+  // ---------- Tạo ảnh ----------
+  // Ưu tiên Workers AI (FLUX) trên máy chủ chung; máy chủ chưa bật thì dùng Pollinations (miễn phí, có logo nhỏ).
+  async function makeImage(prompt) {
+    prompt = prompt.trim().slice(0, 1500);
+    if (!prompt) return { out: "Lỗi: thiếu mô tả ảnh." };
+    try {
+      const signal = AbortSignal.any ? AbortSignal.any([controller.signal, AbortSignal.timeout(90000)]) : controller.signal;
+      const res = await fetch(SHARED_URL.replace(/\/$/, "") + "/image", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt }), signal,
+      });
+      if (res.ok) return { out: "Đã tạo xong ảnh và hiển thị cho người dùng.", image: (await res.json()).image };
+      if (res.status !== 501 && res.status !== 404 && res.status !== 405) return { out: "Lỗi: " + (await apiError(res)) };
+    } catch (e) {
+      if (e.name === "AbortError" && controller?.signal.aborted) throw e;
+    }
+    const seed = Math.floor(Math.random() * 1e9);
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${seed}`;
+    return { out: "Đã gửi yêu cầu tạo ảnh, ảnh đang hiển thị cho người dùng.", image: url };
+  }
+
+  // ---------- Tự đặt tên đoạn chat ----------
+  async function autoTitle(chat) {
+    if (chat.titled || chat.messages.length < 2) return;
+    chat.titled = true;
+    const q = chat.messages[0].content.slice(0, 1000);
+    const a = splitThink(chat.messages[1].content || "").answer.slice(0, 1000);
+    try {
+      const res = await fetch(SHARED_URL, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "glm-4.5-flash", stream: false, max_tokens: 40, temperature: 0.3, thinking: { type: "disabled" },
+          messages: [{ role: "user", content: `Đặt tiêu đề ngắn (tối đa 6 từ, không dấu ngoặc kép, không dấu chấm cuối) cho đoạn chat này, cùng ngôn ngữ với câu hỏi.\n\nCâu hỏi: ${q}\n\nTrả lời: ${a}\n\nChỉ viết tiêu đề.` }],
+        }),
+      });
+      if (!res.ok) return;
+      const t = (await res.json()).choices?.[0]?.message?.content?.replace(/<think>[\s\S]*?<\/think>/g, "").replace(/["“”*#]/g, "").trim().split("\n")[0];
+      if (t && t.length <= 80) { chat.title = t; chat.updated = Math.max(chat.updated, Date.now()); saveChats(); renderHistory(); }
+    } catch {}
+  }
+
+  // ---------- Đồng bộ giữa các máy ----------
+  // Bật bằng một mã bí mật; máy nào nhập cùng mã sẽ thấy cùng lịch sử chat, bộ nhớ và nhân vật.
+  // Ảnh trong chat không đồng bộ (quá nặng), chỉ còn ở máy đã gửi/tạo ảnh.
+  let syncState = store.get("glm.sync", { code: "", since: 0, pushed: {}, deleted: {}, meta: {} });
+  syncState.pushed ??= {}; syncState.deleted ??= {}; syncState.meta ??= {};
+  const saveSync = () => store.set("glm.sync", syncState);
+  function markSynced(id) { syncState.meta[id] = Date.now(); saveSync(); scheduleSync(); }
+  function markDeleted(chatId) { syncState.deleted[chatId] = Date.now(); saveSync(); scheduleSync(); }
+  const stripChat = (c) => ({
+    ...c,
+    messages: c.messages.map((m) => {
+      const x = { ...m };
+      if (x.images?.length) { x.imagesDropped = (x.imagesDropped || 0) + x.images.length; delete x.images; }
+      if (x.genImages) x.genImages = x.genImages.map((u) => (u?.startsWith("data:") ? null : u));
+      if (x.files) x.files = x.files.map((f) => ({ ...f, text: (f.text || "").slice(0, 20000) }));
+      return x;
+    }),
+  });
+  let syncTimer = null, syncing = false;
+  function scheduleSync(ms = 4000) {
+    if (!syncState.code) return;
+    clearTimeout(syncTimer);
+    syncTimer = setTimeout(syncNow, ms);
+  }
+  async function syncNow() {
+    if (!syncState.code || syncing) return;
+    syncing = true;
+    paintSync("Đang đồng bộ…");
+    try {
+      const changes = [];
+      for (const c of chats) if (syncState.pushed["chat:" + c.id] !== c.updated) changes.push({ id: "chat:" + c.id, updated: c.updated, data: stripChat(c) });
+      for (const [id, t] of Object.entries(syncState.deleted)) if (syncState.pushed["chat:" + id] !== -t) changes.push({ id: "chat:" + id, updated: t, data: null });
+      for (const id of ["memory", "personas"]) {
+        const t = syncState.meta[id];
+        if (t && syncState.pushed[id] !== t) changes.push({ id, updated: t, data: id === "memory" ? memories : customPersonas });
+      }
+      const res = await fetch(SHARED_URL.replace(/\/$/, "") + "/sync", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: syncState.code, since: syncState.since, changes }),
+      });
+      if (!res.ok) throw new Error(res.status === 501 ? "Máy chủ chưa bật đồng bộ (xem worker/README.md)." : await apiError(res));
+      const { now, items } = await res.json();
+      for (const c of changes) syncState.pushed[c.id] = c.data === null ? -c.updated : c.updated;
+      let changed = false;
+      for (const it of items) {
+        if (it.id.startsWith("chat:")) {
+          const id = it.id.slice(5), i = chats.findIndex((c) => c.id === id);
+          const local = chats[i];
+          if (it.data === null) {
+            if (local && local.updated <= it.updated && !controller) { chats.splice(i, 1); changed = true; if (id === currentId) currentId = null; }
+            syncState.pushed[it.id] = -it.updated;
+          } else if (!local || it.updated > local.updated) {
+            if (local && controller && id === currentId) continue; // đang trả lời đoạn chat này thì để lần sau
+            // Giữ lại ảnh của máy này cho các tin nhắn không đổi.
+            if (local) it.data.messages.forEach((m, k) => {
+              const lm = local.messages[k];
+              if (lm && lm.content === m.content) {
+                if (lm.images) { m.images = lm.images; delete m.imagesDropped; }
+                if (lm.genImages) m.genImages = lm.genImages.map((u, j) => m.genImages?.[j] ?? u);
+              }
+            });
+            if (i >= 0) chats[i] = it.data; else chats.push(it.data);
+            delete syncState.deleted[id];
+            syncState.pushed[it.id] = it.updated; changed = true;
+          } else if (it.updated === local.updated) syncState.pushed[it.id] = it.updated;
+        } else if (it.id === "memory" || it.id === "personas") {
+          if (!(it.updated > (syncState.meta[it.id] || 0))) continue;
+          if (it.id === "memory") { memories = it.data || []; store.set("glm.memory", memories); }
+          else { customPersonas = it.data || []; store.set("glm.personas", customPersonas); }
+          syncState.meta[it.id] = syncState.pushed[it.id] = it.updated;
+        }
+      }
+      // Lùi mốc 1 phút để không bỏ sót thay đổi từ máy khác gửi lên cùng lúc.
+      syncState.since = now - 60000;
+      saveSync();
+      if (changed) { saveChats(false); renderHistory(); if (!controller) renderThread(); }
+      paintSync(`Đã đồng bộ lúc ${new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}.`);
+    } catch (e) {
+      paintSync("Lỗi đồng bộ: " + e.message);
+    } finally { syncing = false; }
+  }
+  function paintSync(status) {
+    const on = !!syncState.code;
+    $("syncOff").hidden = $("syncOffJoin").hidden = on; $("syncOn").hidden = !on;
+    if (on) $("syncCode").value = syncState.code;
+    if (status) $("syncStatus").textContent = status;
+  }
+  function startSync(code) {
+    syncState = { code, since: 0, pushed: {}, deleted: {}, meta: { memory: Date.now(), personas: Date.now() } };
+    saveSync(); paintSync("Đang kết nối…"); syncNow();
+  }
+  $("syncNew").onclick = () => {
+    const bytes = crypto.getRandomValues(new Uint8Array(15));
+    const abc = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    const raw = [...bytes].map((b) => abc[b % 32]).join("");
+    startSync(raw.match(/.{1,5}/g).join("-"));
+  };
+  $("syncJoin").onclick = () => {
+    const code = $("syncInput").value.trim().toUpperCase().replace(/\s+/g, "");
+    if (!/^[A-Z0-9-]{16,64}$/.test(code)) { alert("Mã đồng bộ không đúng. Hãy chép nguyên mã từ máy kia."); return; }
+    // Máy mới nhập mã: bộ nhớ và nhân vật lấy theo máy chủ thay vì ghi đè lên.
+    startSync(code);
+    syncState.meta = {}; saveSync();
+    $("syncInput").value = "";
+  };
+  $("syncCopy").onclick = async (e) => { await copy(syncState.code); flash(e.currentTarget, "Đã chép", "Chép mã"); };
+  $("syncStop").onclick = () => {
+    if (!confirm("Tắt đồng bộ trên máy này? Lịch sử chat trên máy này vẫn được giữ.")) return;
+    syncState = { code: "", since: 0, pushed: {}, deleted: {}, meta: {} }; saveSync(); paintSync("Đồng bộ đang tắt.");
+  };
+  addEventListener("focus", () => scheduleSync(500));
+  setInterval(() => scheduleSync(0), 120000);
+  if (syncState.code) scheduleSync(1000);
+
+  // ---------- Ghim, thư mục, đổi tên đoạn chat ----------
+  function chatMenu(btn, c) {
+    document.querySelector(".chat-menu")?.remove();
+    const m = document.createElement("div");
+    m.className = "chat-menu";
+    m.innerHTML = `<button data-a="pin">${c.pinned ? "Bỏ ghim" : "Ghim lên đầu"}</button><button data-a="rename">Đổi tên</button>` +
+      `<button data-a="folder">${c.folder ? "Đổi thư mục" : "Chuyển vào thư mục"}</button>${c.folder ? '<button data-a="unfolder">Bỏ khỏi thư mục</button>' : ""}` +
+      `<button data-a="delete" class="danger">Xoá</button>`;
+    document.body.append(m);
+    const r = btn.getBoundingClientRect();
+    m.style.left = Math.min(r.left, innerWidth - m.offsetWidth - 8) + "px";
+    m.style.top = Math.min(r.bottom + 4, innerHeight - m.offsetHeight - 8) + "px";
+    m.onclick = (e) => {
+      const a = e.target.closest("[data-a]")?.dataset.a;
+      if (!a) return;
+      m.remove();
+      if (a === "pin") c.pinned = !c.pinned;
+      else if (a === "rename") { const t = prompt("Tên mới cho đoạn chat:", c.title || ""); if (!t?.trim()) return; c.title = t.trim().slice(0, 80); c.titled = true; }
+      else if (a === "folder") {
+        const names = [...new Set(chats.map((x) => x.folder).filter(Boolean))];
+        const f = prompt(`Tên thư mục${names.length ? ` (đang có: ${names.join(", ")})` : ""}:`, c.folder || "");
+        if (!f?.trim()) return;
+        c.folder = f.trim().slice(0, 40);
+      } else if (a === "unfolder") delete c.folder;
+      else if (a === "delete") {
+        if (!confirm("Xoá đoạn chat này?")) return;
+        chats = chats.filter((x) => x.id !== c.id); markDeleted(c.id); saveChats();
+        if (c.id === currentId) newChat(); else renderHistory();
+        return;
+      }
+      c.updated = Date.now(); saveChats(); renderHistory();
+    };
+  }
+  document.addEventListener("click", (e) => { if (!e.target.closest(".chat-menu, .history-item .more")) document.querySelector(".chat-menu")?.remove(); });
+
   // ---------- Ảnh và file đính kèm ----------
   // Ảnh được thu nhỏ còn tối đa 1280px (JPEG) trước khi gửi. File được đọc thành chữ ngay trong trình duyệt:
   // văn bản/code đọc thẳng, PDF dùng pdf.js, Word dùng mammoth, Excel dùng SheetJS (tải từ cdnjs khi cần).
@@ -1794,6 +2251,7 @@
     } else if (act.dataset.act === "good") {
       const m = chat.messages[idx];
       m.good = !m.good;
+      chat.updated = Date.now();
       saveChats();
       paintAssistant(act.closest(".msg"), m, false);
     } else if (act.dataset.act === "regen" && !controller) {
@@ -1882,6 +2340,7 @@
     $("setTools").checked = settings.tools;
     renderMemories();
     $("trainCount").value = `${trainingExamples().length} câu trả lời đã được thích`;
+    renderPersonas(); renderKb(); paintSync();
     els.settings.showModal();
   };
   els.settings.addEventListener("close", () => {
@@ -1951,6 +2410,8 @@
 
   $("clearAll").onclick = () => {
     if (!confirm("Xoá toàn bộ lịch sử chat?")) return;
+    for (const c of chats) syncState.deleted[c.id] = Date.now();
+    saveSync();
     chats = []; saveChats(); els.settings.close(); newChat();
   };
 

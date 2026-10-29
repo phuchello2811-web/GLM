@@ -36,6 +36,24 @@ Mở địa chỉ của Worker. Nó hiện ở đầu trang Worker, dạng `http
 
 Thấy dòng `Máy chủ GLM đang chạy` là được. Dán địa chỉ đó vào dòng `const SHARED_URL = "...";` trong `index.html`, rồi `git push`.
 
+## Bước 5: Bật tạo ảnh (miễn phí)
+
+Trang dùng mô hình FLUX trên Cloudflare Workers AI để tạo ảnh. Gói miễn phí tạo được khoảng vài trăm ảnh mỗi ngày.
+
+1. Mở Worker `glm`, chọn thẻ **Bindings**, bấm **Add binding**.
+2. Chọn **Workers AI**. **Variable name** nhập `AI`, rồi bấm **Add Binding** (hoặc **Deploy**).
+
+Chưa bật thì trang tự dùng Pollinations. Pollinations cũng miễn phí, nhưng ảnh kém hơn và có logo nhỏ.
+
+## Bước 6: Bật đồng bộ lịch sử giữa các máy (miễn phí)
+
+1. Ở menu bên trái của Cloudflare, chọn **Storage & Databases → D1 SQL Database**, bấm **Create**. Đặt tên `glm-sync`, rồi bấm **Create**.
+2. Mở lại Worker `glm`, chọn **Bindings → Add binding → D1 database**. **Variable name** nhập `DB`, chọn database `glm-sync`, rồi bấm **Add Binding**.
+
+Không cần tạo bảng, Worker tự tạo ở lần đồng bộ đầu tiên. Máy chủ chỉ lưu mã đồng bộ đã băm, không lưu mã thật.
+
+Muốn dùng: trong trang chat, vào **Cài đặt → Đồng bộ giữa các máy → Bật đồng bộ**, chép mã, rồi trên máy kia chọn **Nhập mã → Kết nối**.
+
 ## Tuỳ chỉnh (không bắt buộc)
 
 - **Cho phép thêm trang khác:** trong **Variables and Secrets**, thêm biến thường (kiểu Text) tên `ALLOWED_ORIGINS`. Giá trị là danh sách địa chỉ cách nhau bằng dấu phẩy, ví dụ `https://phuchello2811-web.github.io,http://127.0.0.1:5500`.

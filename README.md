@@ -58,6 +58,15 @@ Bật nút **Nghĩ kỹ** trong khung chat để mô hình giải hai lần đ�
 
 Khi cần tính toán, mô hình tự viết code JavaScript hoặc Python. Trang chạy code đó ngay trong trình duyệt (cách ly, không truy cập mạng; Python chạy bằng [Pyodide](https://pyodide.org), có sẵn numpy, pandas, sympy) rồi đưa kết quả cho mô hình, nên phép tính luôn chính xác. Khi bạn nhờ viết code, mô hình chạy thử với vài ví dụ, tự sửa nếu lỗi, rồi mới đưa code cuối cùng. Code trong câu trả lời được tô màu cho dễ đọc. Khi cần thông tin thực tế, mô hình tự tra cứu rồi trả lời kèm nguồn: Wikipedia tiếng Việt hoặc tiếng Anh cho kiến thức chung, tìm kiếm web (DuckDuckGo) cho tin tức, giá cả, tài liệu mới, và đọc nội dung trang web (qua [Jina Reader](https://jina.ai/reader)). Bạn cũng có thể dán đường dẫn để mô hình đọc trang đó. Từ khoá tìm kiếm và đường dẫn được gửi tới DuckDuckGo và Jina. Mô hình cũng được dạy cách suy nghĩ: chia nhỏ bài toán, thử nhiều cách và tự kiểm tra trước khi trả lời. Nếu máy chủ ngắt kết nối giữa chừng, trang tự nối lại và cho mô hình viết tiếp. Muốn mô hình nhớ điều gì ở mọi đoạn chat, cứ nói "hãy nhớ: …". Danh sách ghi nhớ nằm trong **Cài đặt → Bộ nhớ**.
 
+**Nhân vật, kho kiến thức, đồng bộ:**
+
+- **Nhân vật:** chọn trong menu mô hình ở khung chat, gồm Thầy dạy Toán, Huấn luyện viên IOI, Dịch giả Anh–Việt, Gia sư tiếng Anh, Trợ lý viết văn. Có thể tự tạo thêm trong **Cài đặt**.
+- **Kho kiến thức:** **Cài đặt → Kho kiến thức → Thêm tài liệu** (PDF, Word, Excel, văn bản). Mỗi câu hỏi, GLM tự tìm đoạn liên quan trong kho và ghi rõ tài liệu đã dùng. Tài liệu chỉ lưu trong trình duyệt.
+- **Học từ câu trả lời được thích:** khi bạn hỏi câu giống câu cũ, các câu trả lời bạn đã bấm thích được dùng làm mẫu, để GLM trả lời đúng văn phong bạn muốn.
+- **Tạo ảnh:** nhờ "tạo bức tranh…", GLM tự viết mô tả rồi tạo ảnh. Bấm vào ảnh để xem cỡ lớn.
+- **Đồng bộ giữa các máy:** **Cài đặt → Đồng bộ giữa các máy**. Cần bật trên Cloudflare theo [worker/README.md](worker/README.md).
+- **Sắp xếp đoạn chat:** bấm nút `⋯` cạnh đoạn chat để ghim, đổi tên, chuyển vào thư mục. GLM tự đặt tên đoạn chat sau câu trả lời đầu tiên.
+
 **Tiện ích khác:**
 
 - **Công thức toán** hiển thị như trong sách (KaTeX).

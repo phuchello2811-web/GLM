@@ -5,6 +5,11 @@
 // - Chỉ cho dùng mô hình miễn phí, nên kể cả bị lạm dụng cũng không mất tiền.
 // - Chỉ trình duyệt mở từ các trang trong ALLOWED_ORIGINS mới gọi được (chặn trang web khác dùng ké).
 // - Giới hạn số lượt hỏi mỗi phút cho mỗi địa chỉ IP.
+//
+// Các đường dẫn:
+// - POST /        chat với GLM (Z.ai).
+// - POST /image   tạo ảnh bằng Cloudflare Workers AI (cần binding AI, xem README).
+// - POST /sync    đồng bộ lịch sử chat giữa các máy (cần binding D1 tên DB, xem README).
 
 const UPSTREAM = "https://api.z.ai/api/paas/v4/chat/completions";
 const FREE_MODELS = ["glm-4.7-flash", "glm-4.5-flash", "glm-4.6v-flash"];
@@ -16,6 +21,9 @@ const DEFAULT_ORIGINS = [
   "http://localhost:5500",
 ];
 const PER_MINUTE = 20; // số lượt hỏi tối đa mỗi phút cho mỗi IP
+const LIMITS = { chat: PER_MINUTE, image: 6, sync: 40 }; // giới hạn mỗi phút theo từng loại yêu cầu
+const IMAGE_MODEL = "@cf/black-forest-labs/flux-1-schnell";
+const SYNC_ROW_MAX = 1_900_000; // D1 giới hạn mỗi dòng khoảng 2MB
 const MAX_BODY = 8 * 1024 * 1024; // đoạn chat (kể cả ảnh) nặng quá 8MB thì từ chối
 const MAX_TOKENS = 8192;
 const BUSY = [429, 502, 503, 504, 524]; // mã lỗi khi Z.ai quá tải hoặc treo
@@ -23,13 +31,13 @@ const BUSY = [429, 502, 503, 504, 524]; // mã lỗi khi Z.ai quá tải hoặc 
 // Đếm lượt trong bộ nhớ: mỗi máy chủ Cloudflare đếm riêng nên chỉ là chặn tương đối.
 // Nếu có gắn binding Rate Limiting tên LIMITER (xem README) thì dùng cái đó, chính xác hơn.
 const hits = new Map();
-function overLimit(ip) {
+function overLimit(key, max) {
   const now = Date.now();
-  const recent = (hits.get(ip) || []).filter((t) => now - t < 60_000);
+  const recent = (hits.get(key) || []).filter((t) => now - t < 60_000);
   recent.push(now);
-  hits.set(ip, recent);
+  hits.set(key, recent);
   if (hits.size > 5000) hits.clear();
-  return recent.length > PER_MINUTE;
+  return recent.length > max;
 }
 
 export default {
@@ -54,16 +62,26 @@ export default {
     if (request.method === "GET") return fail(200, "Máy chủ GLM đang chạy. Hãy dùng từ trang chat.");
     if (request.method !== "POST") return fail(405, "Chỉ nhận POST.");
     if (!allowed) return fail(403, "Trang này không được phép dùng máy chủ chung.");
-    if (!env.ZAI_API_KEY) return fail(500, "Máy chủ chưa được cài API key (biến bí mật ZAI_API_KEY).");
+    const route = new URL(request.url).pathname.replace(/\/+$/, "") || "/";
+    const kind = route === "/image" ? "image" : route === "/sync" ? "sync" : "chat";
+    if (kind === "chat" && route !== "/") return fail(404, "Không có đường dẫn này.");
+    if (kind === "chat" && !env.ZAI_API_KEY) return fail(500, "Máy chủ chưa được cài API key (biến bí mật ZAI_API_KEY).");
 
     const ip = request.headers.get("CF-Connecting-IP") || "unknown";
-    const limited = env.LIMITER ? !(await env.LIMITER.limit({ key: ip })).success : overLimit(ip);
-    if (limited) return fail(429, `Bạn hỏi quá ${PER_MINUTE} lần mỗi phút trên máy chủ chung. Đợi một lúc rồi thử lại.`);
+    const limited = env.LIMITER && kind === "chat" ? !(await env.LIMITER.limit({ key: ip })).success : overLimit(`${kind}:${ip}`, LIMITS[kind]);
+    if (limited) return fail(429, kind === "chat"
+      ? `Bạn hỏi quá ${PER_MINUTE} lần mỗi phút trên máy chủ chung. Đợi một lúc rồi thử lại.`
+      : "Bạn gửi quá nhiều yêu cầu trong một phút. Đợi một lúc rồi thử lại.");
 
     const raw = await request.text();
-    if (raw.length > MAX_BODY) return fail(413, "Đoạn chat quá dài. Hãy mở đoạn chat mới.");
+    if (raw.length > MAX_BODY) return fail(413, "Dữ liệu gửi lên quá lớn.");
     let body;
     try { body = JSON.parse(raw); } catch { return fail(400, "Dữ liệu gửi lên không hợp lệ."); }
+    const json = (data) => new Response(JSON.stringify(data), { headers: { ...cors, "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } });
+
+    if (kind === "image") return makeImage(body, env, json, fail);
+    if (kind === "sync") return sync(body, env, json, fail);
+
     if (!Array.isArray(body.messages) || !body.messages.length) return fail(400, "Thiếu tin nhắn.");
 
     // Chỉ chuyển tiếp các trường cần thiết, và ép về mô hình miễn phí.
@@ -108,6 +126,52 @@ export default {
     return new Response(upstream.body, { status: upstream.status, headers });
   },
 };
+
+// Tạo ảnh bằng FLUX.1 schnell trên Workers AI (gói miễn phí của Cloudflare cho khoảng vài trăm ảnh mỗi ngày).
+async function makeImage(body, env, json, fail) {
+  if (!env.AI) return fail(501, "Máy chủ chưa bật tạo ảnh (binding AI).");
+  const prompt = typeof body.prompt === "string" ? body.prompt.trim().slice(0, 2000) : "";
+  if (!prompt) return fail(400, "Thiếu mô tả ảnh.");
+  try {
+    const out = await env.AI.run(IMAGE_MODEL, { prompt, steps: 4 });
+    if (!out?.image) return fail(502, "Không tạo được ảnh, thử lại với mô tả khác.");
+    return json({ image: `data:image/jpeg;base64,${out.image}` });
+  } catch (e) {
+    const msg = String(e?.message || e);
+    if (/limit|quota|neuron|exceeded/i.test(msg)) return fail(429, "Hôm nay máy chủ đã hết lượt tạo ảnh miễn phí. Thử lại vào ngày mai.");
+    return fail(502, "Không tạo được ảnh: " + msg.slice(0, 200));
+  }
+}
+
+// Đồng bộ: mỗi người có một mã bí mật; máy chủ chỉ lưu mã đã băm (SHA-256), không lưu mã thật.
+// Mỗi mục (một đoạn chat, bộ nhớ, nhân vật…) là một dòng có thời điểm cập nhật; bản mới hơn thắng.
+// Máy gửi lên các mục đã đổi kèm mốc lần đồng bộ trước, máy chủ trả về các mục đã đổi kể từ mốc đó.
+async function sync(body, env, json, fail) {
+  if (!env.DB) return fail(501, "Máy chủ chưa bật đồng bộ (binding D1 tên DB).");
+  const code = typeof body.code === "string" ? body.code.trim() : "";
+  if (!/^[A-Za-z0-9-]{16,64}$/.test(code)) return fail(400, "Mã đồng bộ không hợp lệ.");
+  const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("glm-sync:" + code));
+  const user = [...new Uint8Array(hash)].map((b) => b.toString(16).padStart(2, "0")).join("");
+  await env.DB.prepare("CREATE TABLE IF NOT EXISTS items (user TEXT NOT NULL, id TEXT NOT NULL, updated INTEGER NOT NULL, data TEXT, seen INTEGER NOT NULL, PRIMARY KEY (user, id))").run();
+
+  const now = Date.now();
+  const changes = Array.isArray(body.changes) ? body.changes.slice(0, 200) : [];
+  const writes = [];
+  for (const c of changes) {
+    if (typeof c?.id !== "string" || c.id.length > 100 || !Number.isFinite(c.updated)) continue;
+    const data = c.data === null ? null : JSON.stringify(c.data);
+    if (data && data.length > SYNC_ROW_MAX) continue;
+    // Chỉ ghi đè khi bản gửi lên mới hơn bản đang lưu. "seen" là lúc máy chủ nhận, dùng để biết máy khác cần tải gì.
+    writes.push(env.DB.prepare(
+      "INSERT INTO items (user, id, updated, data, seen) VALUES (?1, ?2, ?3, ?4, ?5) " +
+      "ON CONFLICT (user, id) DO UPDATE SET updated = excluded.updated, data = excluded.data, seen = excluded.seen WHERE excluded.updated > items.updated",
+    ).bind(user, c.id, Math.round(c.updated), data, now));
+  }
+  if (writes.length) await env.DB.batch(writes);
+  const since = Number.isFinite(body.since) ? body.since : 0;
+  const { results } = await env.DB.prepare("SELECT id, updated, data FROM items WHERE user = ?1 AND seen > ?2").bind(user, since).all();
+  return json({ now, items: results.map((r) => ({ id: r.id, updated: r.updated, data: r.data === null ? null : JSON.parse(r.data) })) });
+}
 
 function clamp(v, lo, hi, fallback) {
   const n = Number(v);
