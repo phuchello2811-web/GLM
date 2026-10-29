@@ -8,13 +8,15 @@
 
 const UPSTREAM = "https://api.z.ai/api/paas/v4/chat/completions";
 const FREE_MODELS = ["glm-4.7-flash", "glm-4.5-flash", "glm-4.6v-flash"];
+const VISION_MODEL = "glm-4.6v-flash"; // mô hình miễn phí duy nhất đọc được ảnh
+const MAX_IMAGES = 8;
 const DEFAULT_ORIGINS = [
   "https://phuchello2811-web.github.io",
   "http://127.0.0.1:5500", // Live Server trong VS Code
   "http://localhost:5500",
 ];
 const PER_MINUTE = 20; // số lượt hỏi tối đa mỗi phút cho mỗi IP
-const MAX_BODY = 256 * 1024; // đoạn chat dài quá 256KB thì từ chối
+const MAX_BODY = 8 * 1024 * 1024; // đoạn chat (kể cả ảnh) nặng quá 8MB thì từ chối
 const MAX_TOKENS = 8192;
 const BUSY = [429, 502, 503, 504, 524]; // mã lỗi khi Z.ai quá tải hoặc treo
 
@@ -65,12 +67,20 @@ export default {
     if (!Array.isArray(body.messages) || !body.messages.length) return fail(400, "Thiếu tin nhắn.");
 
     // Chỉ chuyển tiếp các trường cần thiết, và ép về mô hình miễn phí.
-    const model = FREE_MODELS.includes(body.model) ? body.model : FREE_MODELS[0];
+    // Tin nhắn của người dùng có thể kèm ảnh (chỉ nhận ảnh dạng data:image/...;base64, không nhận đường dẫn tới web khác).
+    const part = (p) =>
+      p?.type === "text" && typeof p.text === "string" ? { type: "text", text: p.text }
+      : p?.type === "image_url" && /^data:image\/(png|jpeg|webp|gif);base64,/.test(p.image_url?.url || "") ? { type: "image_url", image_url: { url: p.image_url.url } }
+      : null;
+    const messages = body.messages
+      .filter((m) => m && ["system", "user", "assistant"].includes(m.role) && (typeof m.content === "string" || (m.role === "user" && Array.isArray(m.content))))
+      .map((m) => ({ role: m.role, content: typeof m.content === "string" ? m.content : m.content.map(part).filter(Boolean) }));
+    const images = messages.reduce((n, m) => n + (Array.isArray(m.content) ? m.content.filter((p) => p.type === "image_url").length : 0), 0);
+    if (images > MAX_IMAGES) return fail(413, `Đoạn chat có quá ${MAX_IMAGES} ảnh. Hãy mở đoạn chat mới.`);
+    const model = images ? VISION_MODEL : FREE_MODELS.includes(body.model) ? body.model : FREE_MODELS[0];
     const clean = {
       model,
-      messages: body.messages
-        .filter((m) => m && typeof m.content === "string" && ["system", "user", "assistant"].includes(m.role))
-        .map((m) => ({ role: m.role, content: m.content })),
+      messages,
       stream: body.stream !== false,
       temperature: clamp(body.temperature, 0, 1, 0.6),
       top_p: clamp(body.top_p, 0.01, 1, 0.95),
@@ -80,7 +90,7 @@ export default {
 
     // Bản miễn phí hay bị quá tải (429) hoặc treo (502/503/504/524): thử lần lượt các mô hình miễn phí còn lại.
     let upstream;
-    for (const m of [model, ...FREE_MODELS.filter((x) => x !== model)]) {
+    for (const m of images ? [model] : [model, ...FREE_MODELS.filter((x) => x !== model)]) {
       if (upstream) await upstream.body?.cancel();
       upstream = await fetch(UPSTREAM, {
         method: "POST",

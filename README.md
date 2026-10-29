@@ -58,6 +58,12 @@ Bật nút **Nghĩ kỹ** trong khung chat để mô hình tự kiểm tra và v
 
 Khi cần tính toán, mô hình tự viết code JavaScript hoặc Python. Trang chạy code đó ngay trong trình duyệt (cách ly, không truy cập mạng; Python chạy bằng [Pyodide](https://pyodide.org), có sẵn numpy, pandas, sympy) rồi đưa kết quả cho mô hình, nên phép tính luôn chính xác. Khi bạn nhờ viết code, mô hình chạy thử với vài ví dụ, tự sửa nếu lỗi, rồi mới đưa code cuối cùng. Code trong câu trả lời được tô màu cho dễ đọc. Khi cần thông tin thực tế (sự kiện, nhân vật, số liệu), mô hình tự tra Wikipedia tiếng Việt hoặc tiếng Anh rồi trả lời kèm nguồn. Mô hình cũng được dạy cách suy nghĩ: chia nhỏ bài toán, thử nhiều cách và tự kiểm tra trước khi trả lời. Nếu máy chủ ngắt kết nối giữa chừng, trang tự nối lại và cho mô hình viết tiếp. Muốn mô hình nhớ điều gì ở mọi đoạn chat, cứ nói "hãy nhớ: …". Danh sách ghi nhớ nằm trong **Cài đặt → Bộ nhớ**.
 
+**Gửi ảnh và file:** bấm nút kẹp giấy trong khung chat, kéo thả vào khung chat, hoặc dán ảnh bằng `Cmd+V`.
+
+- **Ảnh** (tối đa 4 ảnh mỗi tin): trang tự chuyển sang **GLM-4.6V Flash**, mô hình miễn phí duy nhất đọc được ảnh. Ảnh được thu nhỏ trước khi gửi.
+- **File:** đọc được văn bản, code, CSV, JSON, PDF có chữ (PDF scan thì chụp từng trang gửi dạng ảnh), Word `.docx` và Excel. File được đọc ngay trong trình duyệt rồi gửi phần chữ cho mô hình, tối đa khoảng 60.000 ký tự mỗi file.
+- Ảnh và file được lưu cùng lịch sử chat. Khi bộ nhớ trình duyệt đầy, ảnh và file của các đoạn chat cũ nhất sẽ bị xoá trước.
+
 GLM được dạy thêm vài kỹ năng, tự bật khi câu hỏi đúng chủ đề:
 
 - **Làm trang web:** viết trọn một file HTML. Bấm **Xem trước** dưới khối code để chạy thử ngay trong khung chat, hoặc **Tải về** để lấy file.

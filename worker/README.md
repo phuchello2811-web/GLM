@@ -8,6 +8,7 @@ Worker được cài sẵn mấy lớp bảo vệ:
 - Chỉ cho dùng các mô hình **miễn phí** (`glm-4.7-flash`, `glm-4.5-flash`, `glm-4.6v-flash`). Ai cố gọi mô hình trả phí cũng bị đổi về mô hình miễn phí, nên bạn không bao giờ mất tiền.
 - Chỉ nhận yêu cầu từ trang `phuchello2811-web.github.io`. Trang web khác không dùng ké được.
 - Mỗi địa chỉ IP được hỏi tối đa 20 lần mỗi phút.
+- Câu hỏi có ảnh luôn được gửi tới `glm-4.6v-flash` (mô hình đọc được ảnh). Mỗi đoạn chat tối đa 8 ảnh và 8MB.
 
 ## Bước 1: Lấy API key Z.ai
 
