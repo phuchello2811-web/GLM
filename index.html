@@ -29,21 +29,30 @@
     --danger: #d93025;
     --ok: #10a37f;
     --shadow: 0 2px 12px rgba(0,0,0,.06);
+    --scroll: #c8c8c8;
+    color-scheme: light;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       --bg: #212121; --sidebar: #171717; --surface: #303030; --hover: #2a2a2a;
       --border: #3a3a3a; --text: #ececec; --muted: #a0a0a0; --accent: #ececec;
       --accent-text: #0d0d0d; --code-bg: #171717; --shadow: 0 2px 12px rgba(0,0,0,.3);
+      --scroll: #4a4a4a; color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
     --bg: #212121; --sidebar: #171717; --surface: #303030; --hover: #2a2a2a;
     --border: #3a3a3a; --text: #ececec; --muted: #a0a0a0; --accent: #ececec;
     --accent-text: #0d0d0d; --code-bg: #171717; --shadow: 0 2px 12px rgba(0,0,0,.3);
+    --scroll: #4a4a4a; color-scheme: dark;
   }
 
   * { box-sizing: border-box; }
+  /* Thanh cuộn mảnh, nền trong suốt, theo màu giao diện sáng/tối. */
+  * { scrollbar-width: thin; scrollbar-color: var(--scroll) transparent; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--scroll); border-radius: 8px; }
   html, body { height: 100%; margin: 0; }
   body {
     background: var(--bg); color: var(--text);
@@ -119,13 +128,6 @@
     padding: 0 24px; gap: 28px;
   }
   .empty h1 { font-size: 28px; font-weight: 600; margin: 0; text-align: center; letter-spacing: -.01em; }
-  .suggestions { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; max-width: 640px; width: 100%; }
-  .suggestion {
-    border: 1px solid var(--border); border-radius: 16px; padding: 12px 14px; text-align: left;
-    font-size: 14px; color: var(--muted); line-height: 1.4;
-  }
-  .suggestion b { display: block; color: var(--text); font-weight: 500; }
-  .suggestion:hover { background: var(--surface); }
 
   .msg { margin: 24px 0; }
   .msg.user { display: flex; justify-content: flex-end; }
@@ -272,8 +274,6 @@
     .sidebar { position: absolute; z-index: 10; height: 100%; box-shadow: var(--shadow); }
     .thread { padding: 16px 16px 24px; }
     .composer-wrap { padding: 0 12px 10px; }
-    .suggestions { grid-template-columns: 1fr; }
-    .suggestion:nth-child(n+3) { display: none; }
     .msg.user .bubble { max-width: 85%; }
   }
 </style>
@@ -328,12 +328,6 @@
     <div class="empty" id="empty">
       <img class="hero-logo" src="icons/icon.svg" alt="">
       <h1>Hôm nay bạn muốn hỏi gì?</h1>
-      <div class="suggestions">
-        <button class="suggestion" data-prompt="Giải thích thuật toán quicksort bằng ví dụ đơn giản, kèm code Python."><b>Giải thích thuật toán</b>quicksort kèm code Python</button>
-        <button class="suggestion" data-prompt="Một cửa hàng giảm giá 20%, sau đó tăng giá 20%. Giá cuối so với giá ban đầu thế nào? Giải từng bước."><b>Giải bài toán</b>giảm 20% rồi tăng 20%</button>
-        <button class="suggestion" data-prompt="Viết email xin nghỉ phép 3 ngày gửi quản lý, giọng lịch sự, ngắn gọn."><b>Viết email</b>xin nghỉ phép 3 ngày</button>
-        <button class="suggestion" data-prompt="So sánh ưu nhược điểm của SQL và NoSQL, trình bày dạng bảng."><b>So sánh</b>SQL và NoSQL dạng bảng</button>
-      </div>
     </div>
     <div class="thread" id="thread" hidden></div>
   </div>
@@ -1155,7 +1149,6 @@
   deepBtn.onclick = () => { settings.deep = !settings.deep; store.set("glm.settings", settings); paintDeep(); };
   paintDeep();
 
-  document.querySelectorAll(".suggestion").forEach((b) => b.onclick = () => send(b.dataset.prompt));
   $("newChat").onclick = newChat;
   $("newChatIcon").onclick = newChat;
   $("closeSide").onclick = () => els.sidebar.classList.add("hidden");
