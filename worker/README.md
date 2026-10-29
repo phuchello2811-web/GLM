@@ -33,7 +33,7 @@ Worker được cài sẵn mấy lớp bảo vệ:
 
 Mở địa chỉ của Worker. Nó hiện ở đầu trang Worker, dạng `https://glm.<tên-bạn>.workers.dev`.
 
-Thấy dòng `Máy chủ GLM đang chạy` là được. Gửi địa chỉ đó cho Claude, hoặc tự dán vào dòng `const SHARED_URL = "";` trong `index.html`, rồi `git push`.
+Thấy dòng `Máy chủ GLM đang chạy` là được. Dán địa chỉ đó vào dòng `const SHARED_URL = "...";` trong `index.html`, rồi `git push`.
 
 ## Tuỳ chỉnh (không bắt buộc)
 
