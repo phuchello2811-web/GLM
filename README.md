@@ -56,7 +56,16 @@ Giao diện có lịch sử chat (lưu trong trình duyệt), hiện quá trình
 
 Bật nút **Nghĩ kỹ** trong khung chat để mô hình giải hai lần độc lập, rồi so sánh hai lời giải như một giám khảo (tự chạy code, tra cứu để kiểm chỗ khác nhau) và viết câu trả lời cuối. Cách này chính xác hơn hẳn với toán, logic và code, nhưng chậm gấp 3–4 lần. Hai lời giải nháp vẫn xem được bên trên câu trả lời.
 
-Khi cần tính toán, mô hình tự viết code JavaScript hoặc Python. Trang chạy code đó ngay trong trình duyệt (cách ly, không truy cập mạng; Python chạy bằng [Pyodide](https://pyodide.org), có sẵn numpy, pandas, sympy) rồi đưa kết quả cho mô hình, nên phép tính luôn chính xác. Khi bạn nhờ viết code, mô hình chạy thử với vài ví dụ, tự sửa nếu lỗi, rồi mới đưa code cuối cùng. Code trong câu trả lời được tô màu cho dễ đọc. Khi cần thông tin thực tế, mô hình tự tra cứu rồi trả lời kèm nguồn: Wikipedia tiếng Việt hoặc tiếng Anh cho kiến thức chung, tìm kiếm web (DuckDuckGo) cho tin tức, giá cả, tài liệu mới, và đọc nội dung trang web (qua [Jina Reader](https://jina.ai/reader)). Bạn cũng có thể dán đường dẫn để mô hình đọc trang đó. Từ khoá tìm kiếm và đường dẫn được gửi tới DuckDuckGo và Jina. Mô hình cũng được dạy cách suy nghĩ: chia nhỏ bài toán, thử nhiều cách và tự kiểm tra trước khi trả lời. Nếu máy chủ ngắt kết nối giữa chừng, trang tự nối lại và cho mô hình viết tiếp. Muốn mô hình nhớ điều gì ở mọi đoạn chat, cứ nói "hãy nhớ: …". Danh sách ghi nhớ nằm trong **Cài đặt → Bộ nhớ**.
+Khi cần tính toán, mô hình tự viết code JavaScript hoặc Python. Trang chạy code đó ngay trong trình duyệt (cách ly, không truy cập mạng; Python chạy bằng [Pyodide](https://pyodide.org), có sẵn numpy, pandas, sympy) rồi đưa kết quả cho mô hình, nên phép tính luôn chính xác. Khi bạn nhờ viết code, mô hình chạy thử với vài ví dụ, tự sửa nếu lỗi, rồi mới đưa code cuối cùng. Code trong câu trả lời được tô màu cho dễ đọc. Khi cần thông tin thực tế, mô hình tự tra cứu rồi trả lời kèm nguồn. Câu hỏi có chữ như "hiện nay", "mới nhất", "hôm nay", "giá"… thì bắt buộc phải tra, vì kiến thức có sẵn của mô hình đã cũ. Các nguồn (đều miễn phí, không cần key):
+
+- **Wikipedia và web cùng lúc** (Wikipedia tiếng Việt/Anh và tìm kiếm DuckDuckGo), và **đọc nội dung trang web** qua [Jina Reader](https://jina.ai/reader). Bạn có thể dán đường dẫn để mô hình đọc.
+- **Thời tiết** hiện tại và 3 ngày tới ([Open-Meteo](https://open-meteo.com)).
+- **Tỷ giá ngoại tệ** ([ExchangeRate-API](https://www.exchangerate-api.com)).
+- **Bài báo khoa học** ([OpenAlex](https://openalex.org)), gồm tóm tắt, tác giả, số trích dẫn.
+- **Lập trình:** câu hỏi và câu trả lời hay nhất trên Stack Overflow, cùng kho mã trên GitHub.
+- **Từ điển tiếng Anh** ([Wiktionary](https://en.wiktionary.org)).
+
+Từ khoá tra cứu được gửi tới các dịch vụ trên. Mô hình cũng được dạy cách suy nghĩ: chia nhỏ bài toán, thử nhiều cách và tự kiểm tra trước khi trả lời. Nếu máy chủ ngắt kết nối giữa chừng, trang tự nối lại và cho mô hình viết tiếp. Muốn mô hình nhớ điều gì ở mọi đoạn chat, cứ nói "hãy nhớ: …". Danh sách ghi nhớ nằm trong **Cài đặt → Bộ nhớ**.
 
 **Nhân vật, kho kiến thức, đồng bộ:**
 
