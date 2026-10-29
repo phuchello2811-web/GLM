@@ -794,7 +794,7 @@
         `<button class="icon-btn" data-act="copy" title="Sao chép">${ICON_COPY}</button>` +
         `<button class="icon-btn${m.good ? " good" : ""}" data-act="good" title="${m.good ? "Bỏ thích" : "Thích: lưu làm dữ liệu train"}">${ICON_THUMB}</button>` +
         `<button class="icon-btn" data-act="regen" title="Tạo lại">${ICON_REDO}</button>` +
-        (m.tps ? `<span class="meta">${m.tps} token/giây</span>` : "") + `</div>`;
+        (m.tps ? `<span class="meta">${m.tps} token/giây${m.via ? ` · trả lời bằng ${esc(m.via)} vì mô hình đã chọn đang quá tải` : ""}</span>` : "") + `</div>`;
     }
     // Giữ trạng thái mở/đóng của phần suy nghĩ khi người dùng tự bấm.
     const prev = node.querySelector(".think:not(.is-draft)");
@@ -1186,30 +1186,40 @@
 
   // API kiểu OpenAI (máy chủ chung, Pollinations): đọc luồng SSE, trả ra từng mẩu suy nghĩ/chữ.
   async function* apiDeltas(messages, reply, node, signal) {
-    const p = PROVIDERS[settings.provider];
-    const body = JSON.stringify({
-      messages, stream: true,
-      temperature: Number(settings.temperature), max_tokens: Number(settings.maxTokens), top_p: 0.95,
-      model: cloudModel(), ...p.extra,
-    });
     const notice = reply.notice;
-    let res;
-    // Bản GLM miễn phí hay bị quá tải (429) trong chốc lát: chờ rồi thử lại, tối đa 3 lần.
-    for (let attempt = 0; ; attempt++) {
-      res = await fetch(p.url, { method: "POST", headers: { "Content-Type": "application/json" }, body, signal });
-      if (res.status !== 429 || attempt >= 3) break;
-      await res.body?.cancel();
-      reply.notice = `Máy chủ đang quá tải, tự thử lại lần ${attempt + 1}/3…`;
-      setStatus("", "Máy chủ đang quá tải…");
-      paintAssistant(node, reply, true);
-      await new Promise((ok, fail) => {
-        const t = setTimeout(ok, 5000 * (attempt + 1));
-        signal.addEventListener("abort", () => { clearTimeout(t); fail(new DOMException("", "AbortError")); }, { once: true });
+    const busy = (r) => r.status === 429 || r.status === 503;
+    const wait = (ms) => new Promise((ok, fail) => {
+      const t = setTimeout(ok, ms);
+      signal.addEventListener("abort", () => { clearTimeout(t); fail(new DOMException("", "AbortError")); }, { once: true });
+    });
+    const show = (text) => { reply.notice = text; setStatus("", text); paintAssistant(node, reply, true); };
+    // Máy chủ miễn phí hay bị quá tải (429/503) trong chốc lát: chờ rồi thử lại. Vẫn bận thì chuyển sang nguồn còn lại cho câu này.
+    const order = [settings.provider, ...Object.keys(PROVIDERS).filter((id) => id !== settings.provider)];
+    let res, used, model;
+    for (const id of order) {
+      const p = PROVIDERS[id];
+      used = id; model = id === settings.provider ? cloudModel() : p.models[0];
+      const body = JSON.stringify({
+        messages, stream: true,
+        temperature: Number(settings.temperature), max_tokens: Number(settings.maxTokens), top_p: 0.95,
+        model, ...p.extra,
       });
+      for (let attempt = 0; ; attempt++) {
+        res = await fetch(p.url, { method: "POST", headers: { "Content-Type": "application/json" }, body, signal });
+        if (!busy(res) || attempt >= 2) break;
+        const text = await res.text().catch(() => "");
+        const secs = Number(res.headers.get("Retry-After")) || Number(text.match(/retry after (\d+)/i)?.[1]) || 5 * (attempt + 1);
+        show(`${p.name} đang quá tải, tự thử lại sau ${Math.min(secs, 30)} giây…`);
+        await wait(Math.min(secs, 30) * 1000);
+      }
+      if (!busy(res) || id === order.at(-1)) break;
+      await res.body?.cancel();
+      show(`${p.name} đang quá tải, chuyển sang ${PROVIDERS[order[order.indexOf(id) + 1]].name}…`);
     }
     reply.notice = notice;
     if (!res.ok) throw new Error(await apiError(res));
-    setStatus("ok", `${p.name} · ${modelTitle(settings.provider, cloudModel())}`);
+    if (used !== settings.provider) reply.via = modelTitle(used, model);
+    setStatus("ok", `${PROVIDERS[used].name} · ${modelTitle(used, model)}`);
 
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
