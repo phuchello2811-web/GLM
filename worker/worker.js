@@ -1,7 +1,7 @@
 // Máy chủ trung gian cho trang GLM: giữ API key Z.ai để mọi người dùng chung mà không thấy key.
 //
 // An toàn:
-// - Key nằm trong biến bí mật ZAI_API_KEY của Cloudflare, không có trong code.
+// - Key nằm trong biến bí mật ZAI_API_KEY (và NVIDIA_API_KEY nếu có) của Cloudflare, không có trong code.
 // - Chỉ cho dùng mô hình miễn phí, nên kể cả bị lạm dụng cũng không mất tiền.
 // - Chỉ trình duyệt mở từ các trang trong ALLOWED_ORIGINS mới gọi được (chặn trang web khác dùng ké).
 // - Giới hạn số lượt hỏi mỗi phút cho mỗi địa chỉ IP.
@@ -13,7 +13,11 @@
 
 const UPSTREAM = "https://api.z.ai/api/paas/v4/chat/completions";
 const FREE_MODELS = ["glm-4.7-flash", "glm-4.5-flash", "glm-4.6v-flash"];
-const VISION_MODEL = "glm-4.6v-flash"; // mô hình miễn phí duy nhất đọc được ảnh
+const VISION_MODEL = "glm-4.6v-flash"; // mô hình miễn phí duy nhất của Z.ai đọc được ảnh
+// GLM-5.3 Flash chạy miễn phí trên NVIDIA (build.nvidia.com, khoảng 40 lượt mỗi phút cho cả tài khoản), cần biến bí mật NVIDIA_API_KEY.
+// Đọc được cả ảnh. Chưa có key, NVIDIA bận hoặc lỗi thì tự dùng mô hình miễn phí của Z.ai.
+const NVIDIA_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
+const NVIDIA_MODELS = { "glm-5.3-flash": "z-ai/glm-5.3-flash" };
 const MAX_IMAGES = 8;
 const DEFAULT_ORIGINS = [
   "https://phuchello2811-web.github.io",
@@ -54,6 +58,7 @@ export default {
       "Access-Control-Allow-Methods": "POST, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type",
       "Access-Control-Max-Age": "86400",
+      "Access-Control-Expose-Headers": "X-GLM-Model",
       Vary: "Origin",
     };
     const fail = (status, message) =>
@@ -101,7 +106,6 @@ export default {
     if (images > MAX_IMAGES) return fail(413, `Đoạn chat có quá ${MAX_IMAGES} ảnh. Hãy mở đoạn chat mới.`);
     const model = images ? VISION_MODEL : FREE_MODELS.includes(body.model) ? body.model : FREE_MODELS[0];
     const clean = {
-      model,
       messages,
       stream: body.stream !== false,
       temperature: clamp(body.temperature, 0, 1, 0.6),
@@ -110,10 +114,28 @@ export default {
       thinking: { type: body.thinking?.type === "disabled" ? "disabled" : "enabled" },
     };
 
+    // Thử NVIDIA trước nếu trang chọn GLM-5.3 Flash. Chờ tối đa 40 giây để máy chủ bắt đầu trả lời.
+    let upstream, used;
+    if (env.NVIDIA_API_KEY && NVIDIA_MODELS[body.model]) {
+      const { thinking, ...rest } = clean;
+      const timer = new AbortController(), t = setTimeout(() => timer.abort(), 40_000);
+      try {
+        upstream = await fetch(NVIDIA_URL, {
+          method: "POST",
+          signal: timer.signal,
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${env.NVIDIA_API_KEY}` },
+          body: JSON.stringify({ ...rest, model: NVIDIA_MODELS[body.model], reasoning_effort: thinking.type === "disabled" ? "low" : "high" }),
+        });
+      } catch { upstream = null; }
+      clearTimeout(t);
+      if (upstream?.ok) used = body.model;
+      else { await upstream?.body?.cancel(); upstream = null; }
+    }
+
     // Bản miễn phí hay bị quá tải (429) hoặc treo (502/503/504/524): thử lần lượt các mô hình miễn phí còn lại.
-    let upstream;
-    for (const m of images ? [model] : [model, ...FREE_MODELS.filter((x) => x !== model)]) {
+    for (const m of used ? [] : images ? [model] : [model, ...FREE_MODELS.filter((x) => x !== model)]) {
       if (upstream) await upstream.body?.cancel();
+      used = m;
       upstream = await fetch(UPSTREAM, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${env.ZAI_API_KEY}` },
@@ -127,6 +149,7 @@ export default {
     const headers = new Headers(cors);
     headers.set("Content-Type", upstream.headers.get("Content-Type") || "application/json");
     headers.set("Cache-Control", "no-store");
+    headers.set("X-GLM-Model", used); // mô hình thật đã trả lời, để trang ghi chú khi máy chủ tự đổi mô hình
     return new Response(upstream.body, { status: upstream.status, headers });
   },
 };

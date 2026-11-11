@@ -46,7 +46,8 @@ Mở https://phuchello2811-web.github.io/GLM/ (hoặc mở `index.html` bằng *
 
 Trang dùng **GLM miễn phí** qua máy chủ chung (dựng theo [worker/README.md](worker/README.md)). Ai mở link cũng chat được ngay, không cần key hay tài khoản. Bấm nút tên mô hình trong khung chat (hoặc ở đầu trang) để chọn:
 
-- **GLM-4.7 Flash**: mạnh nhất, mặc định.
+- **GLM-5.3 Flash**: mạnh nhất (thế hệ GLM-5), mặc định, đọc được cả ảnh. Chạy miễn phí trên NVIDIA, cần thêm key NVIDIA vào máy chủ theo [worker/README.md](worker/README.md). Chưa có key hoặc NVIDIA bận thì máy chủ tự dùng GLM-4.7 Flash và ghi chú dưới câu trả lời.
+- **GLM-4.7 Flash**: giỏi suy luận và viết code, dự phòng khi GLM-5.3 Flash bận.
 - **GLM-4.5 Flash**: ít quá tải hơn, trả lời nhanh.
 - **GLM-4.6V Flash**: bản đa phương thức, hay bị quá tải.
 
@@ -89,7 +90,7 @@ Các trang đã tra hiện thành danh sách **Nguồn** dưới câu trả lờ
 
 **Gửi ảnh và file:** bấm nút kẹp giấy trong khung chat, kéo thả vào khung chat, hoặc dán ảnh bằng `Cmd+V`.
 
-- **Ảnh** (tối đa 4 ảnh mỗi tin): trang tự chuyển sang **GLM-4.6V Flash**, mô hình miễn phí duy nhất đọc được ảnh. Ảnh được thu nhỏ trước khi gửi.
+- **Ảnh** (tối đa 4 ảnh mỗi tin): **GLM-5.3 Flash** đọc ảnh trực tiếp. Khi chọn mô hình khác, hoặc GLM-5.3 Flash chưa bật, trang chuyển sang **GLM-4.6V Flash** (mô hình miễn phí của Z.ai đọc được ảnh). Ảnh được thu nhỏ trước khi gửi.
 - **File:** đọc được văn bản, code, CSV, JSON, PDF có chữ (PDF scan thì chụp từng trang gửi dạng ảnh), Word `.docx` và Excel. File được đọc ngay trong trình duyệt rồi gửi phần chữ cho mô hình, tối đa khoảng 60.000 ký tự mỗi file.
 - Ảnh và file được lưu cùng lịch sử chat. Khi bộ nhớ trình duyệt đầy, ảnh và file của các đoạn chat cũ nhất sẽ bị xoá trước.
 

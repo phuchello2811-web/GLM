@@ -5,7 +5,7 @@ Worker này giữ API key Z.ai của bạn, để mọi người mở trang chat
 Worker được cài sẵn mấy lớp bảo vệ:
 
 - Key nằm trong biến bí mật trên Cloudflare, không có trong code và không ai xem được.
-- Chỉ cho dùng các mô hình **miễn phí** (`glm-4.7-flash`, `glm-4.5-flash`, `glm-4.6v-flash`). Ai cố gọi mô hình trả phí cũng bị đổi về mô hình miễn phí, nên bạn không bao giờ mất tiền.
+- Chỉ cho dùng các mô hình **miễn phí**: `glm-4.7-flash`, `glm-4.5-flash`, `glm-4.6v-flash` của Z.ai, và `glm-5.3-flash` trên NVIDIA (bước 7). Ai cố gọi mô hình trả phí cũng bị đổi về mô hình miễn phí, nên bạn không bao giờ mất tiền.
 - Chỉ nhận yêu cầu từ trang `phuchello2811-web.github.io`. Trang web khác không dùng ké được.
 - Mỗi địa chỉ IP được hỏi tối đa 20 lần mỗi phút.
 - Câu hỏi có ảnh luôn được gửi tới `glm-4.6v-flash` (mô hình đọc được ảnh). Mỗi đoạn chat tối đa 8 ảnh và 8MB.
@@ -55,6 +55,18 @@ Nhớ dán lại `worker.js` mới nhất (bước 2) mỗi khi trang được c
 Không cần tạo bảng, Worker tự tạo ở lần đồng bộ đầu tiên. Máy chủ chỉ lưu mã đồng bộ đã băm, không lưu mã thật.
 
 Muốn dùng: trong trang chat, vào **Cài đặt → Đồng bộ giữa các máy → Bật đồng bộ**, chép mã, rồi trên máy kia chọn **Nhập mã → Kết nối**.
+
+## Bước 7: Bật GLM-5.3 Flash qua NVIDIA (miễn phí)
+
+GLM-5.3 Flash là thế hệ GLM-5, mạnh hơn GLM-4.7 Flash nhiều và đọc được ảnh. NVIDIA cho dùng miễn phí khoảng 40 lượt mỗi phút cho cả tài khoản, không cần thẻ tín dụng.
+
+1. Vào https://build.nvidia.com, bấm **Login** và tạo tài khoản NVIDIA miễn phí (cần xác minh số điện thoại).
+2. Mở https://build.nvidia.com/settings/api-keys, bấm **Generate API Key**, rồi chép key (bắt đầu bằng `nvapi-`). Đừng dán key này cho ai, kể cả vào khung chat.
+3. Mở Worker `glm`, chọn **Settings → Variables and Secrets → Add**. **Type** chọn **Secret**, **Variable name** nhập `NVIDIA_API_KEY`, **Value** dán key. Bấm **Deploy**.
+
+Kiểm tra: hỏi một câu trong trang chat. Nếu dưới câu trả lời **không** có dòng "trả lời bằng GLM-4.7 Flash vì GLM-5.3 Flash đang bận hoặc chưa bật" là GLM-5.3 Flash đã chạy.
+
+NVIDIA ghi rằng bản miễn phí dùng để thử nghiệm và phát triển, và có thể đổi điều kiện bất cứ lúc nào. Khi NVIDIA lỗi, bận hoặc hết lượt, máy chủ tự dùng GLM-4.7 Flash của Z.ai, nên trang vẫn chạy.
 
 ## Tuỳ chỉnh (không bắt buộc)
 
