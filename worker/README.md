@@ -38,12 +38,14 @@ Thấy dòng `Máy chủ GLM đang chạy` là được. Dán địa chỉ đó 
 
 ## Bước 5: Bật tạo ảnh (miễn phí)
 
-Trang dùng mô hình FLUX trên Cloudflare Workers AI để tạo ảnh. Gói miễn phí tạo được khoảng vài trăm ảnh mỗi ngày.
+Trang dùng mô hình **FLUX.2 [klein]** trên Cloudflare Workers AI để tạo ảnh và **sửa ảnh** (đổi nền, đổi phong cách, thêm bớt vật). Gói miễn phí (10.000 neuron mỗi ngày) vẽ được khoảng 90 ảnh 1024x1024 mỗi ngày. Nếu FLUX.2 lỗi, Worker tự dùng FLUX.1 [schnell].
 
 1. Mở Worker `glm`, chọn thẻ **Bindings**, bấm **Add binding**.
 2. Chọn **Workers AI**. **Variable name** nhập `AI`, rồi bấm **Add Binding** (hoặc **Deploy**).
 
-Chưa bật thì trang tự dùng Pollinations. Pollinations cũng miễn phí, nhưng ảnh kém hơn và có logo nhỏ.
+Chưa bật thì trang tự dùng Pollinations. Pollinations cũng miễn phí nhưng ảnh kém hơn và không sửa được ảnh.
+
+Nhớ dán lại `worker.js` mới nhất (bước 2) mỗi khi trang được cập nhật, rồi bấm **Deploy**.
 
 ## Bước 6: Bật đồng bộ lịch sử giữa các máy (miễn phí)
 

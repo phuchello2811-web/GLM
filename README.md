@@ -59,20 +59,22 @@ Bật nút **Nghĩ kỹ** trong khung chat để mô hình giải hai lần đ�
 Khi cần tính toán, mô hình tự viết code JavaScript hoặc Python. Trang chạy code đó ngay trong trình duyệt (cách ly, không truy cập mạng; Python chạy bằng [Pyodide](https://pyodide.org), có sẵn numpy, pandas, sympy) rồi đưa kết quả cho mô hình, nên phép tính luôn chính xác. Khi bạn nhờ viết code, mô hình chạy thử với vài ví dụ, tự sửa nếu lỗi, rồi mới đưa code cuối cùng. Code trong câu trả lời được tô màu cho dễ đọc. Khi cần thông tin thực tế, mô hình tự tra cứu rồi trả lời kèm nguồn. Câu hỏi có chữ như "hiện nay", "mới nhất", "hôm nay", "giá"… thì bắt buộc phải tra, vì kiến thức có sẵn của mô hình đã cũ. Các nguồn (đều miễn phí, không cần key):
 
 - **Wikipedia và web cùng lúc** (Wikipedia tiếng Việt/Anh và tìm kiếm DuckDuckGo), và **đọc nội dung trang web** qua [Jina Reader](https://jina.ai/reader). Bạn có thể dán đường dẫn để mô hình đọc.
+- **Tin tức mới nhất** kèm ngày đăng (Bing News).
+- **Nghiên cứu sâu:** với câu hỏi phức tạp, GLM tìm tối đa 4 truy vấn cùng lúc, tự đọc các trang tốt nhất và trích đoạn liên quan, rồi tổng hợp kèm nguồn.
 - **Thời tiết** hiện tại và 3 ngày tới ([Open-Meteo](https://open-meteo.com)).
 - **Tỷ giá ngoại tệ** ([ExchangeRate-API](https://www.exchangerate-api.com)).
 - **Bài báo khoa học** ([OpenAlex](https://openalex.org)), gồm tóm tắt, tác giả, số trích dẫn.
 - **Lập trình:** câu hỏi và câu trả lời hay nhất trên Stack Overflow, cùng kho mã trên GitHub.
 - **Từ điển tiếng Anh** ([Wiktionary](https://en.wiktionary.org)).
 
-Từ khoá tra cứu được gửi tới các dịch vụ trên. Mô hình cũng được dạy cách suy nghĩ: chia nhỏ bài toán, thử nhiều cách và tự kiểm tra trước khi trả lời. Nếu máy chủ ngắt kết nối giữa chừng, trang tự nối lại và cho mô hình viết tiếp. Muốn mô hình nhớ điều gì ở mọi đoạn chat, cứ nói "hãy nhớ: …". Danh sách ghi nhớ nằm trong **Cài đặt → Bộ nhớ**.
+Các trang đã tra hiện thành danh sách **Nguồn** dưới câu trả lời. Từ khoá tra cứu được gửi tới các dịch vụ trên. Mô hình cũng được dạy cách suy nghĩ: hiểu đề, chia thành câu hỏi con, thử ít nhất hai hướng, kiểm chứng kết quả bằng một cách độc lập (chạy code, thay ngược, vét cạn) và nói rõ mức độ chắc chắn. Bài toán, xác suất và câu đố logic được kiểm lại bằng sympy hoặc vét cạn. Nếu máy chủ ngắt kết nối giữa chừng, trang tự nối lại và cho mô hình viết tiếp. Muốn mô hình nhớ điều gì ở mọi đoạn chat, cứ nói "hãy nhớ: …". Danh sách ghi nhớ nằm trong **Cài đặt → Bộ nhớ**.
 
 **Nhân vật, kho kiến thức, đồng bộ:**
 
 - **Nhân vật:** chọn trong menu mô hình ở khung chat, gồm Thầy dạy Toán, Huấn luyện viên IOI, Dịch giả Anh–Việt, Gia sư tiếng Anh, Trợ lý viết văn. Có thể tự tạo thêm trong **Cài đặt**.
 - **Kho kiến thức:** **Cài đặt → Kho kiến thức → Thêm tài liệu** (PDF, Word, Excel, văn bản). Mỗi câu hỏi, GLM tự tìm đoạn liên quan trong kho và ghi rõ tài liệu đã dùng. Tài liệu chỉ lưu trong trình duyệt.
 - **Học từ câu trả lời được thích:** khi bạn hỏi câu giống câu cũ, các câu trả lời bạn đã bấm thích được dùng làm mẫu, để GLM trả lời đúng văn phong bạn muốn.
-- **Tạo ảnh:** nhờ "tạo bức tranh…", GLM tự viết mô tả rồi tạo ảnh. Bấm vào ảnh để xem cỡ lớn.
+- **Tạo và sửa ảnh:** nhờ "vẽ…" hoặc "tạo bức tranh…", GLM tự viết mô tả chi tiết và chọn khổ ảnh (vuông, ngang 16:9, dọc 9:16…). Trên mỗi ảnh có nút **Tải về**, **Vẽ lại** (cùng mô tả, ảnh khác) và **Sửa** (gõ thay đổi, ví dụ "đổi nền thành bãi biển"). Gửi ảnh của bạn kèm "biến ảnh này thành tranh anime" cũng được. Ảnh do FLUX.2 trên Cloudflare vẽ; sửa ảnh cần bật Workers AI theo [worker/README.md](worker/README.md).
 - **Đồng bộ giữa các máy:** **Cài đặt → Đồng bộ giữa các máy**. Cần bật trên Cloudflare theo [worker/README.md](worker/README.md).
 - **Sắp xếp đoạn chat:** bấm nút `⋯` cạnh đoạn chat để ghim, đổi tên, chuyển vào thư mục. GLM tự đặt tên đoạn chat sau câu trả lời đầu tiên.
 

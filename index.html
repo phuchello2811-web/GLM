@@ -30,6 +30,7 @@
     --ok: #10a37f;
     --shadow: 0 2px 12px rgba(0,0,0,.06);
     --scroll: #c8c8c8;
+    --brand: #0a78d1; --brand-2: #0f9f8f; --brand-soft: rgba(10,120,209,.07); --ring: rgba(10,120,209,.2);
     --hl-kw: #a626a4; --hl-str: #50a14f; --hl-num: #b76b01; --hl-fn: #4078f2; --hl-type: #c18401; --hl-meta: #0184bc;
     color-scheme: light;
   }
@@ -39,6 +40,7 @@
       --border: #3a3a3a; --text: #ececec; --muted: #a0a0a0; --accent: #ececec;
       --accent-text: #0d0d0d; --code-bg: #171717; --shadow: 0 2px 12px rgba(0,0,0,.3);
       --scroll: #4a4a4a; color-scheme: dark;
+      --brand: #4fb0ff; --brand-2: #3fd2bf; --brand-soft: rgba(79,176,255,.12); --ring: rgba(79,176,255,.25);
     --hl-kw: #c678dd; --hl-str: #98c379; --hl-num: #d19a66; --hl-fn: #61afef; --hl-type: #e5c07b; --hl-meta: #56b6c2;
     }
   }
@@ -47,6 +49,7 @@
     --border: #3a3a3a; --text: #ececec; --muted: #a0a0a0; --accent: #ececec;
     --accent-text: #0d0d0d; --code-bg: #171717; --shadow: 0 2px 12px rgba(0,0,0,.3);
     --scroll: #4a4a4a; color-scheme: dark;
+    --brand: #4fb0ff; --brand-2: #3fd2bf; --brand-soft: rgba(79,176,255,.12); --ring: rgba(79,176,255,.25);
     --hl-kw: #c678dd; --hl-str: #98c379; --hl-num: #d19a66; --hl-fn: #61afef; --hl-type: #e5c07b; --hl-meta: #56b6c2;
   }
 
@@ -332,12 +335,90 @@
     .composer-wrap { padding: 0 12px 10px; }
     .msg.user .bubble { max-width: 85%; }
   }
+
+  /* ---------- Giao diện ---------- */
+  body { -webkit-font-smoothing: antialiased; }
+  .sidebar { border-right: 1px solid var(--border); }
+  .brand { flex: 1; display: flex; align-items: center; gap: 9px; padding: 0 6px; font-weight: 650; font-size: 15px; letter-spacing: -.01em; min-width: 0; }
+  .brand img { width: 26px; height: 26px; border-radius: 8px; }
+  #newChat { border: 1px solid var(--border); background: var(--bg); margin: 6px 0 2px; box-shadow: 0 1px 2px rgba(0,0,0,.04); transition: border-color .15s, background .15s, color .15s; }
+  #newChat:hover { border-color: var(--brand); color: var(--brand); background: var(--brand-soft); }
+  .history-item { transition: background .12s; }
+  .history-item.active { background: var(--brand-soft); }
+  .history-item.active .title { color: var(--brand); font-weight: 500; }
+  .top-title { position: absolute; left: 50%; transform: translateX(-50%); max-width: 46%; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
+  .empty { gap: 12px; }
+  .hero-logo { width: 64px; height: 64px; border-radius: 18px; margin-bottom: 8px; box-shadow: 0 12px 32px var(--ring); }
+  .empty h1 { font-size: clamp(26px, 4vw, 34px); background: linear-gradient(90deg, var(--brand), var(--brand-2)); -webkit-background-clip: text; background-clip: text; color: transparent; padding-bottom: 2px; }
+  .hero-sub { margin: 0; color: var(--muted); text-align: center; max-width: 520px; font-size: 15px; }
+  .msg { animation: rise .28s ease both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } }
+  .msg.assistant { position: relative; padding-left: 44px; }
+  .msg.assistant::before { content: ""; position: absolute; left: 0; top: 0; width: 30px; height: 30px; border-radius: 9px; background: url(icons/icon.svg) center/cover; box-shadow: 0 2px 10px var(--ring); }
+  .msg.user .bubble { background: var(--brand-soft); border: 1px solid var(--ring); border-bottom-right-radius: 8px; }
+  .think summary { padding: 3px 12px; border-radius: 999px; background: var(--surface); font-size: 13px; }
+  .think summary:hover { color: var(--text); }
+  .content a { color: var(--brand); text-decoration-color: var(--ring); }
+  .content a:hover { text-decoration-color: currentColor; }
+  .content blockquote { border-left-color: var(--brand); }
+  .content table { border-radius: 10px; }
+  .content tr:nth-child(even) td { background: var(--brand-soft); }
+  .content h1, .content h2, .content h3 { letter-spacing: -.01em; }
+  .codeblock { border-radius: 14px; }
+  .composer { border-radius: 28px; transition: border-color .15s, box-shadow .15s; }
+  .composer:focus-within { border-color: var(--brand); box-shadow: 0 0 0 4px var(--ring), var(--shadow); }
+  .composer.drag { border-color: var(--brand); }
+  .send { background: linear-gradient(135deg, var(--brand), var(--brand-2)); color: #fff; box-shadow: 0 4px 14px var(--ring); transition: opacity .15s, transform .15s; }
+  .send:not(:disabled):hover { transform: translateY(-1px); }
+  .send:disabled { box-shadow: none; }
+  .deep.on { color: var(--brand); border-color: var(--brand); background: var(--brand-soft); }
+  .composer-wrap { position: relative; }
+  .to-bottom { position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%); width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--bg); border: 1px solid var(--border); box-shadow: var(--shadow); color: var(--muted); z-index: 4; }
+  .to-bottom:hover { color: var(--text); }
+  .to-bottom[hidden] { display: none; }
+  .to-bottom svg { width: 18px; height: 18px; }
+  .sources { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .sources .src-label { width: 100%; font-size: 12px; color: var(--muted); font-weight: 600; }
+  .sources a { display: inline-flex; align-items: center; gap: 6px; max-width: 250px; padding: 4px 10px 4px 6px; border: 1px solid var(--border); border-radius: 999px;
+    font-size: 12px; color: var(--text); text-decoration: none; background: var(--bg); transition: border-color .15s, background .15s; }
+  .sources a:hover { border-color: var(--brand); background: var(--brand-soft); }
+  .sources img { width: 16px; height: 16px; border-radius: 4px; flex: none; }
+  .sources span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sources b { font-weight: 600; color: var(--muted); }
+  .gen-card { position: relative; display: inline-block; max-width: min(100%, 560px); margin: 0 0 12px; vertical-align: top; }
+  .gen-card .gen-img { margin: 0; max-width: 100%; cursor: zoom-in; box-shadow: var(--shadow); }
+  .gen-card.busy .gen-img { opacity: .35; filter: blur(2px); transition: opacity .2s, filter .2s; }
+  .gen-tools { position: absolute; right: 8px; top: 8px; display: flex; gap: 4px; opacity: 0; transition: opacity .15s; }
+  .gen-card:hover .gen-tools, .gen-card:focus-within .gen-tools { opacity: 1; }
+  @media (hover: none) { .gen-tools { opacity: 1; } }
+  .gen-tools button { display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 999px; font-size: 12px; background: rgba(0,0,0,.6); color: #fff; backdrop-filter: blur(6px); }
+  .gen-tools button:hover { background: rgba(0,0,0,.82); }
+  .gen-tools svg { width: 14px; height: 14px; }
+  .gen-cap { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  dialog { width: min(560px, calc(100vw - 32px)); border-radius: 20px; }
+  dialog::backdrop { backdrop-filter: blur(3px); }
+  .sec-title { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--brand); padding-top: 14px; border-top: 1px solid var(--border); }
+  .sec-title:first-child { border-top: 0; padding-top: 0; }
+  .btn.primary { background: linear-gradient(135deg, var(--brand), var(--brand-2)); border-color: transparent; color: #fff; }
+  @media (max-width: 768px) {
+    .msg.assistant { padding-left: 0; }
+    .msg.assistant::before { position: static; display: block; width: 24px; height: 24px; border-radius: 7px; margin-bottom: 8px; }
+    .top-title { max-width: 58%; }
+  }
+  /* Màn hình hẹp: chip mô hình co lại, nút Nghĩ kỹ chỉ còn biểu tượng để hàng nút không tràn ra ngoài. */
+  .deep.chip { flex-shrink: 1; }
+  @media (max-width: 480px) {
+    #deep { font-size: 0; gap: 0; padding: 0 10px; }
+    .composer-tools { gap: 4px; }
+  }
 </style>
 </head>
 <body>
 
 <aside class="sidebar" id="sidebar">
   <div class="side-top">
+    <div class="brand"><img src="icons/icon.svg" alt="">GLM Chat</div>
     <button class="icon-btn" id="closeSide" title="Đóng thanh bên">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg>
     </button>
@@ -370,6 +451,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg>
     </button>
     <div class="model-menu" id="modelMenu" role="menu" hidden></div>
+    <div class="top-title" id="topTitle"></div>
     <div class="spacer"></div>
     <button class="icon-btn" id="exportBtn" title="Tải đoạn chat này về (Markdown)" hidden>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M6 10l6 6 6-6M5 20h14"/></svg>
@@ -382,12 +464,16 @@
   <div class="scroll" id="scroll">
     <div class="empty" id="empty">
       <img class="hero-logo" src="icons/icon.svg" alt="">
-      <h1>Hôm nay bạn muốn hỏi gì?</h1>
+      <h1 id="hello">Hôm nay bạn muốn hỏi gì?</h1>
+      <p class="hero-sub">Giải toán, viết code, tra tin mới, nghiên cứu nhiều nguồn, vẽ và sửa ảnh. Cứ hỏi bằng tiếng Việt.</p>
     </div>
     <div class="thread" id="thread" hidden></div>
   </div>
 
   <div class="composer-wrap">
+    <button class="to-bottom" id="toBottom" type="button" title="Cuộn xuống cuối" hidden>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
+    </button>
     <form class="composer" id="form">
       <div class="attachments" id="attachments" hidden></div>
       <textarea id="input" rows="1" placeholder="Nhắn tin cho GLM" autofocus></textarea>
@@ -427,10 +513,30 @@
       </button>
     </div>
     <div class="dlg-body">
+      <div class="sec-title">Mô hình và cách trả lời</div>
       <label>Mô hình
         <select id="setProvider"></select>
         <small id="modelHelp"></small>
       </label>
+      <label>Phần suy nghĩ
+        <select id="setThink">
+          <option value="collapsed">Thu gọn sau khi xong</option>
+          <option value="open">Luôn mở</option>
+        </select>
+      </label>
+      <div class="row">
+        <label>Nhiệt độ
+          <input id="setTemp" type="number" step="0.05" min="0" max="2">
+        </label>
+        <label>Số token tối đa
+          <input id="setMax" type="number" step="256" min="256">
+        </label>
+      </div>
+      <label class="check"><input type="checkbox" id="setTools"> Cho AI dùng công cụ: chạy code, tra cứu (Wikipedia, web, tin tức, nghiên cứu sâu, thời tiết, tỷ giá, bài báo khoa học, Stack Overflow, GitHub, từ điển), tạo và sửa ảnh</label>
+      <label>Lời nhắc hệ thống
+        <textarea id="setSystem" placeholder="Ví dụ: Luôn trả lời bằng tiếng Việt."></textarea>
+      </label>
+      <div class="sec-title">Cá nhân hoá</div>
       <label>Nhân vật của bạn
         <small>Chọn nhân vật trong menu mô hình ở khung chat. Có sẵn Thầy dạy Toán, Huấn luyện viên IOI, Dịch giả, Gia sư tiếng Anh, Trợ lý viết văn; tạo thêm ở đây.</small>
         <ul class="mem-list" id="personaList"></ul>
@@ -438,6 +544,15 @@
         <textarea id="personaPrompt" placeholder="Lời dặn cho nhân vật, ví dụ: Bạn là thầy giáo Vật lý, giải thích bằng ví dụ đời thường, luôn vẽ sơ đồ lực…"></textarea>
         <button class="btn" id="personaAdd" type="button">Thêm nhân vật</button>
       </label>
+      <label>Bộ nhớ
+        <small>AI dùng những điều này ở mọi đoạn chat. Trong lúc chat, cứ nói "hãy nhớ…" để thêm.</small>
+        <ul class="mem-list" id="memList"></ul>
+        <div class="mem-add">
+          <input id="memInput" placeholder="Thêm điều AI cần nhớ, ví dụ: Tôi tên Phú, là sinh viên IT">
+          <button class="btn" id="memAdd" type="button">Thêm</button>
+        </div>
+      </label>
+      <div class="sec-title">Kiến thức và dữ liệu</div>
       <label>Kho kiến thức
         <small>Thêm sách, đề thi, ghi chú (PDF, Word, Excel, văn bản). Mỗi câu hỏi, GLM tự tìm đoạn liên quan trong kho rồi trả lời dựa trên đó. Tài liệu chỉ lưu trong trình duyệt này.</small>
         <ul class="mem-list" id="kbList"></ul>
@@ -447,6 +562,14 @@
         </div>
         <input type="file" id="kbInput" multiple hidden>
       </label>
+      <label>Dữ liệu train
+        <small>Bấm nút thích dưới câu trả lời tốt để lưu lại. Khi đủ vài trăm câu, xuất file rồi làm theo FINETUNE.md để dạy mô hình trên Google Colab.</small>
+        <div class="mem-add">
+          <input id="trainCount" readonly>
+          <button class="btn" id="exportTrain" type="button">Xuất data.jsonl</button>
+        </div>
+      </label>
+      <div class="sec-title">Đồng bộ</div>
       <label>Đồng bộ giữa các máy
         <small>Dùng chung lịch sử chat, bộ nhớ và nhân vật trên nhiều máy (Mac, điện thoại, trình duyệt khác). Ảnh trong chat không đồng bộ. Ai có mã đều xem được chat của bạn, nên đừng chia sẻ mã.</small>
         <div id="syncOff" class="mem-add">
@@ -462,39 +585,6 @@
           <button class="btn" id="syncStop" type="button">Tắt</button>
         </div>
         <small id="syncStatus">Đồng bộ đang tắt.</small>
-      </label>
-      <label>Lời nhắc hệ thống
-        <textarea id="setSystem" placeholder="Ví dụ: Luôn trả lời bằng tiếng Việt."></textarea>
-      </label>
-      <div class="row">
-        <label>Nhiệt độ
-          <input id="setTemp" type="number" step="0.05" min="0" max="2">
-        </label>
-        <label>Số token tối đa
-          <input id="setMax" type="number" step="256" min="256">
-        </label>
-      </div>
-      <label>Phần suy nghĩ
-        <select id="setThink">
-          <option value="collapsed">Thu gọn sau khi xong</option>
-          <option value="open">Luôn mở</option>
-        </select>
-      </label>
-      <label class="check"><input type="checkbox" id="setTools"> Cho AI dùng công cụ: chạy code, tra cứu (Wikipedia, web, thời tiết, tỷ giá, bài báo khoa học, Stack Overflow, GitHub, từ điển) và tạo ảnh</label>
-      <label>Dữ liệu train
-        <small>Bấm nút thích dưới câu trả lời tốt để lưu lại. Khi đủ vài trăm câu, xuất file rồi làm theo FINETUNE.md để dạy mô hình trên Google Colab.</small>
-        <div class="mem-add">
-          <input id="trainCount" readonly>
-          <button class="btn" id="exportTrain" type="button">Xuất data.jsonl</button>
-        </div>
-      </label>
-      <label>Bộ nhớ
-        <small>AI dùng những điều này ở mọi đoạn chat. Trong lúc chat, cứ nói "hãy nhớ…" để thêm.</small>
-        <ul class="mem-list" id="memList"></ul>
-        <div class="mem-add">
-          <input id="memInput" placeholder="Thêm điều AI cần nhớ, ví dụ: Tôi tên Phú, là sinh viên IT">
-          <button class="btn" id="memAdd" type="button">Thêm</button>
-        </div>
       </label>
     </div>
     <div class="dlg-foot">
@@ -641,6 +731,7 @@
   }
   let currentId = null;
   let controller = null;
+  let genChat = null; // đoạn chat đang được trả lời
 
   // Ảnh và file làm bộ nhớ trình duyệt (khoảng 5MB) đầy nhanh: hết chỗ thì bỏ dần ảnh/file của các đoạn chat cũ nhất.
   function saveChats(sync = true) {
@@ -649,9 +740,10 @@
       try { localStorage.setItem("glm.chats", JSON.stringify(chats)); return; } catch (e) {
         if (e.name !== "QuotaExceededError" && e.code !== 22) return;
         const order = [...chats.filter((c) => c.id !== currentId), ...chats.filter((c) => c.id === currentId)];
-        const victim = order.flatMap((c) => c.messages).find((m) => m.images?.length || m.genImages?.some((u) => u?.startsWith("data:")) || m.files?.some((f) => f.text));
+        const victim = order.flatMap((c) => c.messages).find((m) => m.images?.length || m.refImages?.length || m.genImages?.some((u) => u?.startsWith("data:")) || m.files?.some((f) => f.text));
         if (!victim) return;
         if (victim.genImages?.some((u) => u?.startsWith("data:"))) victim.genImages = victim.genImages.map((u) => (u?.startsWith("data:") ? null : u));
+        else if (victim.refImages?.length) victim.refImages = [];
         else if (victim.images?.length) { victim.imagesDropped = (victim.imagesDropped || 0) + victim.images.length; victim.images = []; }
         else for (const f of victim.files) if (f.text) { f.text = ""; f.dropped = true; }
       }
@@ -723,10 +815,10 @@
       .replace(/\u0001(\d+)\u0001/g, (_, i) => mathSpan(maths[i], false));
   }
 
-  const CODE_LABELS = { "js-run": "JavaScript · đã chạy", "py-run": "Python · đã chạy", "python-run": "Python · đã chạy", search: "Tra cứu Wikipedia và web", wiki: "Tra cứu Wikipedia", web: "Tìm trên web", read: "Đọc trang web", image: "Tạo ảnh",
+  const CODE_LABELS = { "js-run": "JavaScript · đã chạy", "py-run": "Python · đã chạy", "python-run": "Python · đã chạy", search: "Tra cứu Wikipedia và web", news: "Tin tức", research: "Nghiên cứu sâu", wiki: "Tra cứu Wikipedia", web: "Tìm trên web", read: "Đọc trang web", image: "Tạo ảnh",
     weather: "Thời tiết", rate: "Tỷ giá", papers: "Tìm bài báo khoa học", dev: "Tìm trên Stack Overflow và GitHub", dict: "Tra từ điển", output: "Kết quả" };
   // Ngôn ngữ để tô màu code; khối không có tên ngôn ngữ thì để highlight.js tự đoán.
-  const HL_LANG = new Proxy({ "js-run": "javascript", "py-run": "python", "python-run": "python", search: null, wiki: null, web: null, read: null, image: null, weather: null, rate: null, papers: null, dev: null, dict: null, output: null, "": "auto" }, {
+  const HL_LANG = new Proxy({ "js-run": "javascript", "py-run": "python", "python-run": "python", search: null, news: null, research: null, wiki: null, web: null, read: null, image: null, weather: null, rate: null, papers: null, dev: null, dict: null, output: null, "": "auto" }, {
     get: (t, k) => (k in t ? t[k] : String(k).toLowerCase()),
   });
 
@@ -857,6 +949,7 @@
   function renderHistory() {
     els.history.innerHTML = "";
     $("exportBtn").hidden = !currentChat()?.messages.length;
+    $("topTitle").textContent = currentChat()?.messages.length ? currentChat().title || "" : "";
     // Tìm theo tên đoạn chat và nội dung tin nhắn, không phân biệt hoa thường và dấu.
     const fold = (t) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/gi, "d").toLowerCase();
     const q = fold($("historySearch").value.trim());
@@ -896,7 +989,12 @@
     els.empty.style.display = has ? "none" : "";
     els.thread.hidden = !has;
     els.thread.innerHTML = "";
-    if (!has) return;
+    $("toBottom").hidden = true;
+    if (!has) {
+      const h = new Date().getHours();
+      $("hello").textContent = `Chào buổi ${h < 11 && h >= 4 ? "sáng" : h < 13 && h >= 4 ? "trưa" : h < 18 && h >= 4 ? "chiều" : "tối"}, mình giúp gì được bạn?`;
+      return;
+    }
     chat.messages.forEach((m, idx) => els.thread.append(m.role === "user" ? userNode(m, idx) : assistantNode(m, idx)));
     scrollDown(true);
   }
@@ -905,10 +1003,10 @@
     const d = document.createElement("div");
     d.className = "msg user";
     d.dataset.idx = idx;
-    if (m.images?.length || m.files?.length || m.imagesDropped) {
+    if (m.images?.length || m.refImages?.length || m.files?.length || m.imagesDropped) {
       const a = document.createElement("div");
       a.className = "attachments";
-      a.innerHTML = (m.images || []).map((u) => `<div class="att image"><img alt="Ảnh đính kèm" src="${u}"></div>`).join("") +
+      a.innerHTML = [...(m.refImages || []), ...(m.images || [])].map((u) => `<div class="att image"><img alt="Ảnh đính kèm" src="${u}"></div>`).join("") +
         (m.files || []).map((f) => attChip(f.name, f.dropped ? "Đã xoá nội dung để tiết kiệm bộ nhớ" : fileInfo(f))).join("") +
         (m.imagesDropped ? attChip(`${m.imagesDropped} ảnh`, "Đã xoá để tiết kiệm bộ nhớ") : "");
       d.append(a);
@@ -988,6 +1086,17 @@
     }
     html += `<div class="content${streaming && !thinking ? " cursor" : ""}">${markdown(answer.replace(MEMO_TAG, "").replace(/\[\[[^\]]*$/, "").trim())}</div>`;
     if (m.notice) html += `<div class="shimmer" style="font-size:14px">${esc(m.notice)}</div>`;
+    if (m.sources?.length && !streaming) {
+      // Nguồn được trích trong câu trả lời đứng trước.
+      const cited = (s) => (answer.includes(s.url) ? 0 : 1);
+      const list = [...m.sources].sort((a, b) => cited(a) - cited(b)).slice(0, 8);
+      html += `<div class="sources"><span class="src-label">Nguồn</span>` + list.map((s, i) => {
+        let host = "";
+        try { host = new URL(s.url).hostname.replace(/^www\./, ""); } catch {}
+        return `<a href="${esc(s.url)}" target="_blank" rel="noopener" title="${esc(s.title ? s.title + "\n" + s.url : s.url)}">` +
+          `<img alt="" loading="lazy" src="https://icons.duckduckgo.com/ip3/${esc(host)}.ico"><span><b>${i + 1}</b> ${esc(s.title || host)}</span></a>`;
+      }).join("") + `</div>`;
+    }
     if (m.kb?.length) html += `<div class="memo">${ICON_BOOK}Dùng kho kiến thức: ${esc(m.kb.join(", "))}</div>`;
     if (m.remembered) html += m.remembered.map((t) => `<div class="memo">${ICON_CHECK}Đã ghi nhớ: ${esc(t)}</div>`).join("");
     if (m.error) html += `<div class="error">${esc(m.error)}</div>`;
@@ -1010,9 +1119,22 @@
     if (det) det.querySelector("summary").addEventListener("click", () => { det.dataset.user = "1"; });
     if (det && streaming && thinking) det.dataset.live = "1";
     // Ảnh do công cụ tạo: gắn ảnh thật vào chỗ đánh dấu; ảnh đã bị xoá cho đỡ bộ nhớ thì ghi chú.
+    node.querySelectorAll(".sources img").forEach((img) => { img.onerror = () => (img.style.visibility = "hidden"); });
     node.querySelectorAll("img[data-gen]").forEach((img) => {
-      const url = m.genImages?.[Number(img.dataset.gen)];
-      if (url) { img.src = url; img.title = "Bấm để mở ảnh cỡ lớn"; img.onclick = () => openImage(url); }
+      const i = Number(img.dataset.gen), url = m.genImages?.[i];
+      if (url) {
+        img.src = url; img.title = "Bấm để mở ảnh cỡ lớn"; img.onclick = () => openImage(url);
+        // Khung ảnh có nút Tải về, Vẽ lại (cùng mô tả, ảnh khác), Sửa (đính kèm ảnh vào ô chat để sửa bằng lời).
+        const meta = m.genMeta?.[i];
+        const card = document.createElement("div");
+        card.className = "gen-card"; card.dataset.gen = i;
+        img.replaceWith(card); card.append(img);
+        if (!streaming) card.insertAdjacentHTML("beforeend", `<div class="gen-tools">` +
+          `<button type="button" data-img="download" title="Tải ảnh về máy">${ICON_DOWN}Tải về</button>` +
+          (meta && !meta.edit ? `<button type="button" data-img="again" title="Vẽ lại với cùng mô tả">${ICON_REDO}Vẽ lại</button>` : "") +
+          `<button type="button" data-img="edit" title="Sửa ảnh này bằng lời">${ICON_EDIT}Sửa</button></div>`);
+        if (meta?.model) card.insertAdjacentHTML("beforeend", `<div class="gen-cap">${meta.width}×${meta.height} · ${esc(meta.model)}${meta.edit ? " · sửa từ ảnh mẫu" : ""}</div>`);
+      }
       else img.outerHTML = '<div class="gen-img-gone">(Ảnh đã được xoá khỏi máy này để tiết kiệm bộ nhớ.)</div>';
     });
     // Ảnh lấy từ đường dẫn mô hình viết ra có thể không tồn tại: tải lỗi thì ẩn đi.
@@ -1025,6 +1147,8 @@
     return s.scrollHeight - s.scrollTop - s.clientHeight < 120;
   }
   function scrollDown(force) { if (force || nearBottom()) els.scroll.scrollTop = els.scroll.scrollHeight; }
+  els.scroll.addEventListener("scroll", () => { $("toBottom").hidden = nearBottom(); }, { passive: true });
+  $("toBottom").onclick = () => els.scroll.scrollTo({ top: els.scroll.scrollHeight, behavior: "smooth" });
 
   // ---------- Chat ----------
   function newChat() {
@@ -1048,6 +1172,8 @@
     if (attached.some((a) => a.loading)) return;
     const images = attached.filter((a) => a.kind === "image").map((a) => a.url);
     const files = attached.filter((a) => a.kind === "file").map(({ name, text, pages }) => ({ name, text, pages }));
+    const refImages = attached.filter((a) => a.kind === "ref").map((a) => a.url);
+    if (!text && refImages.length && !images.length) text = "Vẽ lại ảnh này đẹp hơn.";
     if (!text) text = images.length ? "Hãy mô tả và phân tích ảnh này." : "Hãy tóm tắt nội dung file này.";
     attached = []; paintAttachments();
     let chat = currentChat();
@@ -1057,6 +1183,7 @@
     }
     const msg = { role: "user", content: text };
     if (images.length) msg.images = images;
+    if (refImages.length) msg.refImages = refImages;
     if (files.length) msg.files = files;
     chat.messages.push(msg);
     chat.updated = Date.now();
@@ -1077,20 +1204,27 @@
     "<loi_giai_B>\n{B}\n</loi_giai_B>\n\n" +
     "Hãy làm như một giám khảo nghiêm khắc: liệt kê các điểm A và B khác nhau (kết quả, lập luận, code), xác định bên nào đúng " +
     "bằng cách tự kiểm tra lại từng bước, thay số, hoặc chạy code/tra cứu bằng công cụ; tìm cả lỗi mà hai bên cùng mắc " +
-    "và trường hợp đặc biệt bị bỏ sót. Sau đó viết câu trả lời cuối cùng hoàn chỉnh và đúng nhất cho câu hỏi ban đầu, " +
+    "và trường hợp đặc biệt bị bỏ sót. Nếu A và B cùng kết quả, vẫn kiểm chứng lại bằng một cách thứ ba trước khi tin. " +
+    "Sau đó viết câu trả lời cuối cùng hoàn chỉnh và đúng nhất cho câu hỏi ban đầu, " +
     "như thể trả lời lần đầu: không nhắc tới A, B hay việc so sánh, dùng cùng ngôn ngữ với câu hỏi.";
 
   const THINK_PROMPT =
-    "Cách suy nghĩ với câu hỏi khó (toán, logic, code, khoa học, phân tích, lập kế hoạch):\n" +
-    "1) Hiểu đề: xác định chính xác người dùng cần gì (đầu vào, đầu ra, ràng buộc, điều kiện ngầm). Đề mơ hồ thì nêu giả định hợp lý.\n" +
-    "2) Lập kế hoạch: chia thành các bước nhỏ; nghĩ ít nhất hai hướng giải và chọn hướng chắc chắn nhất.\n" +
-    "3) Giải cẩn thận từng bước, không nhảy cóc; mọi phép tính quan trọng đều kiểm bằng code.\n" +
-    "4) Tự phản biện: tìm phản ví dụ, thử trường hợp biên, kiểm tra đơn vị, thay kết quả ngược vào đề, " +
-    "hỏi \"nếu mình sai thì sai ở đâu?\". Phát hiện lỗi thì quay lại sửa.\n" +
-    "5) Trả lời: kết luận rõ ràng trước, rồi giải thích ngắn gọn các bước chính.\n" +
-    "Không bịa thông tin; không chắc thì tra cứu hoặc nói rõ mức độ chắc chắn. " +
-    "Câu hỏi đơn giản thì trả lời ngắn gọn, không cần nghĩ dài. Trả lời bằng ngôn ngữ của người dùng.";
-
+    "Cách suy nghĩ. Trước hết đánh giá câu hỏi: đơn giản (chào hỏi, sự thật quen thuộc, việc ngắn) thì trả lời ngay, gọn; " +
+    "khó (toán, logic, code, khoa học, phân tích, so sánh, lập kế hoạch, câu hỏi nhiều bước) thì suy nghĩ đầy đủ theo các bước:\n" +
+    "1) Hiểu đề: viết lại yêu cầu bằng lời của mình; liệt kê dữ kiện, ẩn số, ràng buộc, điều kiện ngầm. " +
+    "Đọc lại từng chữ để bắt bẫy (\"không\", \"ít nhất\", \"trừ\", đơn vị, mốc thời gian). Đề mơ hồ thì nêu giả định hợp lý nhất.\n" +
+    "2) Chia nhỏ: tách thành các câu hỏi con theo thứ tự phụ thuộc; câu hỏi con nào cần dữ kiện bạn không chắc thì tra cứu.\n" +
+    "3) Lập kế hoạch: nghĩ ít nhất hai hướng (ví dụ đại số và hình học, công thức và vét cạn, lý thuyết và số liệu), " +
+    "ước lượng hướng nào chắc chắn hơn rồi chọn.\n" +
+    "4) Giải từng bước, mỗi bước suy ra chặt chẽ từ bước trước; ghi rõ đâu là sự thật, đâu là suy luận, đâu là giả định. " +
+    "Phép tính quan trọng, số lớn, xác suất, đếm tổ hợp thì kiểm bằng code.\n" +
+    "5) Kiểm chứng độc lập: kiểm lại kết quả bằng một cách khác với cách đã giải (thay ngược vào đề, thử số nhỏ, vét cạn bằng code, " +
+    "ước lượng cỡ độ lớn, kiểm tra đơn vị, xét trường hợp biên và phản ví dụ). Hỏi \"nếu mình sai thì sai ở đâu?\". " +
+    "Hai cách cho kết quả khác nhau thì tìm ra chỗ sai trước khi kết luận.\n" +
+    "6) Với câu hỏi mở (phân tích, đánh giá, dự đoán, tư vấn): xét nhiều góc nhìn và giả thuyết, phân biệt tương quan với nhân quả, " +
+    "cân nhắc bằng chứng ủng hộ và phản bác, nêu đánh đổi, rồi đưa ra kết luận có lập luận chứ không chỉ liệt kê.\n" +
+    "7) Trả lời: kết luận rõ ràng trước, rồi các bước hoặc lý do chính; với điều chưa chắc thì nói mức độ chắc chắn và vì sao.\n" +
+    "Không bịa thông tin, số liệu, trích dẫn hay đường dẫn; không chắc thì tra cứu hoặc nói rõ. Trả lời bằng ngôn ngữ của người dùng.";
   const TOOL_PROMPT =
     "Bạn có các công cụ sau. Mỗi lần chỉ dùng một công cụ: viết khối lệnh rồi DỪNG viết ngay sau khối đó. " +
     "Hệ thống sẽ chạy và gửi lại kết quả để bạn trả lời tiếp. Không tự đoán kết quả.\n\n" +
@@ -1100,20 +1234,30 @@
     "Tra cứu kiến thức (mỗi khối chỉ ghi từ khoá hoặc đường dẫn):\n" +
     "- ```search``` : tìm cùng lúc trên Wikipedia và web. Dùng mặc định cho mọi câu hỏi về sự kiện, nhân vật, số liệu, tin tức, sản phẩm…\n" +
     "- ```wiki``` : chỉ Wikipedia (kiến thức bách khoa). Từ khoá có dấu tiếng Việt tra bản tiếng Việt; từ khoá tiếng Anh tra bản tiếng Anh, thường đầy đủ hơn.\n" +
-    "- ```web``` : chỉ tìm trên web (tin mới, giá cả, tài liệu kỹ thuật, trang chính thức).\n" +
+    "- ```web``` : chỉ tìm trên web (giá cả, tài liệu kỹ thuật, trang chính thức).\n" +
+    "- ```news``` : tin tức mới nhất kèm ngày đăng (Bing News); cho thời sự, sự kiện, thể thao, giá cả, sản phẩm vừa ra.\n" +
+    "- ```research\ncâu hỏi con 1\ncâu hỏi con 2\n``` : nghiên cứu sâu: tìm tối đa 4 truy vấn cùng lúc, tự đọc các trang tốt nhất và trích đoạn liên quan. " +
+    "Dùng cho câu hỏi phức tạp, cần nhiều nguồn, so sánh, tổng hợp, phân tích; mỗi dòng một truy vấn ngắn, nên có cả tiếng Anh và tiếng Việt.\n" +
     "- ```read``` : đọc nội dung một trang web, ghi đường dẫn đầy đủ (dùng sau khi tìm, hoặc khi người dùng đưa link).\n" +
     "- ```weather``` : thời tiết hiện tại và 3 ngày tới, ghi tên địa điểm (ví dụ Hà Nội, Da Nang, Tokyo).\n" +
     "- ```rate``` : tỷ giá ngoại tệ, ví dụ \"100 USD VND\" hoặc \"EUR\".\n" +
     "- ```papers``` : bài báo khoa học (OpenAlex), từ khoá tiếng Anh; cho nghiên cứu, số liệu khoa học, trích dẫn.\n" +
     "- ```dev``` : Stack Overflow và GitHub, từ khoá tiếng Anh; cho lỗi lập trình, cách dùng thư viện, mã nguồn mẫu.\n" +
     "- ```dict``` : nghĩa, từ loại, ví dụ của một từ tiếng Anh (Wiktionary).\n\nVí dụ cách viết:\n```search\ngiá vàng SJC hôm nay\n```\nhoặc\n```weather\nĐà Lạt\n```\n\n" +
-    "Tạo ảnh:\n" +
-    "- ```image\nmô tả chi tiết bằng tiếng Anh: chủ thể, bối cảnh, phong cách, ánh sáng, góc chụp\n``` : tạo tranh, ảnh minh hoạ, phong cảnh, nhân vật; ảnh sẽ hiện cho người dùng. " +
-    "Logo, icon, sơ đồ, biểu đồ thì vẽ bằng SVG thay vì dùng công cụ này.\n\n" +
+    "Tạo và sửa ảnh:\n" +
+    "- ```image\nratio: 16:9\nmô tả bằng tiếng Anh\n``` : tạo tranh, ảnh chụp, ảnh minh hoạ, phong cảnh, nhân vật, poster; ảnh sẽ hiện cho người dùng. " +
+    "Dòng ratio không bắt buộc (mặc định 1:1; có 16:9, 9:16, 4:3, 3:4, 3:2, 2:3, 21:9): hình nền máy tính, phong cảnh dùng 16:9; hình nền điện thoại, chân dung, poster dùng 9:16 hoặc 2:3. " +
+    "Mô tả tốt dài 40–120 từ, theo thứ tự: chủ thể (ngoại hình, trang phục, hành động, cảm xúc), bối cảnh, phong cách (photorealistic photo, anime, Studio Ghibli style, watercolor, oil painting, 3D render, pixel art…), " +
+    "ánh sáng, bảng màu, góc máy và ống kính (close-up, wide shot, 85mm, bokeh), chất lượng (highly detailed, sharp focus). Chữ cần hiện trong ảnh thì đặt trong ngoặc kép. " +
+    "Sửa ảnh người dùng gửi hoặc ảnh vừa tạo (đổi nền, thêm hoặc bớt vật, đổi phong cách, đổi màu…): thêm dòng edit: yes và mô tả thay đổi, ví dụ:\n" +
+    "```image\nedit: yes\nmake the cat wear a red scarf, keep everything else unchanged\n```\n" +
+    "Cần nhiều ảnh thì dùng nhiều khối image lần lượt (tối đa 4). Logo, icon, sơ đồ, biểu đồ thì vẽ bằng SVG thay vì dùng công cụ này.\n\n" +
     "Cách tra cứu: kiến thức của bạn có thể đã cũ, nên với thông tin có thể đã thay đổi hoặc bạn không chắc, hãy tra cứu thay vì đoán. " +
-    "Chọn đúng nguồn chuyên biệt khi có (thời tiết, tỷ giá, bài báo, lập trình, từ điển); còn lại dùng search. " +
+    "Chọn đúng nguồn chuyên biệt khi có (tin tức, thời tiết, tỷ giá, bài báo, lập trình, từ điển); câu hỏi phức tạp hoặc cần tổng hợp nhiều nguồn thì dùng research; còn lại dùng search. " +
+    "Câu hỏi nhiều bước thì tra lần lượt từng dữ kiện còn thiếu, không đoán phần còn lại. " +
     "Đối chiếu nhiều nguồn khi chúng khác nhau, ưu tiên nguồn chính thống và mới nhất. Tổng cộng tra cứu tối đa 5 lần cho một câu hỏi; " +
-    "khi thông tin đã đủ thì trả lời ngay. Khi trả lời dựa trên tra cứu, ghi nguồn (tên trang và đường dẫn).\n\n" +
+    "khi thông tin đã đủ thì trả lời ngay. Khi trả lời dựa trên tra cứu, ghi nguồn ngay sau ý dùng nó dưới dạng link [tên trang](đường dẫn); " +
+    "chỉ dùng đường dẫn có trong kết quả tra cứu, không tự tạo đường dẫn.\n\n" +
     "Khi người dùng nhờ viết code Python hoặc JavaScript: BẮT BUỘC chạy thử trước khi trả lời. Bước đầu tiên của câu trả lời " +
     "là một khối py-run hoặc js-run chứa code kèm vài lệnh in kết quả với ví dụ, gồm cả trường hợp đặc biệt (rỗng, số âm, rất lớn…). " +
     "Nếu lỗi hoặc kết quả sai, tìm nguyên nhân, sửa rồi chạy lại. Không bao giờ tự viết kết quả chạy thử mà chưa chạy. " +
@@ -1129,7 +1273,7 @@
     "CHỈ KHI người dùng yêu cầu rõ ràng bạn ghi nhớ điều gì (ví dụ \"hãy nhớ…\", \"nhớ giúp tôi…\"), thêm vào cuối " +
     "câu trả lời một dòng: [[NHỚ: nội dung cần nhớ, viết ngắn gọn]]. Không bao giờ dùng dòng này trong các trường hợp khác.";
 
-  const RUN_BLOCK = /```(js-run|py-run|python-run|search|wiki|web|read|weather|rate|papers|dev|dict|image)[^\n]*\n([\s\S]*?)\n\s*```/;
+  const RUN_BLOCK = /```(js-run|py-run|python-run|search|wiki|web|news|research|read|weather|rate|papers|dev|dict|image)[^\n]*\n([\s\S]*?)\n\s*```/;
   const MEMO_TAG = /\[\[\s*[Nn][Hh][ỚớOo]\s*:\s*([^\]]+?)\s*\]\]/g;
 
   // Kỹ năng chuyên sâu: chỉ thêm vào lời nhắc khi câu hỏi gần đây đúng chủ đề, để mô hình tập trung.
@@ -1138,7 +1282,7 @@
       // Câu hỏi về thông tin thay đổi theo thời gian: mô hình hay trả lời theo kiến thức cũ, nên bắt buộc tra cứu.
       test: /hiện nay|hiện tại|hiện giờ|bây giờ|mới nhất|gần đây|năm nay|hôm nay|tuần này|tháng này|dạo này|đương nhiệm|đang là|giá\s|tỷ giá|tỉ giá|bao nhiêu tiền|kết quả trận|tỉ số|tỷ số|lịch thi đấu|\bcurrent(ly)?\b|\blatest\b|\btoday\b|\bnow\b|\bthis (week|month|year)\b|\b20[2-3]\d\b/i,
       prompt: "",
-      remind: "thông tin này có thể đã thay đổi so với kiến thức của bạn, nên BẮT BUỘC tra cứu (search, hoặc nguồn chuyên biệt như weather, rate) trước khi trả lời, và ghi nguồn",
+      remind: "thông tin này có thể đã thay đổi so với kiến thức của bạn, nên BẮT BUỘC tra cứu (search; news cho tin tức, sự kiện; hoặc nguồn chuyên biệt như weather, rate) trước khi trả lời, và ghi nguồn",
     },
     {
       // Chỉ bật khi người dùng muốn làm/sửa trang (câu "tìm trên web" không tính).
@@ -1163,14 +1307,27 @@
     },
     {
       // Chỉ bật khi người dùng muốn vẽ/tạo hình (hỏi về ảnh gửi kèm như "ảnh này là gì" không tính).
-      test: /\bsvg\b|\bdraw\b|\blogo\b|\bicon\b|vẽ|(tạo|thiết kế|làm|sinh)\s.{0,30}(hình|ảnh|biểu tượng|poster|banner|biểu đồ|minh hoạ|minh họa|hình nền|tranh)/i,
+      test: /\bsvg\b|\bdraw\b|\blogo\b|\bicon\b|vẽ|(tạo|thiết kế|làm|sinh)\s.{0,30}(hình|ảnh|biểu tượng|poster|banner|biểu đồ|minh hoạ|minh họa|hình nền|tranh)|(sửa|chỉnh|biến|đổi)\s.{0,20}(ảnh|hình|nền|tranh)|phong cách (anime|hoạt hình|ghibli|tranh)/i,
       prompt:
         "Kỹ năng vẽ hình: ảnh chụp, tranh vẽ, ảnh minh hoạ giàu chi tiết thì dùng công cụ image. Logo, icon, sơ đồ, biểu đồ thì vẽ bằng SVG và trang sẽ hiện ảnh ngay. " +
         "Viết một khối ```svg hoàn chỉnh (<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"...\">), " +
         "dùng hình khối, path, gradient, bóng; bố cục cân đối, màu hài hoà, chi tiết vừa đủ; không dùng ảnh hay font ngoài. " +
         "Biểu đồ số liệu thì vẽ trục, nhãn, chú thích rõ ràng (có thể tính toạ độ bằng py-run trước). " +
         "Cần hoạt hình hoặc hình phức tạp (fractal, hạt, mô phỏng) thì viết ```html với <canvas> và JS.",
-      remind: "logo/icon/biểu đồ/sơ đồ thì vẽ bằng một khối ```svg hoàn chỉnh; tranh, ảnh minh hoạ thì dùng công cụ ```image",
+      remind: "logo/icon/biểu đồ/sơ đồ thì vẽ bằng một khối ```svg hoàn chỉnh; tranh, ảnh minh hoạ thì dùng công cụ ```image (mô tả tiếng Anh chi tiết, thêm dòng ratio khi cần); sửa ảnh có sẵn thì thêm dòng edit: yes",
+    },
+    {
+      test: /chứng minh|giải (phương trình|hệ|bất phương trình|bài toán)|xác suất|tổ hợp|chỉnh hợp|hoán vị|bao nhiêu cách|câu đố|đố vui|logic|suy luận|nghịch lý|nói thật|nói dối|hiệp sĩ|đạo hàm|tích phân|giới hạn|ma trận|cực trị|\bproof\b|\bprove\b|probability|puzzle|riddle|integral|derivative/i,
+      prompt:
+        "Kỹ năng toán và suy luận logic:\n" +
+        "- Toán: tính chính xác (phân số, căn, π) trước rồi mới làm tròn. Dùng sympy (solve, simplify, factor, diff, integrate, limit, Matrix, nsimplify) qua py-run để giải hoặc kiểm tra. " +
+        "Xác suất, tổ hợp: kiểm bằng vét cạn với số nhỏ hoặc mô phỏng Monte Carlo bằng py-run; hai cách phải khớp.\n" +
+        "- Chứng minh: nêu giả thiết, mỗi bước có lý do (định nghĩa, định lý, bước trước), không dùng điều chưa chứng minh, kết thúc bằng điều phải chứng minh. " +
+        "Thử điều cần chứng minh với vài giá trị cụ thể trước để chắc nó đúng.\n" +
+        "- Câu đố logic: đặt biến cho từng đối tượng, viết mọi ràng buộc thành mệnh đề, suy luận loại trừ; nếu số trường hợp hữu hạn thì vét cạn bằng py-run " +
+        "(itertools.permutations, product) để chắc chắn có đúng một đáp án, rồi kiểm lại đáp án với từng ràng buộc.\n" +
+        "- Cẩn thận các lỗi hay gặp: đếm thiếu hoặc trùng, nhầm điều kiện cần và đủ, chia cho số có thể bằng 0, quên nghiệm ngoại lai, quên đơn vị.",
+      remind: "kiểm chứng đáp số bằng py-run (sympy để tính hoặc giải chính xác, hoặc vét cạn/mô phỏng với số nhỏ) trước khi kết luận",
     },
     {
       test: /ioi|icpc|olympic|hsg|học sinh giỏi|codeforces|atcoder|leetcode|vnoi|thi đấu|competitive|thuật toán|algorithm|độ phức tạp|c\+\+|cpp|subtask|testcase|quy hoạch động|đồ thị/i,
@@ -1211,6 +1368,7 @@
 
   async function generate(chat) {
     const reply = { role: "assistant", content: "", reasoning: "" };
+    genChat = chat;
     chat.messages.push(reply);
     renderThread();
     const node = els.thread.lastElementChild;
@@ -1228,6 +1386,8 @@
     history.unshift({ role: "system", content: systemPrompt(chat) + extra.text });
     // Mô hình làm theo lời dặn ngay trong câu hỏi tốt hơn lời dặn chung, nên nhắc ngắn kỹ năng đang dùng (người dùng không thấy).
     const reminds = activeSkills(chat).map((k) => k.remind).filter(Boolean);
+    if (chat.messages.filter((m) => m.role === "user").at(-1)?.refImages?.length)
+      reminds.push("người dùng gửi kèm ảnh đã tạo để sửa: dùng khối ```image với dòng đầu edit: yes, rồi mô tả bằng tiếng Anh thay đổi cần làm và nói rõ phần giữ nguyên");
     const lastUser = history.findLast((m) => m.role === "user");
     if (reminds.length && lastUser) {
       const add = `\n\n(Yêu cầu thêm: ${reminds.join("; ")}.)`;
@@ -1249,7 +1409,8 @@
         try {
           const again = history.map((m) => ({ ...m }));
           const last = again.findLast((m) => m.role === "user");
-          const add = "\n\n(Hãy giải lại từ đầu một cách độc lập và cẩn thận, thử một hướng tiếp cận khác nếu có.)";
+          const add = "\n\n(Hãy giải lại từ đầu một cách độc lập và cẩn thận, theo một hướng tiếp cận KHÁC với cách làm thông thường, " +
+            "và tự kiểm chứng kết quả bằng code hoặc tra cứu trước khi kết luận.)";
           if (typeof last.content === "string") last.content += add; else last.content = [{ ...last.content[0], text: last.content[0].text + add }, ...last.content.slice(1)];
           await answerWithTools(again, reply, node);
           draft2 = splitThink(reply.content).answer.trim();
@@ -1334,9 +1495,15 @@
         // Ảnh tạo ra nằm trong reply.genImages; nội dung chỉ giữ một chỗ đánh dấu nhỏ để gửi lại cho mô hình.
         if (out.image) {
           reply.genImages = [...(reply.genImages || []), out.image];
-          reply.content += `\n\n![${m[2].trim().replace(/[\[\]\n]/g, " ").slice(0, 200)}](genimg:${reply.genImages.length - 1})\n\n`;
+          reply.genMeta = [...(reply.genMeta || [])];
+          reply.genMeta[reply.genImages.length - 1] = out.meta || null;
+          reply.content += `\n\n![${(out.meta?.prompt || m[2]).trim().replace(/[\[\]\n]/g, " ").slice(0, 200)}](genimg:${reply.genImages.length - 1})\n\n`;
         }
         out = out.out;
+      }
+      if (search && m[1] !== "image") {
+        const known = reply.sources || [];
+        reply.sources = [...known, ...sourcesFrom(out).filter((x) => !known.some((k) => k.url === x.url))].slice(0, 16);
       }
       reply.content += "\n\n```output\n" + out + "\n```\n\n";
       reply.notice = "Đang đọc kết quả…";
@@ -1404,32 +1571,122 @@
     return "Lỗi: " + (e.name === "TimeoutError" ? "trang web không phản hồi." : e.message);
   };
 
+  // Kết quả tìm kiếm DuckDuckGo dạng danh sách { title, url, snippet }.
+  async function webResults(query, max = 6) {
+    const md = await jina("https://html.duckduckgo.com/html/?q=" + encodeURIComponent(query.trim()));
+    // Mỗi kết quả: một dòng "## [tiêu đề](link chuyển hướng ?uddg=...)" rồi một dòng mô tả dạng "[...](...)".
+    const results = [];
+    const lines = md.split("\n");
+    const clean = (t) => t.replace(/\*\*/g, "").replace(/\s+/g, " ").trim();
+    for (let i = 0; i < lines.length && results.length < max; i++) {
+      const h = lines[i].match(/^## \[(.+?)\]\((\S+?)\)\s*$/);
+      if (!h) continue;
+      let url = h[2];
+      try { url = new URL(url).searchParams.get("uddg") || url; } catch {}
+      if (/duckduckgo\.com\/y\.js|ad_domain|ad_provider/.test(h[2])) continue; // bỏ quảng cáo
+      let snippet = "";
+      for (let j = i + 1; j < Math.min(i + 6, lines.length); j++) {
+        if (lines[j].startsWith("## ")) break;
+        const sm = lines[j].match(/^\[(.+)\]\(\S+\)\s*$/);
+        if (sm && !sm[1].startsWith("![") && !/^[\w.-]+\.[a-z]{2,}\//i.test(sm[1])) { snippet = sm[1]; break; }
+      }
+      results.push({ title: clean(h[1]), url, snippet: clean(snippet) });
+    }
+    return results;
+  }
   async function searchWeb(query) {
     if (!query.trim()) return "Lỗi: thiếu từ khoá tìm kiếm.";
     try {
-      const md = await jina("https://html.duckduckgo.com/html/?q=" + encodeURIComponent(query.trim()));
-      // Mỗi kết quả: một dòng "## [tiêu đề](link chuyển hướng ?uddg=...)" rồi một dòng mô tả dạng "[...](...)".
-      const results = [];
-      const lines = md.split("\n");
-      for (let i = 0; i < lines.length && results.length < 6; i++) {
-        const h = lines[i].match(/^## \[(.+?)\]\((\S+?)\)\s*$/);
-        if (!h) continue;
-        let url = h[2];
-        try { url = new URL(url).searchParams.get("uddg") || url; } catch {}
-        if (/duckduckgo\.com\/y\.js|ad_domain|ad_provider/.test(h[2])) continue; // bỏ quảng cáo
-        let snippet = "";
-        for (let j = i + 1; j < Math.min(i + 6, lines.length); j++) {
-          if (lines[j].startsWith("## ")) break;
-          const sm = lines[j].match(/^\[(.+)\]\(\S+\)\s*$/);
-          if (sm && !sm[1].startsWith("![") && !/^[\w.-]+\.[a-z]{2,}\//i.test(sm[1])) { snippet = sm[1]; break; }
-        }
-        const clean = (t) => t.replace(/\*\*/g, "").replace(/\s+/g, " ").trim();
-        results.push(`${results.length + 1}. ${clean(h[1])}\n${url}\n${clean(snippet)}`);
-      }
+      const results = await webResults(query);
       return results.length
-        ? results.join("\n\n") + "\n\n(Muốn xem chi tiết một kết quả thì dùng công cụ read với đường dẫn của nó.)"
+        ? results.map((r, i) => `${i + 1}. ${r.title}\n${r.url}\n${r.snippet}`).join("\n\n") + "\n\n(Muốn xem chi tiết một kết quả thì dùng công cụ read với đường dẫn của nó.)"
         : `Không tìm thấy kết quả nào cho "${query.trim()}".`;
     } catch (e) { return toolError(e); }
+  }
+
+  // Tin tức mới nhất (Bing News qua Jina Reader): tiêu đề, tóm tắt, ngày đăng, đường dẫn bài gốc.
+  async function searchNews(query) {
+    query = query.trim();
+    if (!query) return "Lỗi: thiếu từ khoá tin tức.";
+    try {
+      const lang = /[^\x00-\x7F]/.test(query) ? "vi" : "en";
+      const md = await jina(`https://www.bing.com/news/search?q=${encodeURIComponent(query)}&format=rss&setlang=${lang}`);
+      const items = [];
+      for (const block of md.split(/^### /m).slice(1)) {
+        const h = block.match(/^\[(.+?)\]\((\S+?)\)/);
+        if (!h) continue;
+        let url = h[2];
+        try { url = new URL(url).searchParams.get("url") || url; } catch {}
+        const rest = block.split("\n").slice(1).map((l) => l.trim()).filter(Boolean);
+        const date = rest.find((l) => /^\w{3}, \d{1,2} \w{3} \d{4}/.test(l)) || "";
+        const desc = rest.find((l) => !l.startsWith("[") && l !== date) || "";
+        const when = date ? new Date(date).toLocaleString("vi-VN", { dateStyle: "short", timeStyle: "short" }) : "";
+        items.push(`${items.length + 1}. ${h[1]}${when ? ` (${when})` : ""}\n${url}\n${desc.slice(0, 400)}`);
+        if (items.length >= 8) break;
+      }
+      return items.length
+        ? items.join("\n\n") + "\n\n(Khi trả lời, dẫn link tới các bài gốc ở trên, không dẫn Bing News. Muốn đọc kỹ một bài thì dùng công cụ read với đường dẫn của nó.)"
+        : `Không có tin tức nào cho "${query}". Thử từ khoá ngắn hơn hoặc dùng search.`;
+    } catch (e) { return toolError(e); }
+  }
+
+  // Nghiên cứu sâu: tìm nhiều truy vấn cùng lúc, đọc luôn các trang tốt nhất và trích đoạn liên quan,
+  // để mô hình có dữ kiện từ nhiều nguồn chỉ trong một lần dùng công cụ.
+  async function research(block) {
+    const queries = block.split("\n").map((q) => q.replace(/^[-*\d.)\s]+/, "").trim()).filter(Boolean).slice(0, 4);
+    if (!queries.length) return "Lỗi: thiếu câu hỏi cần nghiên cứu.";
+    const lists = await Promise.allSettled(queries.map((q) => webResults(q, 5)));
+    const wiki = searchWiki(queries[0]).catch((e) => toolError(e));
+    // Lấy xen kẽ kết quả đầu của từng truy vấn để các trang đọc được đa dạng; bỏ trùng và trang khó đọc.
+    const seen = new Set(), picked = [], all = [];
+    for (let rank = 0; rank < 5; rank++) {
+      for (const l of lists) {
+        const r = l.status === "fulfilled" && l.value[rank];
+        if (!r) continue;
+        const key = r.url.replace(/[#?].*$/, "").replace(/\/$/, "");
+        if (seen.has(key)) continue;
+        seen.add(key); all.push(r);
+        if (picked.length < 4 && !/youtube\.com|youtu\.be|facebook\.com|tiktok\.com|instagram\.com|\.pdf$/i.test(r.url)) picked.push(r);
+      }
+    }
+    if (!all.length) {
+      const why = lists.find((l) => l.status === "rejected");
+      return why ? toolError(why.reason) : `Không tìm thấy kết quả nào cho: ${queries.join("; ")}.`;
+    }
+    const terms = [...new Set(queries.join(" ").toLowerCase().split(/[\s,.;:!?()"']+/).filter((w) => w.length > 2 || /\d/.test(w)))];
+    const excerpt = (text) => {
+      const paras = text.replace(/!\[[^\]]*\]\([^)]*\)/g, "").replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+        .split(/\n+/).map((t) => t.trim()).filter((t) => t.length > 60);
+      const scored = paras.map((t, i) => ({ t, i, s: terms.filter((w) => t.toLowerCase().includes(w)).length }))
+        .filter((x) => x.s).sort((a, b) => b.s - a.s || a.i - b.i);
+      let out = "", used = [];
+      for (const x of scored) { if (out.length > 2600) break; used.push(x); out += x.t; }
+      return used.sort((a, b) => a.i - b.i).map((x) => (x.t.length > 900 ? x.t.slice(0, 900) + "…" : x.t)).join("\n…\n") ||
+        paras.slice(0, 3).join("\n").slice(0, 1500);
+    };
+    const pages = await Promise.allSettled(picked.map(async (r) => `### ${r.title}\n${r.url}\n${excerpt(await jina(r.url)) || r.snippet}`));
+    const read = pages.map((p, i) => (p.status === "fulfilled" ? p.value : `### ${picked[i].title}\n${picked[i].url}\n(Không đọc được trang, tóm tắt: ${picked[i].snippet})`));
+    return `Đã tìm: ${queries.join(" | ")}\n\n## Nội dung các trang đã đọc\n${read.join("\n\n")}\n\n` +
+      `## Các kết quả khác\n${all.filter((r) => !picked.includes(r)).slice(0, 8).map((r) => `- ${r.title}\n  ${r.url}\n  ${r.snippet}`).join("\n")}\n\n` +
+      `## Wikipedia\n${await wiki}`;
+  }
+
+  // Lấy danh sách nguồn (tiêu đề, đường dẫn) từ kết quả tra cứu để hiện dưới câu trả lời.
+  function sourcesFrom(out) {
+    const found = [];
+    let title = "";
+    for (const line of String(out).split("\n")) {
+      const t = line.match(/^\s*(?:###\s+|\d+\.\s+|-\s+)(.+)$/);
+      const u = line.match(/https?:\/\/[^\s\]>"']+/);
+      if (u && !/r\.jina\.ai|duckduckgo\.com|bing\.com\/news\/apiclick|\.(png|jpe?g|gif|svg|ico)$/i.test(u[0])) {
+        // Giữ dấu ")" thuộc đường dẫn (ví dụ Rust_(programming_language)), bỏ dấu ")" và dấu câu thừa ở cuối.
+        let url = u[0].replace(/[.,;]+$/, "");
+        while (url.endsWith(")") && (url.match(/\(/g) || []).length < (url.match(/\)/g) || []).length) url = url.slice(0, -1);
+        if (!found.some((s) => s.url === url)) found.push({ url, title: (title || "").replace(/\s*\(\d{1,2}\/\d{1,2}\/\d{4}.*$/, "").slice(0, 90) });
+        title = "";
+      } else if (t && !/^https?:/.test(t[1])) title = t[1].trim();
+    }
+    return found;
   }
 
   async function readPage(url) {
@@ -1555,13 +1812,15 @@
     search: { lookup: true, label: "Tra cứu Wikipedia và web", notice: "Đang tra cứu Wikipedia và web…", run: (q) => searchAll(q) },
     wiki: { lookup: true, label: "Tra cứu Wikipedia", notice: "Đang tra cứu Wikipedia…", run: (q) => searchWiki(q.trim()) },
     web: { lookup: true, label: "Tìm trên web", notice: "Đang tìm trên web…", run: (q) => searchWeb(q) },
+    news: { lookup: true, label: "Tin tức", notice: "Đang tìm tin tức mới nhất…", run: (q) => searchNews(q) },
+    research: { lookup: true, label: "Nghiên cứu sâu", notice: "Đang nghiên cứu: tìm nhiều nguồn và đọc các trang liên quan (khoảng 20–40 giây)…", run: (q) => research(q) },
     weather: { lookup: true, label: "Thời tiết", notice: "Đang xem thời tiết…", run: (q) => weather(q) },
     rate: { lookup: true, label: "Tỷ giá", notice: "Đang xem tỷ giá…", run: (q) => rates(q) },
     papers: { lookup: true, label: "Tìm bài báo khoa học", notice: "Đang tìm bài báo khoa học…", run: (q) => papers(q) },
     dev: { lookup: true, label: "Tìm trên Stack Overflow và GitHub", notice: "Đang tìm trên Stack Overflow và GitHub…", run: (q) => devSearch(q) },
     dict: { lookup: true, label: "Tra từ điển", notice: "Đang tra từ điển…", run: (q) => dictionary(q) },
     read: { lookup: true, label: "Đọc trang web", notice: "Đang đọc trang web…", run: (u) => readPage(u) },
-    image: { lookup: true, label: "Tạo ảnh", notice: "Đang tạo ảnh (khoảng 10–30 giây)…", run: (p) => makeImage(p) },
+    image: { lookup: true, label: "Tạo ảnh", notice: "Đang vẽ ảnh (khoảng 5–30 giây)…", run: (p) => makeImage(p, genChat) },
   };
 
   // Chạy code của mô hình trong Web Worker riêng: không có DOM, không có mạng, dừng sau 5 giây.
@@ -2017,23 +2276,82 @@
   }
 
   // ---------- Tạo ảnh ----------
-  // Ưu tiên Workers AI (FLUX) trên máy chủ chung; máy chủ chưa bật thì dùng Pollinations (miễn phí, có logo nhỏ).
-  async function makeImage(prompt) {
-    prompt = prompt.trim().slice(0, 1500);
-    if (!prompt) return { out: "Lỗi: thiếu mô tả ảnh." };
+  // Khối ```image: các dòng đầu có thể ghi tuỳ chọn "ratio: 16:9" và "edit: yes", phần còn lại là mô tả.
+  // Ưu tiên Workers AI (FLUX.2) trên máy chủ chung; máy chủ chưa bật thì dùng Pollinations (miễn phí, không sửa được ảnh).
+  const RATIOS = {
+    "1:1": [1024, 1024], "16:9": [1344, 768], "9:16": [768, 1344], "4:3": [1152, 864], "3:4": [864, 1152],
+    "3:2": [1216, 816], "2:3": [816, 1216], "21:9": [1536, 656],
+  };
+  function imageRequest(block) {
+    const opts = {};
+    const lines = block.trim().split("\n");
+    while (lines.length) {
+      const o = lines[0].match(/^\s*(ratio|aspect|tỉ lệ|tỷ lệ|size|edit|sửa)\s*[:=]\s*(.+?)\s*$/i);
+      if (!o) break;
+      opts[/edit|sửa/i.test(o[1]) ? "edit" : "ratio"] = o[2].toLowerCase();
+      lines.shift();
+    }
+    const [width, height] = RATIOS[(opts.ratio || "").replace(/\s/g, "").replace("x", ":")] || RATIOS["1:1"];
+    return { prompt: lines.join(" ").replace(/\s+/g, " ").trim().slice(0, 1500), width, height, edit: /^(yes|có|true|1|last)/.test(opts.edit || "") };
+  }
+  // Ảnh mẫu khi sửa ảnh: ảnh người dùng chọn "Sửa ảnh này", nếu không thì ảnh họ gửi kèm, nếu không thì ảnh vừa tạo.
+  function editSources(chat) {
+    const users = (chat?.messages || []).filter((m) => m.role === "user");
+    const last = users.at(-1);
+    if (last?.refImages?.length) return last.refImages;
+    if (last?.images?.length) return last.images;
+    for (const m of [...(chat?.messages || [])].reverse()) {
+      const g = (m.genImages || []).filter(Boolean);
+      if (g.length) return [g.at(-1)];
+    }
+    return [];
+  }
+  // FLUX.2 chỉ nhận ảnh mẫu nhỏ hơn 512x512.
+  async function refImage(url) {
+    const blob = await (await fetch(url)).blob();
+    const bmp = await createImageBitmap(blob);
+    const k = Math.min(1, 504 / Math.max(bmp.width, bmp.height));
+    const c = document.createElement("canvas");
+    c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+    const g = c.getContext("2d");
+    g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height);
+    g.drawImage(bmp, 0, 0, c.width, c.height);
+    bmp.close();
+    return c.toDataURL("image/jpeg", 0.9);
+  }
+  async function makeImage(block, chat) {
+    const req = typeof block === "string" ? imageRequest(block) : block;
+    if (!req.prompt) return { out: "Lỗi: thiếu mô tả ảnh." };
+    const forced = (chat?.messages || []).filter((m) => m.role === "user").at(-1)?.refImages?.length;
+    let refs = [];
+    if (req.edit || forced) {
+      const got = await Promise.allSettled(editSources(chat).slice(0, 4).map(refImage));
+      refs = got.filter((r) => r.status === "fulfilled").map((r) => r.value);
+    }
+    const meta = { prompt: req.prompt, width: req.width, height: req.height, edit: refs.length > 0 };
     try {
       const signal = AbortSignal.any ? AbortSignal.any([controller.signal, AbortSignal.timeout(90000)]) : controller.signal;
       const res = await fetch(SHARED_URL.replace(/\/$/, "") + "/image", {
-        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt }), signal,
+        method: "POST", headers: { "Content-Type": "application/json" }, signal,
+        body: JSON.stringify({ prompt: req.prompt, width: req.width, height: req.height, refs }),
       });
-      if (res.ok) return { out: "Đã tạo xong ảnh và hiển thị cho người dùng.", image: (await res.json()).image };
+      if (res.ok) {
+        const j = await res.json();
+        meta.model = j.model || "FLUX";
+        return { out: `Đã ${refs.length ? "sửa" : "tạo"} xong ảnh ${req.width}x${req.height} bằng ${meta.model} và hiển thị cho người dùng.`, image: j.image, meta };
+      }
       if (res.status !== 501 && res.status !== 404 && res.status !== 405) return { out: "Lỗi: " + (await apiError(res)) };
     } catch (e) {
       if (e.name === "AbortError" && controller?.signal.aborted) throw e;
     }
     const seed = Math.floor(Math.random() * 1e9);
-    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true&seed=${seed}`;
-    return { out: "Đã gửi yêu cầu tạo ảnh, ảnh đang hiển thị cho người dùng.", image: url };
+    meta.model = "Pollinations"; meta.edit = false;
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(req.prompt)}?width=${req.width}&height=${req.height}&nologo=true&model=flux&seed=${seed}`;
+    return {
+      out: "Đã gửi yêu cầu tạo ảnh, ảnh đang hiển thị cho người dùng." +
+        (refs.length ? " Lưu ý: máy chủ chưa bật sửa ảnh nên đây là ảnh mới theo mô tả, không dựa trên ảnh cũ; hãy nói rõ điều này với người dùng." : ""),
+      image: url, meta,
+    };
   }
 
   // ---------- Tự đặt tên đoạn chat ----------
@@ -2070,6 +2388,7 @@
       const x = { ...m };
       if (x.images?.length) { x.imagesDropped = (x.imagesDropped || 0) + x.images.length; delete x.images; }
       if (x.genImages) x.genImages = x.genImages.map((u) => (u?.startsWith("data:") ? null : u));
+      delete x.refImages;
       if (x.files) x.files = x.files.map((f) => ({ ...f, text: (f.text || "").slice(0, 20000) }));
       return x;
     }),
@@ -2294,7 +2613,7 @@
     box.hidden = !attached.length;
     box.innerHTML = attached.map((a, i) => {
       const rm = `<button type="button" class="rm" data-rm="${i}" title="Bỏ">×</button>`;
-      if (a.kind === "image") return `<div class="att image${a.loading ? " loading" : ""}">${a.url ? `<img alt="" src="${a.url}">` : ""}${rm}</div>`;
+      if (a.kind === "image" || a.kind === "ref") return `<div class="att image${a.loading ? " loading" : ""}">${a.url ? `<img alt="" src="${a.url}">` : ""}${rm}</div>`;
       return `<div class="att${a.loading ? " loading" : ""}"><span class="file-ico">${ICON_FILE}</span>` +
         `<span class="name">${esc(a.name)}<small>${a.loading ? "Đang đọc…" : fileInfo(a)}</small></span>${rm}</div>`;
     }).join("");
@@ -2304,6 +2623,7 @@
   // Nội dung gửi cho mô hình: chữ của file đặt trước câu hỏi; ảnh gửi kèm theo dạng của API OpenAI.
   function apiContent(m, withImages) {
     let text = (m.files || []).filter((f) => f.text).map((f) => `Nội dung file "${f.name}":\n\`\`\`\n${f.text}\n\`\`\`\n\n`).join("") + m.content;
+    if (m.refImages?.length) text = "(Người dùng đính kèm ảnh do bạn tạo trước đó và muốn sửa ảnh này.)\n" + text;
     const n = (m.images?.length || 0) + (m.imagesDropped || 0);
     if (!withImages || !m.images?.length) return n ? `(Người dùng đã gửi ${n} ảnh ở đây.)\n${text}` : text;
     return [{ type: "text", text }, ...m.images.map((url) => ({ type: "image_url", image_url: { url } }))];
@@ -2351,6 +2671,8 @@
   if (innerWidth <= 768) els.sidebar.classList.add("hidden");
 
   els.thread.addEventListener("click", async (e) => {
+    const imgBtn = e.target.closest("[data-img]");
+    if (imgBtn) { imageAction(imgBtn); return; }
     const prevBtn = e.target.closest("[data-preview], [data-download], [data-full]");
     if (prevBtn) { codePreview(prevBtn); return; }
     const copyBtn = e.target.closest("[data-copy]");
@@ -2378,6 +2700,39 @@
       speak(act, splitThink(chat.messages[idx].content).answer);
     }
   });
+
+  // Nút trên ảnh đã tạo.
+  async function imageAction(btn) {
+    const card = btn.closest(".gen-card"), node = btn.closest(".msg");
+    const chat = currentChat(), m = chat?.messages[Number(node.dataset.idx)], i = Number(card.dataset.gen);
+    const url = m?.genImages?.[i];
+    if (!url) return;
+    if (btn.dataset.img === "download") {
+      const a = document.createElement("a");
+      a.download = `glm-anh-${Date.now()}.${url.startsWith("data:image/png") ? "png" : "jpg"}`;
+      try {
+        a.href = url.startsWith("data:") ? url : URL.createObjectURL(await (await fetch(url)).blob());
+        a.click();
+      } catch { openImage(url); }
+    } else if (btn.dataset.img === "edit") {
+      attached = attached.filter((x) => x.kind !== "ref");
+      attached.push({ kind: "ref", name: "Ảnh cần sửa", url });
+      paintAttachments();
+      if (!els.input.value.trim()) els.input.value = "Sửa ảnh này: ";
+      els.input.focus(); els.input.setSelectionRange(els.input.value.length, els.input.value.length);
+      autosize();
+    } else if (btn.dataset.img === "again" && !controller) {
+      controller = new AbortController();
+      setBusy(true);
+      card.classList.add("busy");
+      try {
+        const r = await makeImage({ ...m.genMeta[i], edit: false }, null);
+        if (r.image) { m.genImages[i] = r.image; m.genMeta[i] = r.meta; chat.updated = Date.now(); saveChats(); }
+        else alert(r.out);
+      } catch (e) { if (e.name !== "AbortError") alert(e.message); }
+      finally { controller = null; setBusy(false); paintAssistant(node, m, false); }
+    }
+  }
 
   // Đọc to câu trả lời bằng giọng có sẵn của máy (ưu tiên giọng tiếng Việt). Bấm lần nữa để dừng.
   let speakingBtn = null;

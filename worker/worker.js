@@ -22,7 +22,11 @@ const DEFAULT_ORIGINS = [
 ];
 const PER_MINUTE = 20; // số lượt hỏi tối đa mỗi phút cho mỗi IP
 const LIMITS = { chat: PER_MINUTE, image: 6, sync: 40 }; // giới hạn mỗi phút theo từng loại yêu cầu
-const IMAGE_MODEL = "@cf/black-forest-labs/flux-1-schnell";
+// Tạo ảnh: FLUX.2 [klein] 4B (đẹp, nhanh, sửa được ảnh có sẵn; khoảng 100 neuron mỗi ảnh 1024x1024,
+// gói miễn phí 10.000 neuron mỗi ngày). Lỗi thì dùng FLUX.1 [schnell] (chỉ ảnh vuông, không sửa ảnh).
+const IMAGE_MODEL = "@cf/black-forest-labs/flux-2-klein-4b";
+const IMAGE_FALLBACK = "@cf/black-forest-labs/flux-1-schnell";
+const MAX_REFS = 4; // số ảnh mẫu tối đa khi sửa ảnh (mỗi ảnh phải nhỏ hơn 512x512, trang tự thu nhỏ)
 const SYNC_ROW_MAX = 1_900_000; // D1 giới hạn mỗi dòng khoảng 2MB
 const MAX_BODY = 8 * 1024 * 1024; // đoạn chat (kể cả ảnh) nặng quá 8MB thì từ chối
 const MAX_TOKENS = 8192;
@@ -127,20 +131,55 @@ export default {
   },
 };
 
-// Tạo ảnh bằng FLUX.1 schnell trên Workers AI (gói miễn phí của Cloudflare cho khoảng vài trăm ảnh mỗi ngày).
+// Tạo ảnh hoặc sửa ảnh. Trang gửi: prompt, width/height (256–1920), seed, refs (ảnh mẫu dạng data:image/...;base64).
 async function makeImage(body, env, json, fail) {
   if (!env.AI) return fail(501, "Máy chủ chưa bật tạo ảnh (binding AI).");
   const prompt = typeof body.prompt === "string" ? body.prompt.trim().slice(0, 2000) : "";
   if (!prompt) return fail(400, "Thiếu mô tả ảnh.");
+  // Kích thước làm tròn tới bội số của 16 cho mô hình dễ xử lý.
+  const side = (v) => Math.round(clamp(v, 256, 1920, 1024) / 16) * 16;
+  const width = side(body.width), height = side(body.height);
+  const seed = Number.isInteger(body.seed) && body.seed >= 0 ? body.seed : Math.floor(Math.random() * 2 ** 31);
+  const refs = (Array.isArray(body.refs) ? body.refs : [])
+    .filter((u) => typeof u === "string" && /^data:image\/(png|jpeg|webp);base64,/.test(u) && u.length < 1_500_000)
+    .slice(0, MAX_REFS);
+  const done = (out, model) => {
+    const b64 = out?.image;
+    if (!b64) return null;
+    // FLUX trả PNG hoặc JPEG tuỳ mô hình: nhận dạng theo mấy byte đầu.
+    const mime = b64.startsWith("/9j/") ? "image/jpeg" : b64.startsWith("UklG") ? "image/webp" : "image/png";
+    return json({ image: `data:${mime};base64,${b64}`, model, width, height, seed });
+  };
+  let err;
   try {
-    const out = await env.AI.run(IMAGE_MODEL, { prompt, steps: 4 });
-    if (!out?.image) return fail(502, "Không tạo được ảnh, thử lại với mô tả khác.");
-    return json({ image: `data:image/jpeg;base64,${out.image}` });
-  } catch (e) {
-    const msg = String(e?.message || e);
-    if (/limit|quota|neuron|exceeded/i.test(msg)) return fail(429, "Hôm nay máy chủ đã hết lượt tạo ảnh miễn phí. Thử lại vào ngày mai.");
-    return fail(502, "Không tạo được ảnh: " + msg.slice(0, 200));
-  }
+    // Mô hình FLUX.2 nhận dữ liệu dạng multipart, kể cả khi chỉ có prompt.
+    const form = new FormData();
+    form.append("prompt", prompt);
+    form.append("width", String(width));
+    form.append("height", String(height));
+    form.append("seed", String(seed));
+    refs.forEach((u, i) => {
+      const [head, data] = u.split(",");
+      const bytes = Uint8Array.from(atob(data), (c) => c.charCodeAt(0));
+      form.append(`input_image_${i}`, new Blob([bytes], { type: head.slice(5, head.indexOf(";")) }), `image${i}`);
+    });
+    const packed = new Response(form);
+    const out = await env.AI.run(IMAGE_MODEL, { multipart: { body: packed.body, contentType: packed.headers.get("content-type") } });
+    const res = done(out, "FLUX.2 klein");
+    if (res) return res;
+  } catch (e) { err = e; }
+  if (refs.length) return imageFail(err, fail); // FLUX.1 không sửa được ảnh, nên không dùng làm dự phòng
+  try {
+    const res = done(await env.AI.run(IMAGE_FALLBACK, { prompt, steps: 8 }), "FLUX.1 schnell");
+    if (res) return res;
+  } catch (e) { err = e; }
+  return imageFail(err, fail);
+}
+function imageFail(e, fail) {
+  const msg = String(e?.message || e || "không có ảnh trả về");
+  if (/limit|quota|neuron|exceeded|4006/i.test(msg)) return fail(429, "Hôm nay máy chủ đã hết lượt tạo ảnh miễn phí. Thử lại vào ngày mai.");
+  if (/nsfw|safety|flagged|moderat/i.test(msg)) return fail(400, "Mô tả ảnh bị bộ lọc an toàn chặn. Hãy đổi mô tả khác.");
+  return fail(502, "Không tạo được ảnh: " + msg.slice(0, 200));
 }
 
 // Đồng bộ: mỗi người có một mã bí mật; máy chủ chỉ lưu mã đã băm (SHA-256), không lưu mã thật.
