@@ -740,7 +740,8 @@
         const st = modelStatus?.models?.[el.dataset.st];
         if (!PROVIDERS.shared.nvidia.includes(el.dataset.st) || !modelStatus) { el.className = "st"; el.textContent = ""; continue; }
         if (!modelStatus.enabled) { el.className = "st busy"; el.textContent = "Chưa bật"; el.title = "Máy chủ chưa có NVIDIA_API_KEY"; continue; }
-        if (!st) { el.className = "st wait"; el.textContent = "Đang kiểm tra…"; continue; }
+        // Đã có kết quả mà không có mô hình này (máy chủ bản cũ chưa kiểm tra nó): không hiện nhãn.
+        if (!st) { el.className = "st" + (statusAt ? "" : " wait"); el.textContent = statusAt ? "" : "Đang kiểm tra…"; continue; }
         // NVIDIA báo mô hình không còn (404): ẩn khỏi menu, trừ khi đang được chọn.
         el.closest("button").style.display = st.gone && !el.closest("button").matches('[aria-checked="true"]') ? "none" : "";
         el.className = "st " + (st.ok ? "ok" : "busy");

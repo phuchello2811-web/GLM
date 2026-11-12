@@ -38,7 +38,7 @@ const NVIDIA_MODELS = {
   "gemma-4-31b": { id: "google/gemma-4-31b-it", title: "Gemma 4 31B", trial: true },
   "gemma-3-12b": { id: "google/gemma-3-12b-it", title: "Gemma 3 12B", trial: true },
   "palmyra-creative": { id: "writer/palmyra-creative-122b", title: "Palmyra Creative", trial: true },
-  "laguna-xs": { id: "poolside/laguna-xs-2.1", title: "Laguna XS", trial: true },
+  "laguna-xs": { id: "poolside/laguna-xs-2.1", title: "Laguna XS" },
 };
 const NVIDIA_WAIT = 25_000; // chờ chữ đầu tiên tối đa 25 giây
 const STALL = 90_000; // đang trả lời mà đứng yên quá 90 giây thì ngắt, để trang tự nối lại
@@ -160,14 +160,21 @@ export default {
     }
 
     // Bản miễn phí hay bị quá tải (429) hoặc treo (502/503/504/524): thử lần lượt các mô hình miễn phí còn lại.
-    for (const m of used ? [] : images ? [model] : [model, ...FREE_MODELS.filter((x) => x !== model)]) {
-      if (upstream) await upstream.body?.cancel();
-      used = m;
-      upstream = await fetch(UPSTREAM, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${env.ZAI_API_KEY}` },
-        body: JSON.stringify({ ...clean, effort: undefined, model: m }),
-      });
+    // Z.ai từ chối ngẫu nhiên khoảng một nửa số lần khi đông (429, lỗi 1305) và trả lời lỗi rất nhanh, nên mô hình đầu tiên
+    // được thử lại 2 lần (sau 1 rồi 2 giây) trước khi đổi sang mô hình khác. Lỗi treo (502/504/524) thì đổi mô hình ngay.
+    const order = used ? [] : images ? [model] : [model, ...FREE_MODELS.filter((x) => x !== model)];
+    for (const m of order) {
+      for (let attempt = 0; attempt < (m === order[0] ? 3 : 1); attempt++) {
+        if (upstream) await upstream.body?.cancel();
+        if (attempt) await new Promise((ok) => setTimeout(ok, 1000 * attempt));
+        used = m;
+        upstream = await fetch(UPSTREAM, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${env.ZAI_API_KEY}` },
+          body: JSON.stringify({ ...clean, effort: undefined, model: m }),
+        });
+        if (upstream.status !== 429 && upstream.status !== 503) break;
+      }
       if (!BUSY.includes(upstream.status)) break;
     }
     if (!stream && BUSY.includes(upstream.status)) return fail(429, "Máy chủ GLM miễn phí đang quá tải. Đợi một lúc rồi thử lại.");
