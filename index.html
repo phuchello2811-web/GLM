@@ -1980,7 +1980,9 @@
   // Trả lời, và mỗi khi mô hình viết khối ```js-run hoặc ```search thì chạy công cụ rồi cho nó viết tiếp với kết quả (tối đa 5 lần).
   const TOOL_ROUNDS = 8;
   const MAX_OUTPUT = 131072; // xin độ dài tối đa; máy chủ tự hạ xuống mức mỗi mô hình cho phép
-  const CONTINUE_LIMIT = 8; // số lần tự viết tiếp tối đa khi câu trả lời chạm giới hạn độ dài
+  const CONTINUE_LIMIT = 8; // số lần tự viết tiếp tối đa khi câu trả lời chạm giới hạn độ dài hoặc dừng giữa khối code
+  // Còn khối code mở mà chưa đóng (số dòng bắt đầu bằng ``` là số lẻ).
+  const unclosedFence = (text) => (text.match(/^\s*```/gm) || []).length % 2 === 1;
   async function answerWithTools(messages, reply, node) {
     for (let round = 0; ; round++) {
       const start = reply.content.length;
@@ -1995,13 +1997,14 @@
           await runPass(pass, reply, node, allowTool ? (text) => RUN_BLOCK.test(text.slice(start)) : null);
           // Chạm giới hạn độ dài khi đang viết câu trả lời: tự yêu cầu viết tiếp đúng từ chỗ dừng và nối vào,
           // cho tới khi xong. (Chạm giới hạn khi mới suy nghĩ, chưa viết gì thì ensureAnswer xử lý.)
-          for (let k = 0; reply.truncated && k < CONTINUE_LIMIT; k++) {
+          // Cũng viết tiếp khi còn khối code mở mà chưa đóng: mô hình đôi khi dừng sớm hoặc luồng bị ngắt mà máy chủ vẫn báo đã xong.
+          for (let k = 0; (reply.truncated || unclosedFence(reply.content.slice(start))) && k < CONTINUE_LIMIT; k++) {
             const sofar = reply.content.slice(start);
             if (!sofar.trim() || (allowTool && RUN_BLOCK.test(sofar))) break;
             reply.notice = "Câu trả lời dài, đang viết tiếp…";
             paintAssistant(node, reply, true);
             await runPass([...messages, { role: "assistant", content: sofar },
-              { role: "user", content: "Bạn bị ngắt vì giới hạn độ dài. Viết tiếp ĐÚNG từ chỗ dừng (kể cả đang giữa câu hay giữa khối code), " +
+              { role: "user", content: "Câu trả lời của bạn bị ngắt giữa chừng. Viết tiếp ĐÚNG từ chỗ dừng (kể cả đang giữa câu hay giữa khối code, nhớ đóng khối code), " +
                 "không lặp lại phần đã viết, không chào hay giải thích lại." }],
               reply, node, allowTool ? (text) => RUN_BLOCK.test(text.slice(start)) : null);
             delete reply.notice;
