@@ -1174,7 +1174,7 @@
         `<button class="icon-btn${m.good ? " good" : ""}" data-act="good" title="${m.good ? "Bỏ thích" : "Thích: lưu làm dữ liệu train"}">${ICON_THUMB}</button>` +
         `<button class="icon-btn" data-act="regen" title="Tạo lại">${ICON_REDO}</button>` +
         ("speechSynthesis" in window ? `<button class="icon-btn" data-act="speak" title="Đọc to">${ICON_SPEAK}</button>` : "") +
-        (m.tps ? `<span class="meta">${m.tps} token/giây${m.via ? ` · trả lời bằng ${esc(m.via)}` : ""}</span>` : "") + `</div>`;
+        (m.tps || m.via ? `<span class="meta">${[m.tps ? `${m.tps} token/giây` : "", m.via ? `trả lời bằng ${esc(m.via)}` : ""].filter(Boolean).join(" · ")}</span>` : "") + `</div>`;
     }
     // Giữ trạng thái mở/đóng của phần suy nghĩ khi người dùng tự bấm.
     const prev = node.querySelector(".think:not(.is-draft)");
@@ -1503,8 +1503,7 @@
       if (!settings.deep && draft && /^glm/.test(cloudModel()) && activeSkills(chat).some((k) => k.hard)) {
         reply.drafts = [{ content: reply.content, reasoning: reply.reasoning, thinkSecs: reply.thinkSecs, model: reply.drafter }];
         Object.assign(reply, { content: "", reasoning: "", thinkSecs: null, tps: null, review: true, via: undefined });
-        await answerWithTools([...history, { role: "assistant", content: draft }, { role: "user", content: REVIEW_PROMPT }], reply, node);
-        if (!splitThink(reply.content).answer.trim()) throw new Error("Bước kiểm tra lại không trả về kết quả.");
+        await judge([...history, { role: "assistant", content: draft }, { role: "user", content: REVIEW_PROMPT }], reply, node);
       }
       // Chế độ Nghĩ kỹ: chờ các mô hình khác giải xong, rồi mô hình chính làm giám khảo: so sánh, kiểm chứng chỗ khác nhau
       // và viết câu trả lời cuối. Không mô hình nào khác giải được thì chỉ tự kiểm tra lời giải đầu.
@@ -1526,8 +1525,7 @@
           ? REVIEW_MULTI_PROMPT.replace("{N}", others.length).replace("{B}", others.map((o, i) =>
             `<loi_giai_${"BCDE"[i]} mo_hinh="${o.draft.model}">\n${o.answer.slice(0, 6000)}\n</loi_giai_${"BCDE"[i]}>`).join("\n\n"))
           : REVIEW_PROMPT;
-        await answerWithTools([...history, { role: "assistant", content: draft.slice(0, 8000) }, { role: "user", content: review }], reply, node);
-        if (!splitThink(reply.content).answer.trim()) throw new Error("Bước kiểm tra lại không trả về kết quả.");
+        await judge([...history, { role: "assistant", content: draft.slice(0, 8000) }, { role: "user", content: review }], reply, node);
       }
     } catch (e) {
       if (e.name !== "AbortError") {
@@ -1552,6 +1550,25 @@
       scrollDown();
       if (!reply.error) autoTitle(chat);
     }
+  }
+
+  // Bước chấm lại (tự kiểm tra hoặc giám khảo của Nghĩ kỹ). Với bài dài (nhiều code), mô hình có thể dùng hết giới hạn độ dài
+  // cho phần suy nghĩ mà chưa viết được câu trả lời: khi đó cho viết lại ngay, tắt suy nghĩ dài. Vẫn không được thì dùng
+  // lời giải nháp đầu tiên và ghi chú, không báo lỗi.
+  async function judge(messages, reply, node) {
+    await answerWithTools(messages, reply, node);
+    if (splitThink(reply.content).answer.trim()) return;
+    Object.assign(reply, { content: "", reasoning: "", thinkSecs: null, tps: null, fast: true, notice: "Đang viết câu trả lời cuối…" });
+    const last = messages.at(-1);
+    try {
+      await answerWithTools([...messages.slice(0, -1), { ...last, content: last.content + "\n\n(Viết ngay câu trả lời cuối cùng hoàn chỉnh, không suy nghĩ dài.)" }], reply, node);
+    } finally { delete reply.fast; delete reply.notice; }
+    if (splitThink(reply.content).answer.trim()) return;
+    const first = reply.drafts[0];
+    Object.assign(reply, { content: first.content, reasoning: first.reasoning, thinkSecs: first.thinkSecs, review: false, truncated: false,
+      via: `${first.model || modelTitle("shared", cloudModel())} (bước chấm lại không viết xong nên đây là lời giải nháp 1)` });
+    reply.drafts = reply.drafts.slice(1);
+    if (!reply.drafts.length) delete reply.drafts;
   }
 
   // Một lời giải của hội đồng Nghĩ kỹ: chạy với mô hình riêng, không hiện ra trong lúc làm.
@@ -2121,7 +2138,8 @@
         messages, stream: true,
         temperature: Number(settings.temperature), max_tokens: Number(settings.maxTokens), top_p: 0.95,
         model, ...p.extra,
-        ...(settings.deep ? { effort: "max" } : {}),
+        ...(settings.deep && !reply.fast ? { effort: "max" } : {}),
+        ...(reply.fast ? { thinking: { type: "disabled" } } : {}), // viết ngay, không suy nghĩ dài
       });
       let hung = false;
       for (let attempt = 0; ; attempt++) {
