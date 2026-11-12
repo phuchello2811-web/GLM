@@ -58,7 +58,7 @@ export default {
       "Access-Control-Allow-Methods": "POST, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type",
       "Access-Control-Max-Age": "86400",
-      "Access-Control-Expose-Headers": "X-GLM-Model",
+      "Access-Control-Expose-Headers": "X-GLM-Model, X-GLM-Note",
       Vary: "Origin",
     };
     const fail = (status, message) =>
@@ -114,11 +114,12 @@ export default {
       thinking: { type: body.thinking?.type === "disabled" ? "disabled" : "enabled" },
     };
 
-    // Thử NVIDIA trước nếu trang chọn GLM-5.3 Flash. Chờ tối đa 40 giây để máy chủ bắt đầu trả lời.
-    let upstream, used;
+    // Thử NVIDIA trước nếu trang chọn GLM-5.3 Flash. Chờ tối đa 60 giây để máy chủ bắt đầu trả lời.
+    // Không dùng được thì ghi lý do vào X-GLM-Note để trang hiện cho người dùng.
+    let upstream, used, note = "";
     if (env.NVIDIA_API_KEY && NVIDIA_MODELS[body.model]) {
       const { thinking, ...rest } = clean;
-      const timer = new AbortController(), t = setTimeout(() => timer.abort(), 40_000);
+      const timer = new AbortController(), t = setTimeout(() => timer.abort(), 60_000);
       try {
         upstream = await fetch(NVIDIA_URL, {
           method: "POST",
@@ -126,10 +127,20 @@ export default {
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${env.NVIDIA_API_KEY}` },
           body: JSON.stringify({ ...rest, model: NVIDIA_MODELS[body.model], reasoning_effort: thinking.type === "disabled" ? "low" : "high" }),
         });
-      } catch { upstream = null; }
+      } catch {
+        upstream = null;
+        note = timer.signal.aborted ? "NVIDIA không trả lời sau 60 giây (đang quá đông)" : "không kết nối được tới NVIDIA";
+      }
       clearTimeout(t);
       if (upstream?.ok) used = body.model;
-      else { await upstream?.body?.cancel(); upstream = null; }
+      else if (upstream) {
+        const detail = (await upstream.text().catch(() => "")).replace(/nvapi-[\w-]+/g, "nvapi-…").replace(/\s+/g, " ").slice(0, 160);
+        note = upstream.status === 401 || upstream.status === 403 ? `key NVIDIA bị từ chối (${upstream.status}), kiểm tra lại NVIDIA_API_KEY`
+          : upstream.status === 429 ? "NVIDIA hết lượt miễn phí trong phút này (429)"
+          : upstream.status === 404 ? "tài khoản NVIDIA chưa dùng được GLM-5.3 Flash (404)"
+          : `NVIDIA báo lỗi ${upstream.status}: ${detail}`;
+        upstream = null;
+      }
     }
 
     // Bản miễn phí hay bị quá tải (429) hoặc treo (502/503/504/524): thử lần lượt các mô hình miễn phí còn lại.
@@ -150,6 +161,7 @@ export default {
     headers.set("Content-Type", upstream.headers.get("Content-Type") || "application/json");
     headers.set("Cache-Control", "no-store");
     headers.set("X-GLM-Model", used); // mô hình thật đã trả lời, để trang ghi chú khi máy chủ tự đổi mô hình
+    if (note) headers.set("X-GLM-Note", encodeURIComponent(note)); // header chỉ nhận chữ không dấu nên phải mã hoá
     return new Response(upstream.body, { status: upstream.status, headers });
   },
 };

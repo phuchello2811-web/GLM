@@ -1990,7 +1990,8 @@
       });
       let hung = false;
       for (let attempt = 0; ; attempt++) {
-        const slow = new AbortController(), timer = setTimeout(() => slow.abort(), 60000);
+        // GLM-5.3 Flash: máy chủ có thể chờ NVIDIA tới 60 giây rồi mới chuyển sang Z.ai, nên chờ lâu hơn.
+        const slow = new AbortController(), timer = setTimeout(() => slow.abort(), m === "glm-5.3-flash" ? 100000 : 60000);
         const both = AbortSignal.any ? AbortSignal.any([signal, slow.signal]) : signal;
         try {
           res = await fetch(p.url, { method: "POST", headers: { "Content-Type": "application/json" }, body, signal: both });
@@ -2023,8 +2024,12 @@
     const asked = model;
     if (real && PROVIDERS[used].titles[real]) model = real;
     if (vision) reply.via = `${modelTitle(used, model)} (mô hình đọc được ảnh)`;
-    else if (used !== settings.provider || model !== cloudModel())
-      reply.via = `${modelTitle(used, model)} vì ${modelTitle(used, asked === model ? cloudModel() : asked)} đang ${asked === "glm-5.3-flash" && real !== asked ? "bận hoặc chưa bật" : "quá tải"}`;
+    else if (used !== settings.provider || model !== cloudModel()) {
+      // Máy chủ ghi lý do không dùng được GLM-5.3 Flash (key sai, hết lượt, quá lâu…) trong X-GLM-Note.
+      let note = "";
+      try { note = decodeURIComponent(res.headers.get("X-GLM-Note") || ""); } catch {}
+      reply.via = `${modelTitle(used, model)} vì ` + (note || `${modelTitle(used, asked === model ? cloudModel() : asked)} đang ${asked === "glm-5.3-flash" && real !== asked ? "bận hoặc chưa bật" : "quá tải"}`);
+    }
     setStatus("ok", `${PROVIDERS[used].name} · ${modelTitle(used, model)}`);
 
     const reader = res.body.getReader();
