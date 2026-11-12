@@ -495,7 +495,7 @@
         <span id="chipTitle">GLM-4.7 Flash</span>
         <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
       </button>
-      <button class="deep" id="deep" type="button" title="Mô hình giải hai lần độc lập, rồi so sánh, kiểm tra và viết câu trả lời cuối. Chính xác hơn nhưng chậm gấp 3–4 lần.">
+      <button class="deep" id="deep" type="button" title="Ba mô hình giải song song độc lập (một mô hình đóng vai phản biện tìm bẫy), rồi mô hình chính chấm, kiểm chứng chỗ khác nhau bằng code và viết câu trả lời cuối. Chính xác nhất nhưng chậm hơn.">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2Z"/></svg>
         Nghĩ kỹ
       </button>
@@ -667,7 +667,7 @@
         "laguna-xs": ["Laguna XS", "Chuyên viết code, trả lời rất nhanh và gọn"],
         "step-5": ["Step 5", "Suy luận nhiều bước rất kỹ, trả lời chậm hơn"],
       },
-      modelHelp: "Dùng chung máy chủ của trang, không cần key hay tài khoản. Tối đa 20 câu hỏi mỗi phút. Mô hình đang quá tải hoặc chưa bật thì tự chuyển sang mô hình khác.",
+      modelHelp: "Dùng chung máy chủ của trang, không cần key hay tài khoản. Tối đa 40 lượt gọi mỗi phút. Mô hình đang quá tải hoặc chưa bật thì tự chuyển sang mô hình khác.",
       extra: { thinking: { type: "enabled" } },
     },
   };
@@ -765,15 +765,14 @@
     }
     return statusLoading;
   }
-  // Mô hình cho lần giải thứ hai của chế độ Nghĩ kỹ: mô hình mạnh khác mô hình đang chọn và đang sẵn sàng,
-  // theo thứ tự ưu tiên; không có thì dùng GLM của Z.ai.
-  const SECOND_ORDER = ["nemotron-3-ultra", "mistral-large-4", "nemotron-3.5-super-vl", "nemotron-3.5-lightning", "laguna-xs"];
-  async function secondModel() {
+  // Mô hình giải cùng trong chế độ Nghĩ kỹ: các mô hình mạnh khác mô hình đang chọn, ưu tiên khác họ nhau,
+  // bỏ mô hình đã biết là đang lỗi (chưa có kết quả kiểm tra thì cứ thử; máy chủ vẫn tự chuyển sang GLM nếu lỗi).
+  // Ưu tiên mô hình mạnh mà trả lời nhanh (GLM của Z.ai hay nghĩ rất lâu khi đông nên xếp sau).
+  const COUNCIL_ORDER = ["nemotron-3-ultra", "mistral-large-4", "nemotron-3.5-super-vl", "glm-4.7-flash", "nemotron-3.5-lightning", "laguna-xs", "glm-4.5-flash"];
+  async function councilModels(n = 2) {
     const cur = cloudModel();
     await Promise.race([loadModelStatus(), new Promise((ok) => setTimeout(ok, 4000))]);
-    // Chưa có kết quả kiểm tra thì cứ thử theo thứ tự; chỉ bỏ mô hình đã biết là đang lỗi (máy chủ vẫn tự chuyển sang GLM nếu lỗi).
-    const ready = SECOND_ORDER.find((m) => m !== cur && modelStatus?.models?.[m]?.ok !== false);
-    return ready || (cur !== "glm-4.7-flash" ? "glm-4.7-flash" : "glm-4.5-flash");
+    return COUNCIL_ORDER.filter((m) => m !== cur && PROVIDERS.shared.models.includes(m) && modelStatus?.models?.[m]?.ok !== false).slice(0, n);
   }
   $("modelChip").onclick = (e) => { e.stopPropagation(); toggleModelMenu(e.currentTarget); };
   $("modelMenu").onclick = (e) => {
@@ -799,7 +798,6 @@
   let currentId = null;
   let controller = null;
   let genChat = null; // đoạn chat đang được trả lời
-  let passModel = null; // mô hình dùng cho lần giải thứ hai của chế độ Nghĩ kỹ (khác mô hình đang chọn)
 
   // Ảnh và file làm bộ nhớ trình duyệt (khoảng 5MB) đầy nhanh: hết chỗ thì bỏ dần ảnh/file của các đoạn chat cũ nhất.
   function saveChats(sync = true) {
@@ -1154,6 +1152,7 @@
     }
     html += `<div class="content${streaming && !thinking ? " cursor" : ""}">${markdown(answer.replace(MEMO_TAG, "").replace(/\[\[[^\]]*$/, "").trim())}</div>`;
     if (m.notice) html += `<div class="shimmer" style="font-size:14px">${esc(m.notice)}</div>`;
+    if (m.council && streaming) html += `<div class="memo">${ICON_CHECK}Nghĩ kỹ: ${esc(m.council.join(", "))} giải song song, rồi ${esc(m.council[0])} chấm và kiểm chứng</div>`;
     if (m.sources?.length && !streaming) {
       // Nguồn được trích trong câu trả lời đứng trước.
       const cited = (s) => (answer.includes(s.url) ? 0 : 1);
@@ -1267,15 +1266,24 @@
     "đã sửa nếu có lỗi. Chỉ viết câu trả lời cuối cùng như thể trả lời lần đầu, không nhắc tới việc kiểm tra, " +
     "và dùng cùng ngôn ngữ với câu hỏi.";
 
-  const REVIEW_TWO_PROMPT =
-    "Dưới đây là một lời giải khác, được làm độc lập cho cùng câu hỏi (gọi là lời giải B; câu trả lời vừa rồi của bạn là lời giải A):\n\n" +
-    "<loi_giai_B>\n{B}\n</loi_giai_B>\n\n" +
-    "Hãy làm như một giám khảo nghiêm khắc: liệt kê các điểm A và B khác nhau (kết quả, lập luận, code), xác định bên nào đúng " +
-    "bằng cách tự kiểm tra lại từng bước, thay số, hoặc chạy code/tra cứu bằng công cụ; tìm cả lỗi mà hai bên cùng mắc " +
-    "và trường hợp đặc biệt bị bỏ sót. Nếu A và B cùng kết quả, vẫn kiểm chứng lại bằng một cách thứ ba trước khi tin. " +
-    "Sau đó viết câu trả lời cuối cùng hoàn chỉnh và đúng nhất cho câu hỏi ban đầu, " +
-    "như thể trả lời lần đầu: không nhắc tới A, B hay việc so sánh, dùng cùng ngôn ngữ với câu hỏi.";
-
+  // Chế độ Nghĩ kỹ: các mô hình khác giải song song với các góc nhìn khác nhau, rồi mô hình chính làm giám khảo.
+  const DEEP_ANGLES = [
+    "(Hãy tự giải độc lập từ đầu thật cẩn thận, theo một hướng tiếp cận KHÁC với cách làm thông thường, " +
+      "và tự kiểm chứng kết quả bằng code hoặc tra cứu trước khi kết luận.)",
+    "(Hãy giải độc lập từ đầu với vai trò người phản biện khó tính: đọc kỹ đề để tìm bẫy và các cách hiểu khác, " +
+      "liệt kê giả định, giải từng bước, rồi kiểm chứng đáp số bằng code, vét cạn trường hợp nhỏ hoặc tra cứu.)",
+  ];
+  const REVIEW_MULTI_PROMPT =
+    "Dưới đây là {N} lời giải khác cho cùng câu hỏi, do các mô hình khác làm độc lập (câu trả lời vừa rồi của bạn là lời giải A):\n\n" +
+    "{B}\n\n" +
+    "Hãy làm giám khảo nghiêm khắc:\n" +
+    "1) Tóm tắt đáp án hoặc kết luận cuối của từng lời giải (A, B, C…).\n" +
+    "2) Chỗ nào các lời giải khác nhau (kết quả, lập luận, code): tự kiểm chứng để xác định bên đúng bằng cách thay số, chạy code, " +
+    "vét cạn trường hợp nhỏ hoặc tra cứu. Số đông không phải là bằng chứng.\n" +
+    "3) Kể cả khi mọi lời giải giống nhau, vẫn kiểm chứng lại bằng một cách độc lập; tìm lỗi mà tất cả cùng mắc và trường hợp đặc biệt bị bỏ sót.\n" +
+    "4) Gộp những phần tốt nhất: lập luận chặt nhất, ví dụ rõ nhất, code đúng và gọn nhất.\n" +
+    "Sau đó viết câu trả lời cuối cùng hoàn chỉnh và đúng nhất cho câu hỏi ban đầu, như thể trả lời lần đầu: " +
+    "không nhắc tới A, B, C hay việc so sánh, dùng cùng ngôn ngữ với câu hỏi.";
   const THINK_PROMPT =
     "Cách suy nghĩ. Trước hết đánh giá câu hỏi: đơn giản (chào hỏi, sự thật quen thuộc, việc ngắn) thì trả lời ngay, gọn; " +
     "khó (toán, logic, code, khoa học, phân tích, so sánh, lập kế hoạch, câu hỏi nhiều bước) thì suy nghĩ đầy đủ theo các bước:\n" +
@@ -1478,11 +1486,19 @@
 
     controller = new AbortController();
     setBusy(true);
+    let council = [], councilStart = 0;
+    const councilStops = [];
     try {
+      // Nghĩ kỹ: các mô hình khác bắt đầu giải song song ngay (không hiện ra), cùng lúc mô hình chính giải.
+      if (settings.deep) {
+        const models = await councilModels();
+        councilStart = Date.now();
+        council = models.map((m, i) => silentDraft(history, m, DEEP_ANGLES[i], councilStops));
+        council.forEach((p) => p.catch(() => {}));
+        reply.council = [modelTitle("shared", cloudModel()), ...models.map((m) => modelTitle("shared", m))];
+      }
       await answerWithTools(history, reply, node);
       const draft = splitThink(reply.content).answer.trim();
-      // Chế độ Nghĩ kỹ: giải thêm một lần độc lập (không thấy lời giải đầu), rồi so sánh hai lời giải,
-      // kiểm tra chỗ khác nhau và viết câu trả lời cuối cùng. Lần giải thứ hai lỗi thì chỉ tự kiểm tra lời giải đầu.
       // Mô hình GLM với câu khó (toán, logic, lập trình thi đấu) mà không bật Nghĩ kỹ: tự chấm lại và sửa câu trả lời một lượt.
       if (!settings.deep && draft && /^glm/.test(cloudModel()) && activeSkills(chat).some((k) => k.hard)) {
         reply.drafts = [{ content: reply.content, reasoning: reply.reasoning, thinkSecs: reply.thinkSecs, model: reply.drafter }];
@@ -1490,28 +1506,27 @@
         await answerWithTools([...history, { role: "assistant", content: draft }, { role: "user", content: REVIEW_PROMPT }], reply, node);
         if (!splitThink(reply.content).answer.trim()) throw new Error("Bước kiểm tra lại không trả về kết quả.");
       }
+      // Chế độ Nghĩ kỹ: chờ các mô hình khác giải xong, rồi mô hình chính làm giám khảo: so sánh, kiểm chứng chỗ khác nhau
+      // và viết câu trả lời cuối. Không mô hình nào khác giải được thì chỉ tự kiểm tra lời giải đầu.
       if (settings.deep && draft) {
-        const keep = (model) => ({ content: reply.content, reasoning: reply.reasoning, thinkSecs: reply.thinkSecs, model });
-        reply.drafts = [keep(modelTitle("shared", cloudModel()))];
-        Object.assign(reply, { content: "", reasoning: "", thinkSecs: null, tps: null, second: true, via: undefined });
-        let draft2 = "";
-        try {
-          const again = history.map((m) => ({ ...m }));
-          const last = again.findLast((m) => m.role === "user");
-          const add = "\n\n(Hãy giải lại từ đầu một cách độc lập và cẩn thận, theo một hướng tiếp cận KHÁC với cách làm thông thường, " +
-            "và tự kiểm chứng kết quả bằng code hoặc tra cứu trước khi kết luận.)";
-          if (typeof last.content === "string") last.content += add; else last.content = [{ ...last.content[0], text: last.content[0].text + add }, ...last.content.slice(1)];
-          // Lời giải thứ hai do một mô hình khác làm: hai mô hình khác nhau ít mắc cùng một lỗi hơn.
-          passModel = await secondModel();
-          try { await answerWithTools(again, reply, node); } finally { passModel = null; }
-          draft2 = splitThink(reply.content).answer.trim();
-          if (draft2) reply.drafts.push(keep(reply.drafter || modelTitle("shared", cloudModel())));
-        } catch (e) { if (e.name === "AbortError") throw e; console.warn("Lần giải thứ hai bị lỗi:", e); }
-        Object.assign(reply, { content: "", reasoning: "", thinkSecs: null, tps: null, second: false, review: true, via: undefined });
-        const review = draft2
-          ? REVIEW_TWO_PROMPT.replace("{B}", draft2)
+        reply.drafts = [{ content: reply.content, reasoning: reply.reasoning, thinkSecs: reply.thinkSecs, model: reply.drafter }];
+        Object.assign(reply, { content: "", reasoning: "", thinkSecs: null, tps: null, review: true, via: undefined, notice: "Đang chờ các mô hình khác giải xong…" });
+        paintAssistant(node, reply, true);
+        // Chờ các mô hình khác thêm tối đa 60 giây sau khi mô hình chính xong (tổng không quá khoảng 3 phút);
+        // mô hình nào chưa xong thì dừng (lời giải dở dang vẫn được dùng nếu đủ dài).
+        const wait = Math.max(60000, 180000 - (Date.now() - councilStart));
+        const timer = setTimeout(() => councilStops.forEach((c) => c.abort()), wait);
+        const others = (await Promise.allSettled(council)).map((r) => (r.status === "fulfilled" ? r.value : null)).filter(Boolean);
+        clearTimeout(timer);
+        if (controller.signal.aborted) throw new DOMException("", "AbortError");
+        reply.drafts.push(...others.map((o) => o.draft));
+        delete reply.notice;
+        // Mỗi lời giải gửi cho giám khảo tối đa 6000 ký tự để không quá dài.
+        const review = others.length
+          ? REVIEW_MULTI_PROMPT.replace("{N}", others.length).replace("{B}", others.map((o, i) =>
+            `<loi_giai_${"BCDE"[i]} mo_hinh="${o.draft.model}">\n${o.answer.slice(0, 6000)}\n</loi_giai_${"BCDE"[i]}>`).join("\n\n"))
           : REVIEW_PROMPT;
-        await answerWithTools([...history, { role: "assistant", content: draft }, { role: "user", content: review }], reply, node);
+        await answerWithTools([...history, { role: "assistant", content: draft.slice(0, 8000) }, { role: "user", content: review }], reply, node);
         if (!splitThink(reply.content).answer.trim()) throw new Error("Bước kiểm tra lại không trả về kết quả.");
       }
     } catch (e) {
@@ -1526,8 +1541,9 @@
         delete reply.drafts;
       }
     } finally {
+      controller?.abort(); // dừng các lời giải của hội đồng còn đang chạy
       controller = null;
-      delete reply.notice;
+      delete reply.notice; delete reply.council;
       saveRemembered(reply, chat.messages.at(-2)?.content || "");
       setBusy(false);
       chat.updated = Date.now();
@@ -1536,6 +1552,25 @@
       scrollDown();
       if (!reply.error) autoTitle(chat);
     }
+  }
+
+  // Một lời giải của hội đồng Nghĩ kỹ: chạy với mô hình riêng, không hiện ra trong lúc làm.
+  async function silentDraft(history, model, angle, stops) {
+    const msgs = history.map((m) => ({ ...m }));
+    const last = msgs.findLast((m) => m.role === "user");
+    const add = "\n\n" + angle;
+    if (typeof last.content === "string") last.content += add;
+    else last.content = [{ ...last.content[0], text: last.content[0].text + add }, ...last.content.slice(1)];
+    const r = { role: "assistant", content: "", reasoning: "", forceModel: model, stop: new AbortController() };
+    controller.signal.addEventListener("abort", () => r.stop.abort(), { once: true });
+    stops.push(r.stop);
+    try { await answerWithTools(msgs, r, document.createElement("div")); } catch (e) { if (!r.stop.signal.aborted) throw e; }
+    // Hết giờ mà đã viết được phần đáng kể thì vẫn đưa cho giám khảo, ghi rõ là chưa viết xong.
+    const answer = splitThink(r.content).answer.replace(/```output[\s\S]*?```/g, "").trim();
+    const cut = r.stop.signal.aborted;
+    if (!answer || (cut && answer.length < 300)) return null;
+    const name = (r.drafter || modelTitle("shared", model)) + (cut ? ", chưa viết xong" : "");
+    return { answer: answer + (cut ? "\n…(lời giải này chưa viết xong vì hết thời gian)" : ""), draft: { content: r.content, reasoning: r.reasoning, thinkSecs: r.thinkSecs, model: name } };
   }
 
   // Lấy các thẻ [[NHỚ: …]] ra khỏi câu trả lời và lưu vào bộ nhớ dài hạn.
@@ -1980,7 +2015,13 @@
     };
   }
   let pyWorker = null, pyReady = false;
+  let pyQueue = Promise.resolve();
   function runPy(code) {
+    const run = pyQueue.then(() => runPyNow(code));
+    pyQueue = run.catch(() => {});
+    return run;
+  }
+  function runPyNow(code) {
     pyWorker ??= new Worker(URL.createObjectURL(new Blob([`const PYODIDE = ${JSON.stringify(PYODIDE)};(${pyMain})()`], { type: "text/javascript" })));
     const w = pyWorker;
     return new Promise((resolve) => {
@@ -2018,7 +2059,8 @@
     let tThinkEnd = null, tokens = 0, tFirst = null, stopped = false;
     const pass = new AbortController();
     const onAbort = () => pass.abort();
-    controller.signal.addEventListener("abort", onAbort, { once: true });
+    const outer = reply.stop?.signal || controller.signal;
+    outer.addEventListener("abort", onAbort, { once: true });
     let pending = false;
     const repaint = () => {
       if (pending) return; pending = true;
@@ -2044,7 +2086,7 @@
     } catch (e) {
       if (!(stopped && e.name === "AbortError")) throw e;
     } finally {
-      controller.signal.removeEventListener("abort", onAbort);
+      outer.removeEventListener("abort", onAbort);
       if (tThinkEnd || reply.reasoning || reply.content.includes("</think>")) {
         reply.thinkSecs = (reply.thinkSecs || 0) + Math.max(1, Math.round(((tThinkEnd || performance.now()) - t0) / 1000));
       }
@@ -2067,7 +2109,7 @@
     // Mô hình trên NVIDIA: máy chủ tự xử lý ảnh (dùng GLM-5.3 Flash) và tự chuyển sang GLM của Z.ai khi bận,
     // nên trang chỉ thử thêm các mô hình của Z.ai.
     const onNvidia = (m) => PROVIDERS.shared.nvidia.includes(m);
-    const chosen = passModel || cloudModel();
+    const chosen = reply.forceModel || cloudModel(); // forceModel: mô hình riêng của một lời giải trong chế độ Nghĩ kỹ
     const order = vision ? [["shared", PROVIDERS.shared.visionNvidia]] : [[settings.provider, chosen]];
     if (!vision) for (const id of Object.keys(PROVIDERS)) for (const m of PROVIDERS[id].models) if ((id !== order[0][0] || m !== order[0][1]) && !onNvidia(m)) order.push([id, m]);
     const retries = vision ? 4 : 1;
@@ -2128,9 +2170,15 @@
 
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
-    let buf = "";
+    let buf = "", lastText = Date.now();
+    // Máy chủ đôi khi vẫn giữ kết nối nhưng không gửi thêm chữ nào: quá 2 phút thì ngắt, coi như mất kết nối
+    // (TypeError) để runPass tự nối lại hoặc báo lỗi, thay vì chờ mãi.
+    const IDLE = 120000;
     while (true) {
-      const { value, done } = await reader.read();
+      let idle;
+      const { value, done } = await Promise.race([reader.read(), new Promise((_, no) => {
+        idle = setTimeout(() => no(new TypeError("Mô hình không gửi thêm nội dung")), Math.max(1000, IDLE - (Date.now() - lastText)));
+      })]).finally(() => clearTimeout(idle)).catch((e) => { reader.cancel().catch(() => {}); throw e; });
       if (done) return;
       buf += decoder.decode(value, { stream: true });
       const parts = buf.split("\n"); buf = parts.pop();
@@ -2141,6 +2189,7 @@
         let j; try { j = JSON.parse(data); } catch { continue; }
         const delta = j.choices?.[0]?.delta || {};
         // Z.ai dùng reasoning_content, một số máy chủ khác dùng reasoning.
+        if (delta.reasoning_content || delta.reasoning || delta.content) lastText = Date.now();
         yield { think: delta.reasoning_content || delta.reasoning, text: delta.content, tps: j.timings?.predicted_per_second, finish: j.choices?.[0]?.finish_reason };
       }
     }

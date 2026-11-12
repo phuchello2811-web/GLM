@@ -50,7 +50,7 @@ const DEFAULT_ORIGINS = [
   "http://127.0.0.1:5500", // Live Server trong VS Code
   "http://localhost:5500",
 ];
-const PER_MINUTE = 20; // số lượt hỏi tối đa mỗi phút cho mỗi IP
+const PER_MINUTE = 40; // số lượt gọi tối đa mỗi phút cho mỗi IP (một câu Nghĩ kỹ dùng nhiều lượt: 3 mô hình, mỗi lần chạy công cụ là một lượt)
 const LIMITS = { chat: PER_MINUTE, image: 6, sync: 40, status: 10 }; // giới hạn mỗi phút theo từng loại yêu cầu
 // Tạo ảnh: FLUX.2 [klein] 4B (đẹp, nhanh, sửa được ảnh có sẵn; khoảng 100 neuron mỗi ảnh 1024x1024,
 // gói miễn phí 10.000 neuron mỗi ngày). Lỗi thì dùng FLUX.1 [schnell] (chỉ ảnh vuông, không sửa ảnh).
