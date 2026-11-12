@@ -61,6 +61,8 @@ Nhóm **GLM** (Z.ai):
 - **GLM-4.5 Flash**: trả lời nhanh nhất, hợp câu hỏi ngắn và trò chuyện.
 - **GLM-4.6V Flash**: chuyên đọc ảnh (ảnh chụp, tài liệu, biểu đồ).
 
+Các mô hình GLM có thêm lời dặn riêng (nghĩ đủ bốn bước Đề bài → Kế hoạch → Giải → Kiểm tra, thử phản bác đáp án đầu tiên, tính bằng code thay vì tính nhẩm, không chen chữ Hán). Với câu toán, logic, lập trình thi đấu, GLM tự chấm lại và sửa câu trả lời một lượt, kể cả khi không bật Nghĩ kỹ.
+
 Danh sách trên đã được kiểm tra trả lời được ngày 12/11/2026. GLM-5.3 Flash, DeepSeek V4.1 Flash và MiniMax M3.1 Flash cũng có trên NVIDIA nhưng bản miễn phí đang quá tải nên chưa có trong menu. Khi mở menu, mỗi mô hình mạnh có nhãn **Sẵn sàng** hoặc **Đang quá tải**. Mô hình nào không trả lời trong 25 giây thì máy chủ trả lời bằng GLM-4.7 Flash, ghi lý do dưới câu trả lời, và tạm bỏ qua mô hình đó 5 phút.
 
 Mô hình nào quá tải hoặc trả lời quá chậm thì trang tự chuyển sang mô hình GLM khác. Trang chỉ dùng mô hình miễn phí, không có chỗ nhập API key. Trang không dùng mô hình tải về máy; muốn chạy offline thì dùng `./chat.sh` hoặc `./server.sh` ở trên.

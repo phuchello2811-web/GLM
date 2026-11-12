@@ -636,7 +636,7 @@
   const SHARED_URL = "https://glm.phuchello2811.workers.dev/";
 
   const settings = Object.assign(
-    { system: "", temperature: 0.6, maxTokens: 8192, think: "collapsed", deep: false, tools: true,
+    { system: "", temperature: 0.6, maxTokens: 16384, think: "collapsed", deep: false, tools: true,
       provider: "shared", models: {} },
     store.get("glm.settings", {})
   );
@@ -674,7 +674,8 @@
   // Cài đặt cũ có thể còn trỏ tới nguồn đã bỏ (máy này, Pollinations, Z.ai, OpenRouter, Puter) hoặc còn lưu API key.
   delete settings.keys; delete settings.server;
   // Mặc định cũ 4096 hay làm câu trả lời bị cắt khi mô hình nghĩ lâu; máy chủ chung cho tối đa 8192.
-  if (settings.maxTokens === 4096) settings.maxTokens = 8192;
+  // Mặc định 16384 để mô hình nghĩ lâu với bài khó mà không bị cắt (máy chủ chung cho tối đa 16384).
+  if (settings.maxTokens === 4096 || settings.maxTokens === 8192) settings.maxTokens = 16384;
   if (!PROVIDERS[settings.provider]) settings.provider = "shared";
   for (const id in settings.models) if (!PROVIDERS[id]?.models.includes(settings.models[id])) delete settings.models[id];
   store.set("glm.settings", settings);
@@ -1291,6 +1292,17 @@
     "cân nhắc bằng chứng ủng hộ và phản bác, nêu đánh đổi, rồi đưa ra kết luận có lập luận chứ không chỉ liệt kê.\n" +
     "7) Trả lời: kết luận rõ ràng trước, rồi các bước hoặc lý do chính; với điều chưa chắc thì nói mức độ chắc chắn và vì sao.\n" +
     "Không bịa thông tin, số liệu, trích dẫn hay đường dẫn; không chắc thì tra cứu hoặc nói rõ. Trả lời bằng ngôn ngữ của người dùng.";
+  // Lời dặn riêng cho các mô hình GLM Flash, nhắm vào lỗi chúng hay mắc: dừng nghĩ khi vừa có đáp án đầu tiên,
+  // tính nhẩm sai, đoán thông tin, chen chữ Hán vào câu trả lời tiếng Việt.
+  const GLM_PROMPT =
+    "Lưu ý riêng cho bạn:\n" +
+    "- Với câu khó, phần suy nghĩ đi đủ bốn bước: Đề bài (viết lại yêu cầu, dữ kiện, điều kiện) → Kế hoạch (ít nhất hai cách, chọn cách chắc nhất) → " +
+    "Giải (từng bước) → Kiểm tra (bằng cách khác với cách đã giải). Không bỏ bước Kiểm tra.\n" +
+    "- Có đáp án đầu tiên rồi thì chưa dừng: thử phản bác nó ít nhất một lần (phản ví dụ, trường hợp biên, đọc lại đề tìm bẫy).\n" +
+    "- Phép tính quá hai bước, số có hơn ba chữ số, đếm, xác suất: bắt buộc tính bằng py-run, không tính nhẩm.\n" +
+    "- Sự thật, số liệu, tên người, ngày tháng mà bạn không chắc chắn: tra cứu, không đoán.\n" +
+    "- Chỉ dùng ngôn ngữ của người dùng; không bao giờ chen chữ Hán hay câu tiếng Trung vào câu trả lời.\n" +
+    "- Câu trả lời cuối gọn gàng: kết luận trước, rồi các bước chính; không chép lại toàn bộ phần suy nghĩ.";
   const TOOL_PROMPT =
     "Bạn có các công cụ sau. Mỗi lần chỉ dùng một công cụ: viết khối lệnh rồi DỪNG viết ngay sau khối đó. " +
     "Hệ thống sẽ chạy và gửi lại kết quả để bạn trả lời tiếp. Không tự đoán kết quả.\n\n" +
@@ -1383,7 +1395,7 @@
       remind: "logo/icon/biểu đồ/sơ đồ thì vẽ bằng một khối ```svg hoàn chỉnh; tranh, ảnh minh hoạ thì dùng công cụ ```image (mô tả tiếng Anh chi tiết, thêm dòng ratio khi cần); sửa ảnh có sẵn thì thêm dòng edit: yes",
     },
     {
-      test: /chứng minh|giải (phương trình|hệ|bất phương trình|bài toán)|xác suất|tổ hợp|chỉnh hợp|hoán vị|bao nhiêu cách|câu đố|đố vui|logic|suy luận|nghịch lý|nói thật|nói dối|hiệp sĩ|đạo hàm|tích phân|giới hạn|ma trận|cực trị|\bproof\b|\bprove\b|probability|puzzle|riddle|integral|derivative/i,
+      test: /chứng minh|giải (phương trình|hệ|bất phương trình|bài toán)|xác suất|tổ hợp|chỉnh hợp|hoán vị|bao nhiêu cách|bao nhiêu số|chia hết|ước số|bội số|số nguyên tố|phương trình|tính (giá trị|tổng|tích|diện tích|thể tích)|câu đố|đố vui|logic|suy luận|nghịch lý|nói thật|nói dối|hiệp sĩ|đạo hàm|tích phân|giới hạn|ma trận|cực trị|\bproof\b|\bprove\b|probability|puzzle|riddle|integral|derivative/i,
       prompt:
         "Kỹ năng toán và suy luận logic:\n" +
         "- Toán: tính chính xác (phân số, căn, π) trước rồi mới làm tròn. Dùng sympy (solve, simplify, factor, diff, integrate, limit, Matrix, nsimplify) qua py-run để giải hoặc kiểm tra. " +
@@ -1394,6 +1406,7 @@
         "(itertools.permutations, product) để chắc chắn có đúng một đáp án, rồi kiểm lại đáp án với từng ràng buộc.\n" +
         "- Cẩn thận các lỗi hay gặp: đếm thiếu hoặc trùng, nhầm điều kiện cần và đủ, chia cho số có thể bằng 0, quên nghiệm ngoại lai, quên đơn vị.",
       remind: "kiểm chứng đáp số bằng py-run (sympy để tính hoặc giải chính xác, hoặc vét cạn/mô phỏng với số nhỏ) trước khi kết luận",
+      hard: true, // câu khó: mô hình GLM tự kiểm tra lại câu trả lời một lượt
     },
     {
       test: /ioi|icpc|olympic|hsg|học sinh giỏi|codeforces|atcoder|leetcode|vnoi|thi đấu|competitive|thuật toán|algorithm|độ phức tạp|c\+\+|cpp|subtask|testcase|quy hoạch động|đồ thị/i,
@@ -1412,6 +1425,7 @@
         "rồi dùng py-run so sánh hai lời giải trên vài trăm test ngẫu nhiên nhỏ và các test biên (stress test). Sai thì sửa rồi chạy lại.\n" +
         "6) Trình bày: ý tưởng, độ phức tạp thời gian và bộ nhớ, code C++ cuối cùng trong khối ```cpp.",
       remind: "lời giải cuối bằng C++17 trong khối ```cpp; trước đó chạy py-run so sánh thuật toán (viết bằng Python) với lời giải vét cạn trên nhiều test ngẫu nhiên nhỏ",
+      hard: true,
     },
   ];
 
@@ -1423,6 +1437,7 @@
   function systemPrompt(chat) {
     const today = new Date().toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "numeric", year: "numeric" });
     const parts = [`Hôm nay là ${today}. Kiến thức có sẵn của bạn chỉ cập nhật đến khoảng năm 2024–2025, nên những gì xảy ra sau đó (ai đang giữ chức vụ, giá cả, phiên bản mới, kết quả thi đấu, sự kiện gần đây) bạn phải tra cứu, không được đoán.`, THINK_PROMPT];
+    if (/^glm/.test(cloudModel())) parts.push(GLM_PROMPT);
     if (settings.system.trim()) parts.push(settings.system.trim());
     if (settings.tools) parts.push(TOOL_PROMPT);
     for (const k of activeSkills(chat)) if (k.prompt) parts.push(k.prompt);
@@ -1467,6 +1482,13 @@
       const draft = splitThink(reply.content).answer.trim();
       // Chế độ Nghĩ kỹ: giải thêm một lần độc lập (không thấy lời giải đầu), rồi so sánh hai lời giải,
       // kiểm tra chỗ khác nhau và viết câu trả lời cuối cùng. Lần giải thứ hai lỗi thì chỉ tự kiểm tra lời giải đầu.
+      // Mô hình GLM với câu khó (toán, logic, lập trình thi đấu) mà không bật Nghĩ kỹ: tự chấm lại và sửa câu trả lời một lượt.
+      if (!settings.deep && draft && /^glm/.test(cloudModel()) && activeSkills(chat).some((k) => k.hard)) {
+        reply.drafts = [{ content: reply.content, reasoning: reply.reasoning, thinkSecs: reply.thinkSecs, model: reply.drafter }];
+        Object.assign(reply, { content: "", reasoning: "", thinkSecs: null, tps: null, review: true, via: undefined });
+        await answerWithTools([...history, { role: "assistant", content: draft }, { role: "user", content: REVIEW_PROMPT }], reply, node);
+        if (!splitThink(reply.content).answer.trim()) throw new Error("Bước kiểm tra lại không trả về kết quả.");
+      }
       if (settings.deep && draft) {
         const keep = (model) => ({ content: reply.content, reasoning: reply.reasoning, thinkSecs: reply.thinkSecs, model });
         reply.drafts = [keep(modelTitle("shared", cloudModel()))];
@@ -2905,7 +2927,7 @@
     chooseModel($("setProvider").value);
     settings.system = $("setSystem").value;
     settings.temperature = parseFloat($("setTemp").value) || 0.6;
-    settings.maxTokens = parseInt($("setMax").value) || 8192;
+    settings.maxTokens = parseInt($("setMax").value) || 16384;
     settings.think = $("setThink").value;
     settings.tools = $("setTools").checked;
     store.set("glm.settings", settings);

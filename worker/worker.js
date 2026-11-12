@@ -59,7 +59,7 @@ const IMAGE_FALLBACK = "@cf/black-forest-labs/flux-1-schnell";
 const MAX_REFS = 4; // số ảnh mẫu tối đa khi sửa ảnh (mỗi ảnh phải nhỏ hơn 512x512, trang tự thu nhỏ)
 const SYNC_ROW_MAX = 1_900_000; // D1 giới hạn mỗi dòng khoảng 2MB
 const MAX_BODY = 8 * 1024 * 1024; // đoạn chat (kể cả ảnh) nặng quá 8MB thì từ chối
-const MAX_TOKENS = 8192;
+const MAX_TOKENS = 16384; // đủ cho mô hình nghĩ lâu với bài khó mà không bị cắt
 const BUSY = [429, 502, 503, 504, 524]; // mã lỗi khi Z.ai quá tải hoặc treo
 
 // Đếm lượt trong bộ nhớ: mỗi máy chủ Cloudflare đếm riêng nên chỉ là chặn tương đối.
