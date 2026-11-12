@@ -21,11 +21,13 @@ const VISION_MODEL = "glm-4.6v-flash"; // mô hình miễn phí duy nhất của
 const NVIDIA_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
 const NVIDIA_MODELS = {
   "glm-5.3-flash": { id: "z-ai/glm-5.3-flash", title: "GLM-5.3 Flash", vision: true, effort: true },
-  "kimi-k2.6": { id: "moonshotai/kimi-k2.6", title: "Kimi K2.6" },
+  "nemotron-3-ultra": { id: "nvidia/nemotron-3-ultra-550b-a55b", title: "Nemotron 3 Ultra" },
+  "nemotron-3.5-super-vl": { id: "nvidia/nemotron-3.5-super-vl-120b-a12b", title: "Nemotron 3.5 Super VL", vision: true },
+  "nemotron-3.5-lightning": { id: "nvidia/nemotron-3.5-lightning-30b-a3b", title: "Nemotron 3.5 Lightning" },
+  "mistral-large-4": { id: "mistralai/mistral-large-4-1t-a52b", title: "Mistral Large 4" },
   "deepseek-v4.1-flash": { id: "deepseek-ai/deepseek-v4.1-flash", title: "DeepSeek V4.1 Flash" },
   "minimax-m3.1-flash": { id: "minimaxai/minimax-m3.1-flash", title: "MiniMax M3.1 Flash" },
-  "mistral-large-4": { id: "mistralai/mistral-large-4-1t-a52b", title: "Mistral Large 4" },
-  "gemma-4-31b": { id: "google/gemma-4-31b-it", title: "Gemma 4 31B" },
+  "step-5": { id: "stepfun-ai/step-5-preview", title: "Step 5" },
 };
 const NVIDIA_WAIT = 25_000; // chờ chữ đầu tiên tối đa 25 giây
 const STALL = 90_000; // đang trả lời mà đứng yên quá 90 giây thì ngắt, để trang tự nối lại
@@ -189,7 +191,7 @@ async function callNvidia(name, clean, env, wait) {
       clearTimeout(t);
       if (res.status === 401 || res.status === 403) return { note: `bị từ chối (${res.status}): kiểm tra lại NVIDIA_API_KEY`, cool: 600_000 };
       if (res.status === 429) return { note: "hết lượt miễn phí trong phút này (429)", cool: 60_000 };
-      if (res.status === 404 || res.status === 410) return { note: `không còn trên NVIDIA (${res.status})`, cool: 3_600_000 };
+      if (res.status === 404 || res.status === 410) return { note: `không còn trên NVIDIA (${res.status})`, cool: 3_600_000, gone: true };
       return { note: `báo lỗi ${res.status}: ${detail}`, cool: 300_000 };
     }
     // NVIDIA đôi khi trả 200 rồi không gửi gì: đọc tới khi có dòng dữ liệu đầu tiên.
@@ -233,11 +235,11 @@ async function nvidiaStatus(env) {
   const models = {};
   await Promise.all(Object.keys(NVIDIA_MODELS).map(async (name) => {
     const down = nvidiaDown.get(name);
-    if (down && down.until > Date.now()) { models[name] = { ok: false, note: down.note }; return; }
+    if (down && down.until > Date.now()) { models[name] = { ok: false, note: down.note, gone: down.gone }; return; }
     const start = Date.now();
     const r = await callNvidia(name, probe, env, 20_000);
     if (r.body) { r.body.cancel().catch(() => {}); nvidiaDown.delete(name); models[name] = { ok: true, ms: Date.now() - start }; }
-    else { nvidiaDown.set(name, { until: Date.now() + r.cool, note: r.note }); models[name] = { ok: false, note: r.note }; }
+    else { nvidiaDown.set(name, { until: Date.now() + r.cool, note: r.note, gone: r.gone }); models[name] = { ok: false, note: r.note, gone: r.gone }; }
   }));
   statusCache = { at: Date.now(), data: { enabled: true, models } };
   return statusCache.data;

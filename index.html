@@ -647,9 +647,9 @@
       url: SHARED_URL,
       // Phải khớp FREE_MODELS trong worker/worker.js.
       models: ["glm-5.3-flash", "glm-4.7-flash", "glm-4.5-flash", "glm-4.6v-flash",
-        "kimi-k2.6", "deepseek-v4.1-flash", "minimax-m3.1-flash", "mistral-large-4", "gemma-4-31b"],
+        "nemotron-3-ultra", "nemotron-3.5-super-vl", "nemotron-3.5-lightning", "mistral-large-4", "deepseek-v4.1-flash", "minimax-m3.1-flash", "step-5"],
       // Chạy trên NVIDIA (phải khớp NVIDIA_MODELS trong worker/worker.js); máy chủ tự dùng GLM của Z.ai khi chúng bận.
-      nvidia: ["glm-5.3-flash", "kimi-k2.6", "deepseek-v4.1-flash", "minimax-m3.1-flash", "mistral-large-4", "gemma-4-31b"],
+      nvidia: ["glm-5.3-flash", "nemotron-3-ultra", "nemotron-3.5-super-vl", "nemotron-3.5-lightning", "mistral-large-4", "deepseek-v4.1-flash", "minimax-m3.1-flash", "step-5"],
       // Mô hình đọc được ảnh: câu hỏi có ảnh luôn gửi tới đây.
       vision: "glm-4.6v-flash",
       titles: {
@@ -657,11 +657,13 @@
         "glm-4.7-flash": ["GLM-4.7 Flash", "Suy luận tốt, viết code giỏi, trả lời ổn định"],
         "glm-4.5-flash": ["GLM-4.5 Flash", "Trả lời nhanh nhất, hợp câu hỏi ngắn và trò chuyện"],
         "glm-4.6v-flash": ["GLM-4.6V Flash", "Chuyên đọc ảnh: ảnh chụp, tài liệu, biểu đồ"],
-        "kimi-k2.6": ["Kimi K2.6", "Rất mạnh về lập trình và việc nhiều bước, nhớ được tài liệu dài"],
+        "nemotron-3-ultra": ["Nemotron 3 Ultra", "Mô hình lớn nhất của NVIDIA: suy luận sâu, viết code tốt"],
+        "nemotron-3.5-super-vl": ["Nemotron 3.5 Super VL", "Đọc được ảnh, vừa nhanh vừa thông minh"],
+        "nemotron-3.5-lightning": ["Nemotron 3.5 Lightning", "Trả lời rất nhanh, hợp hỏi đáp ngắn"],
+        "mistral-large-4": ["Mistral Large 4", "Viết văn hay, dịch và dùng nhiều ngôn ngữ giỏi"],
         "deepseek-v4.1-flash": ["DeepSeek V4.1 Flash", "Suy luận và toán rất tốt, trả lời gọn gàng"],
         "minimax-m3.1-flash": ["MiniMax M3.1 Flash", "Nhanh, viết code và tóm tắt văn bản dài tốt"],
-        "mistral-large-4": ["Mistral Large 4", "Viết văn hay, dịch và dùng nhiều ngôn ngữ giỏi"],
-        "gemma-4-31b": ["Gemma 4 31B", "Nhẹ và nhanh, trò chuyện tự nhiên"],
+        "step-5": ["Step 5", "Suy luận nhiều bước và giải toán tốt"],
       },
       modelHelp: "Dùng chung máy chủ của trang, không cần key hay tài khoản. Tối đa 20 câu hỏi mỗi phút. Mô hình đang quá tải hoặc chưa bật thì tự chuyển sang mô hình khác.",
       extra: { thinking: { type: "enabled" } },
@@ -736,6 +738,8 @@
         if (!PROVIDERS.shared.nvidia.includes(el.dataset.st) || !modelStatus) { el.className = "st"; el.textContent = ""; continue; }
         if (!modelStatus.enabled) { el.className = "st busy"; el.textContent = "Chưa bật"; el.title = "Máy chủ chưa có NVIDIA_API_KEY"; continue; }
         if (!st) { el.className = "st wait"; el.textContent = "Đang kiểm tra…"; continue; }
+        // NVIDIA báo mô hình không còn (404): ẩn khỏi menu, trừ khi đang được chọn.
+        el.closest("button").style.display = st.gone && !el.closest("button").matches('[aria-checked="true"]') ? "none" : "";
         el.className = "st " + (st.ok ? "ok" : "busy");
         el.textContent = st.ok ? "Sẵn sàng" : "Đang quá tải";
         el.title = st.ok ? `Trả lời sau ${(st.ms / 1000).toFixed(1)} giây` : `${st.note || ""}. Chọn vẫn được: khi bận, máy chủ tự trả lời bằng GLM-4.7 Flash.`;

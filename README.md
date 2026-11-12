@@ -53,11 +53,15 @@ Trang dùng **GLM miễn phí** qua máy chủ chung (dựng theo [worker/README
 
 Nhóm **Mô hình khác** (cũng cần key NVIDIA):
 
-- **Kimi K2.6**: rất mạnh về lập trình và việc nhiều bước, nhớ được tài liệu dài.
+- **Nemotron 3 Ultra**: mô hình lớn nhất của NVIDIA, suy luận sâu, viết code tốt.
+- **Nemotron 3.5 Super VL**: đọc được ảnh, vừa nhanh vừa thông minh.
+- **Nemotron 3.5 Lightning**: trả lời rất nhanh, hợp hỏi đáp ngắn.
+- **Mistral Large 4**: viết văn hay, dịch và dùng nhiều ngôn ngữ giỏi.
 - **DeepSeek V4.1 Flash**: suy luận và toán rất tốt, trả lời gọn gàng.
 - **MiniMax M3.1 Flash**: nhanh, viết code và tóm tắt văn bản dài tốt.
-- **Mistral Large 4**: viết văn hay, dịch và dùng nhiều ngôn ngữ giỏi.
-- **Gemma 4 31B**: nhẹ và nhanh, trò chuyện tự nhiên.
+- **Step 5**: suy luận nhiều bước và giải toán tốt.
+
+Mô hình nào NVIDIA báo không còn cho dùng miễn phí thì tự ẩn khỏi menu.
 
 Khi mở menu, mỗi mô hình có nhãn **Sẵn sàng** hoặc **Đang quá tải**. Bản miễn phí của NVIDIA hay quá tải: mô hình nào không trả lời trong 25 giây thì máy chủ trả lời bằng GLM-4.7 Flash, ghi lý do dưới câu trả lời, và tạm bỏ qua mô hình đó 5 phút.
 

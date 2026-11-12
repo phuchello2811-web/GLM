@@ -58,7 +58,7 @@ Muốn dùng: trong trang chat, vào **Cài đặt → Đồng bộ giữa các 
 
 ## Bước 7: Bật GLM-5.3 Flash và các mô hình NVIDIA (miễn phí)
 
-GLM-5.3 Flash là thế hệ GLM-5, mạnh hơn GLM-4.7 Flash nhiều và đọc được ảnh. Cùng key này còn mở thêm Kimi K2.6, DeepSeek V4.1 Flash, MiniMax M3.1 Flash, Mistral Large 4 và Gemma 4 31B. NVIDIA cho dùng miễn phí khoảng 40 lượt mỗi phút cho cả tài khoản, không cần thẻ tín dụng.
+GLM-5.3 Flash là thế hệ GLM-5, mạnh hơn GLM-4.7 Flash nhiều và đọc được ảnh. Cùng key này còn mở thêm Nemotron 3 Ultra, Nemotron 3.5 Super VL, Nemotron 3.5 Lightning, Mistral Large 4, DeepSeek V4.1 Flash, MiniMax M3.1 Flash và Step 5. NVIDIA cho dùng miễn phí khoảng 40 lượt mỗi phút cho cả tài khoản, không cần thẻ tín dụng.
 
 1. Vào https://build.nvidia.com, bấm **Login** và tạo tài khoản NVIDIA miễn phí (cần xác minh số điện thoại).
 2. Mở https://build.nvidia.com/settings/api-keys, bấm **Generate API Key**, rồi chép key (bắt đầu bằng `nvapi-`). Đừng dán key này cho ai, kể cả vào khung chat.
