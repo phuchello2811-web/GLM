@@ -69,7 +69,7 @@ Mô hình nào quá tải hoặc trả lời quá chậm thì trang tự chuyể
 
 Giao diện có lịch sử chat (lưu trong trình duyệt), hiện quá trình suy nghĩ của mô hình, nút dừng và tạo lại câu trả lời, chế độ sáng/tối. Vào **Cài đặt** để đổi lời nhắc hệ thống hoặc nhiệt độ.
 
-Nút **mức suy nghĩ** (biểu tượng bóng đèn) trong khung chat có 4 mức:
+Nút **Mức suy nghĩ** (biểu tượng bóng đèn) trong khung chat mở một thanh trượt 4 nấc (kéo, bấm hoặc dùng phím mũi tên; bấm vào tên mức để xem giải thích):
 
 - **Nhanh**: trả lời ngay, không suy nghĩ dài. Hợp chào hỏi, câu đơn giản.
 - **Cân bằng** (mặc định): suy nghĩ bình thường. Mô hình GLM tự chấm lại câu toán, logic, lập trình thi đấu.

@@ -411,6 +411,30 @@
     .msg.assistant::before { position: static; display: block; width: 24px; height: 24px; border-radius: 7px; margin-bottom: 8px; }
     .top-title { max-width: 58%; }
   }
+  /* Khung chọn mức suy nghĩ: tên mức và thanh trượt 4 nấc. */
+  .level-pop { position: fixed; z-index: 30; width: min(340px, calc(100vw - 32px)); padding: 14px 16px 16px; border-radius: 22px;
+    background: var(--surface); border: 1px solid var(--border); box-shadow: 0 14px 40px rgba(0,0,0,.28); }
+  .level-pop[hidden] { display: none; }
+  .lp-title { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; margin-bottom: 12px; font-size: 18px; font-weight: 600; }
+  .lp-title svg { width: 16px; height: 16px; color: var(--muted); transition: transform .15s; }
+  .lp-title[aria-expanded="true"] svg { transform: rotate(90deg); }
+  .lp-range { --f: .33; --k: 44px; position: relative; height: var(--k); border-radius: 999px; background: rgba(128,128,128,.22); }
+  .lp-range::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; background: var(--brand);
+    width: calc(var(--k) + (100% - var(--k)) * var(--f)); transition: width .15s ease; }
+  .lp-dot { position: absolute; top: 50%; left: calc(var(--k) / 2 + (100% - var(--k)) * var(--i) / 3); width: 6px; height: 6px; border-radius: 50%;
+    background: var(--muted); transform: translate(-50%, -50%); }
+  .lp-range input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; background: transparent; -webkit-appearance: none; appearance: none; cursor: pointer; }
+  .lp-range input:focus { outline: none; }
+  .lp-range input::-webkit-slider-runnable-track { height: var(--k); background: transparent; }
+  .lp-range input::-moz-range-track { height: var(--k); background: transparent; }
+  .lp-range input::-webkit-slider-thumb { -webkit-appearance: none; width: var(--k); height: var(--k); border-radius: 50%; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.35); cursor: grab; }
+  .lp-range input::-moz-range-thumb { width: var(--k); height: var(--k); border: 0; border-radius: 50%; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.35); cursor: grab; }
+  .lp-range input:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px var(--ring), 0 2px 10px rgba(0,0,0,.35); }
+  .lp-desc { margin-top: 12px; font-size: 13px; line-height: 1.45; color: var(--muted); text-align: center; }
+  .lp-more { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 13px; line-height: 1.45; color: var(--muted); }
+  .lp-more p { margin: 0 0 6px; }
+  .lp-more b { color: var(--text); font-weight: 600; }
+
   /* Màn hình hẹp: chip mô hình co lại, nút Nghĩ kỹ chỉ còn biểu tượng để hàng nút không tràn ra ngoài. */
   .deep.chip { flex-shrink: 1; }
   @media (max-width: 480px) {
@@ -497,10 +521,21 @@
       </button>
       <button class="deep chip" id="deep" type="button" aria-haspopup="menu" aria-expanded="false" title="Chọn mức suy nghĩ">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2Z"/></svg>
-        <span id="levelTitle">Cân bằng</span>
+        <span id="levelTitle">Mức suy nghĩ</span>
         <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
       </button>
-      <div class="model-menu" id="levelMenu" role="menu" hidden></div>
+      <div class="level-pop" id="levelMenu" role="dialog" aria-label="Mức suy nghĩ" hidden>
+        <button class="lp-title" id="lpTitle" type="button" aria-expanded="false" title="Xem giải thích các mức">
+          <span id="lpName">Cân bằng</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
+        </button>
+        <div class="lp-range" id="lpRange">
+          <span class="lp-dot" style="--i:0"></span><span class="lp-dot" style="--i:1"></span><span class="lp-dot" style="--i:2"></span><span class="lp-dot" style="--i:3"></span>
+          <input type="range" id="lpInput" min="0" max="3" step="1" aria-label="Mức suy nghĩ">
+        </div>
+        <div class="lp-desc" id="lpDesc"></div>
+        <div class="lp-more" id="lpMore" hidden></div>
+      </div>
       <div class="spacer"></div>
       <button class="send" id="send" type="submit" disabled title="Gửi">
         <svg id="sendIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
@@ -707,7 +742,7 @@
   let menuAnchor = null;
   function toggleModelMenu(anchor) {
     const menu = $("modelMenu");
-    $("levelMenu").hidden = true;
+    if (anchor) $("levelMenu").hidden = true; // mở menu mô hình thì đóng khung mức suy nghĩ
     if (menuAnchor) menuAnchor.setAttribute("aria-expanded", "false");
     if (!anchor || anchor === menuAnchor) { menu.hidden = true; menuAnchor = null; return; }
     let html = "";
@@ -3002,33 +3037,51 @@
   // Cài đặt cũ chỉ có nút Nghĩ kỹ bật/tắt: đang bật thì chuyển thành mức Tối đa.
   if ("deep" in settings) { if (settings.deep) settings.level = "max"; delete settings.deep; store.set("glm.settings", settings); }
   if (!LEVELS[settings.level]) settings.level = "normal";
-  const deepBtn = $("deep");
+  // Khung chọn mức: tên mức ở trên, thanh trượt 4 nấc ở dưới (kéo, bấm hoặc dùng phím mũi tên).
+  const LEVEL_KEYS = Object.keys(LEVELS);
+  const deepBtn = $("deep"), levelPop = $("levelMenu");
   const paintDeep = () => {
-    $("levelTitle").textContent = LEVELS[settings.level][0];
+    const [name, desc] = LEVELS[settings.level], i = LEVEL_KEYS.indexOf(settings.level);
+    $("lpName").textContent = name;
+    $("lpDesc").textContent = desc;
+    $("lpInput").value = i;
+    $("lpInput").setAttribute("aria-valuetext", name);
+    $("lpRange").style.setProperty("--f", i / (LEVEL_KEYS.length - 1));
+    deepBtn.title = `Mức suy nghĩ: ${name}`;
     deepBtn.classList.toggle("on", settings.level === "careful" || settings.level === "max");
+    if (!levelPop.hidden) placeLevels(); // mô tả dài ngắn khác nhau nên căn lại vị trí
   };
+  // Đặt khung phía trên nút, mép phải thẳng với mép phải của nút.
+  const placeLevels = () => {
+    const r = deepBtn.getBoundingClientRect();
+    levelPop.style.left = Math.max(16, Math.min(r.right - levelPop.offsetWidth, innerWidth - levelPop.offsetWidth - 16)) + "px";
+    levelPop.style.top = Math.max(16, r.top - levelPop.offsetHeight - 10) + "px";
+  };
+  const closeLevels = () => { levelPop.hidden = true; deepBtn.setAttribute("aria-expanded", "false"); };
   deepBtn.onclick = (e) => {
     e.stopPropagation();
-    const menu = $("levelMenu");
-    if (!menu.hidden) { menu.hidden = true; deepBtn.setAttribute("aria-expanded", "false"); return; }
+    if (!levelPop.hidden) { closeLevels(); return; }
     toggleModelMenu(null);
-    menu.innerHTML = `<div class="group">Mức suy nghĩ</div>` + Object.entries(LEVELS).map(([k, [t, d]]) =>
-      `<button role="menuitemradio" data-level="${k}" aria-checked="${k === settings.level}"><span><b>${t}</b><small>${d}</small></span>${TICK}</button>`).join("");
-    menu.hidden = false;
+    levelPop.hidden = false;
     deepBtn.setAttribute("aria-expanded", "true");
-    const r = deepBtn.getBoundingClientRect();
-    menu.style.left = Math.max(16, Math.min(r.left, innerWidth - menu.offsetWidth - 16)) + "px";
-    menu.style.top = Math.max(16, r.top - menu.offsetHeight - 6) + "px";
+    paintDeep();
+    $("lpInput").focus();
   };
-  $("levelMenu").onclick = (e) => {
-    const b = e.target.closest("[data-level]");
-    if (!b) return;
-    settings.level = b.dataset.level;
+  $("lpInput").oninput = (e) => {
+    settings.level = LEVEL_KEYS[Number(e.target.value)];
     store.set("glm.settings", settings);
     paintDeep();
-    $("levelMenu").hidden = true; deepBtn.setAttribute("aria-expanded", "false");
   };
-  document.addEventListener("click", (e) => { if (!e.target.closest("#levelMenu")) { $("levelMenu").hidden = true; deepBtn.setAttribute("aria-expanded", "false"); } });
+  // Bấm vào tên mức: hiện hoặc ẩn giải thích của cả 4 mức.
+  $("lpTitle").onclick = () => {
+    const more = $("lpMore"), open = more.hidden;
+    more.hidden = !open;
+    $("lpTitle").setAttribute("aria-expanded", String(open));
+    more.innerHTML = LEVEL_KEYS.map((k) => `<p><b>${LEVELS[k][0]}</b>: ${LEVELS[k][1]}</p>`).join("");
+    placeLevels();
+  };
+  document.addEventListener("click", (e) => { if (!e.target.closest("#levelMenu")) closeLevels(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !levelPop.hidden) { closeLevels(); deepBtn.focus(); } });
   paintDeep();
 
   $("newChat").onclick = newChat;
