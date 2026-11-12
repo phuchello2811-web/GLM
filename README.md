@@ -118,11 +118,10 @@ Các trang đã tra hiện thành danh sách **Nguồn** dưới câu trả lờ
 
 GLM được dạy thêm vài kỹ năng, tự bật khi câu hỏi đúng chủ đề:
 
-- **Làm trang web:** viết trọn một file HTML. Bấm **Xem trước** dưới khối code để chạy thử ngay trong khung chat, hoặc **Tải về** để lấy file.
+- **Làm trang web:** viết trọn một file HTML có thiết kế đẹp, chế độ tối, chạy tốt trên điện thoại, dùng được bằng bàn phím, lưu dữ liệu và xử lý lỗi; game có điều khiển cảm ứng. Phần logic phức tạp được chạy thử trước. Bấm **Xem trước** dưới khối code để dùng ngay trong khung chat, hoặc **Tải về** để lấy file.
 - **Làm slide:** slide dạng HTML, chuyển trang bằng phím mũi tên hoặc chạm; bấm **Toàn màn hình** để trình chiếu.
 - **Vẽ hình:** logo, icon, biểu đồ được vẽ bằng SVG và hiện ảnh ngay trong chat.
-- **Làm trang web:** GLM Chat được dạy làm trang web hoàn chỉnh trong một file: thiết kế đẹp có chế độ tối, chạy tốt trên điện thoại, dùng được bằng bàn phím, lưu dữ liệu, xử lý lỗi, game có điều khiển cảm ứng. Phần logic phức tạp được chạy thử trước, rồi bấm **Xem trước** để dùng ngay.
-- **Lập trình thi đấu (IOI, ICPC, Codeforces, HSG Tin):** phân tích ràng buộc và độ phức tạp, chọn thuật toán, viết C++17, rồi kiểm tra bằng cách so sánh với lời giải vét cạn trên test ngẫu nhiên (chạy bằng Python).
+- **Lập trình thi đấu (IOI, ICPC, Codeforces, HSG Tin):** phân tích ràng buộc và độ phức tạp, chọn thuật toán, viết C++17, rồi chạy C++ thật để so sánh với lời giải vét cạn trên ví dụ của đề và vài trăm test ngẫu nhiên trước khi nộp.
 
 Muốn dạy mô hình theo văn phong hoặc kiến thức riêng của bạn, xem [FINETUNE.md](FINETUNE.md).
 
