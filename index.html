@@ -411,17 +411,17 @@
     .msg.assistant::before { position: static; display: block; width: 24px; height: 24px; border-radius: 7px; margin-bottom: 8px; }
     .top-title { max-width: 58%; }
   }
-  /* Khung chọn mức suy nghĩ: tên mức và thanh trượt 4 nấc. */
+  /* Khung chọn mức suy nghĩ: tên mức và thanh trượt 5 nấc. */
   .level-pop { position: fixed; z-index: 30; width: min(340px, calc(100vw - 32px)); padding: 14px 16px 16px; border-radius: 22px;
     background: var(--surface); border: 1px solid var(--border); box-shadow: 0 14px 40px rgba(0,0,0,.28); }
   .level-pop[hidden] { display: none; }
   .lp-title { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; margin-bottom: 12px; font-size: 18px; font-weight: 600; }
   .lp-title svg { width: 16px; height: 16px; color: var(--muted); transition: transform .15s; }
   .lp-title[aria-expanded="true"] svg { transform: rotate(90deg); }
-  .lp-range { --f: .33; --k: 44px; position: relative; height: var(--k); border-radius: 999px; background: rgba(128,128,128,.22); }
+  .lp-range { --f: .25; --k: 44px; position: relative; height: var(--k); border-radius: 999px; background: rgba(128,128,128,.22); }
   .lp-range::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; background: var(--brand);
     width: calc(var(--k) + (100% - var(--k)) * var(--f)); transition: width .15s ease; }
-  .lp-dot { position: absolute; top: 50%; left: calc(var(--k) / 2 + (100% - var(--k)) * var(--i) / 3); width: 6px; height: 6px; border-radius: 50%;
+  .lp-dot { position: absolute; top: 50%; left: calc(var(--k) / 2 + (100% - var(--k)) * var(--i) / 4); width: 6px; height: 6px; border-radius: 50%;
     background: var(--muted); transform: translate(-50%, -50%); }
   .lp-range input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; background: transparent; -webkit-appearance: none; appearance: none; cursor: pointer; }
   .lp-range input:focus { outline: none; }
@@ -530,8 +530,8 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>
         </button>
         <div class="lp-range" id="lpRange">
-          <span class="lp-dot" style="--i:0"></span><span class="lp-dot" style="--i:1"></span><span class="lp-dot" style="--i:2"></span><span class="lp-dot" style="--i:3"></span>
-          <input type="range" id="lpInput" min="0" max="3" step="1" aria-label="Mức suy nghĩ">
+          <span class="lp-dot" style="--i:0"></span><span class="lp-dot" style="--i:1"></span><span class="lp-dot" style="--i:2"></span><span class="lp-dot" style="--i:3"></span><span class="lp-dot" style="--i:4"></span>
+          <input type="range" id="lpInput" min="0" max="4" step="1" aria-label="Mức suy nghĩ">
         </div>
         <div class="lp-desc" id="lpDesc"></div>
         <div class="lp-more" id="lpMore" hidden></div>
@@ -1319,7 +1319,16 @@
       "và tự kiểm chứng kết quả bằng code hoặc tra cứu trước khi kết luận.)",
     "(Hãy giải độc lập từ đầu với vai trò người phản biện khó tính: đọc kỹ đề để tìm bẫy và các cách hiểu khác, " +
       "liệt kê giả định, giải từng bước, rồi kiểm chứng đáp số bằng code, vét cạn trường hợp nhỏ hoặc tra cứu.)",
+    "(Hãy giải độc lập từ đầu theo cách chặt chẽ nhất có thể: đặt ký hiệu rõ ràng, lập luận từng bước có lý do, " +
+      "xét đủ mọi trường hợp, rồi kiểm chứng kết quả bằng code hoặc tra cứu.)",
   ];
+  // Mức Ultra: vòng trao đổi, mỗi mô hình đọc lời giải vòng 1 của cả nhóm rồi viết lại lời giải đã cải tiến.
+  const DEBATE_PROMPT =
+    "(Vòng trao đổi. Bạn là một thành viên trong nhóm giải bài; lời giải vòng 1 của bạn là lời giải {L}. Dưới đây là lời giải vòng 1 của cả nhóm:\n\n{S}\n\n" +
+    "Hãy: 1) so sánh các lời giải, nêu rõ chỗ đồng ý và chỗ mâu thuẫn (đáp số, lập luận, code); " +
+    "2) với mỗi chỗ mâu thuẫn, kiểm chứng bằng code, vét cạn trường hợp nhỏ hoặc tra cứu để biết bên nào đúng, không theo số đông khi chưa kiểm chứng; " +
+    "3) học ý hay của người khác và sửa lỗi của chính mình; " +
+    "4) cuối cùng viết lại LỜI GIẢI HOÀN CHỈNH đã cải tiến của bạn cho câu hỏi ban đầu (không chỉ viết nhận xét); code trong đó phải đã chạy thử.)";
   const CRITIC_PROMPT =
     "Hãy đóng vai người chấm bài khó tính và soát câu trả lời vừa rồi. KHÔNG viết lại lời giải. " +
     "Kiểm tra từng bước lập luận, từng phép tính, từng dòng code: chạy code để kiểm chứng phép tính và đáp số (câu trả lời có code C++ thì chạy " +
@@ -1456,13 +1465,28 @@
       // Chỉ bật khi người dùng muốn làm/sửa trang (câu "tìm trên web" không tính).
       test: /\bhtml\b|\bcss\b|landing page|responsive|(làm|tạo|viết|code|thiết kế|xây dựng|sửa|lập trình)\s.{0,40}(web|trang|giao diện|game|app|ứng dụng|form|nút|menu|portfolio)/i,
       prompt:
-        "Kỹ năng làm trang web: viết MỘT file HTML hoàn chỉnh trong một khối ```html (CSS trong <style>, JS trong <script>), " +
-        "không dùng file ngoài; chỉ dùng thư viện qua CDN (cdnjs.cloudflare.com, cdn.jsdelivr.net) khi thật cần. " +
-        "Thiết kế hiện đại và đẹp: bố cục flex/grid, responsive (có meta viewport, chạy tốt trên điện thoại), bảng màu hài hoà " +
-        "khai báo bằng biến CSS, font hệ thống, khoảng trắng thoáng, bo góc, bóng nhẹ, hiệu ứng hover/transition mượt, " +
-        "chữ đủ tương phản. JS không có lỗi console, xử lý dữ liệu rỗng/sai, không dùng alert() trừ khi được yêu cầu. " +
-        "Người dùng bấm Xem trước để chạy thử ngay, nên khi sửa cũng luôn đưa lại TRỌN file, không chỉ đoạn thay đổi.",
-      remind: "đưa trọn một file HTML trong một khối ```html",
+        "Kỹ năng làm trang web (HTML, CSS, JavaScript):\n" +
+        "- Viết MỘT file HTML hoàn chỉnh trong một khối ```html: <!doctype html>, <meta charset=\"utf-8\">, <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">, <title>, " +
+        "CSS trong <style>, JS trong <script> ở cuối <body>. Không dùng file ngoài; thư viện chỉ lấy qua CDN (cdnjs.cloudflare.com, cdn.jsdelivr.net) " +
+        "với số phiên bản cụ thể và chỉ khi thật cần, còn lại dùng HTML, CSS, JS thuần.\n" +
+        "- Thiết kế: chọn một phong cách rõ ràng hợp nội dung; bảng màu khai báo bằng biến CSS trong :root, có chế độ tối (prefers-color-scheme: dark); " +
+        "font hệ thống hoặc Google Fonts; khoảng cách và cỡ chữ theo một thang thống nhất (clamp() cho tiêu đề); bố cục grid/flex; bo góc, bóng nhẹ; " +
+        "trạng thái hover, focus, active rõ ràng; transition 150–250ms và tôn trọng prefers-reduced-motion.\n" +
+        "- Responsive từ điện thoại trước: đẹp từ màn hình 360px tới màn hình lớn, không cuộn ngang, ảnh và video max-width: 100%, " +
+        "nút đủ lớn để chạm (tối thiểu 44px), menu gọn lại trên điện thoại.\n" +
+        "- Trợ năng: thẻ ngữ nghĩa (header, nav, main, section, footer; hành động dùng <button>), alt cho ảnh, label cho ô nhập, chữ đủ tương phản, " +
+        "dùng được bằng bàn phím và thấy rõ vị trí focus.\n" +
+        "- JavaScript: không có lỗi console; dùng const/let và addEventListener (không viết onclick trong HTML); kiểm tra dữ liệu nhập và báo lỗi ngay cạnh ô nhập " +
+        "(không dùng alert); lưu dữ liệu bằng localStorage khi hợp lý và luôn bọc try/catch; fetch có trạng thái đang tải và xử lý lỗi; " +
+        "hiển thị dữ liệu người dùng bằng textContent thay vì innerHTML.\n" +
+        "- Game và hoạt hình: canvas với requestAnimationFrame và delta time, điều khiển bằng cả bàn phím lẫn cảm ứng, có màn bắt đầu, tạm dừng, " +
+        "điểm và kỷ lục (localStorage), nút chơi lại; canvas tự co theo màn hình và devicePixelRatio cho nét.\n" +
+        "- Nội dung thật, cụ thể, bằng ngôn ngữ của người dùng (không dùng lorem ipsum); minh hoạ bằng SVG nội tuyến, gradient hoặc emoji thay vì ảnh ngoài.\n" +
+        "- Logic phức tạp (tính toán, xử lý dữ liệu, luật chơi) thì viết thành hàm thuần và chạy thử bằng js-run trước khi đưa vào trang.\n" +
+        "- Trước khi nộp, tự soát: thẻ đóng đủ, JS không lỗi cú pháp, mọi nút và liên kết đều hoạt động, đẹp trên điện thoại, chế độ tối vẫn đọc rõ.\n" +
+        "- Người dùng bấm Xem trước để chạy thử ngay, nên khi sửa luôn đưa lại TRỌN file, không chỉ đoạn thay đổi. " +
+        "Sau khối code, nói ngắn gọn các tính năng chính và cách mở rộng.",
+      remind: "đưa trọn một file HTML hoàn chỉnh trong một khối ```html: thiết kế đẹp, responsive, có chế độ tối, không lỗi JS; logic phức tạp thì chạy thử bằng js-run trước",
     },
     {
       test: /slide|thuyết trình|trình chiếu|bài giảng|powerpoint|pptx?|presentation|deck/i,
@@ -1589,9 +1613,9 @@
     };
     const title = (m) => modelTitle("shared", m);
     try {
-      const deep = level === "careful" || level === "max";
-      const total = level === "max" ? 5 : 4;
-      const helpers = deep ? await councilModels(level === "max" ? 2 : 1) : [];
+      const deep = level === "careful" || level === "max" || level === "ultra";
+      const total = { careful: 4, max: 5, ultra: 7 }[level];
+      const helpers = deep ? await councilModels({ careful: 1, max: 2, ultra: 3 }[level]) : [];
       let base = history;
       // Bước 1: phân tích đề (chưa giải), để bước giải đi đúng hướng và biết cách kiểm chứng.
       if (deep) {
@@ -1602,9 +1626,10 @@
       }
       // Bước 2: giải. Mức Tối đa: hai mô hình khác giải song song (không hiện ra), mỗi mô hình một góc nhìn.
       const solverStops = [], solverStart = Date.now();
-      const solvers = level === "max" ? helpers.map((m, i) => silentRun(withNote(base, DEEP_ANGLES[i]), m, solverStops)) : [];
+      const solvers = level === "max" || level === "ultra" ? helpers.map((m, i) => silentRun(withNote(base, DEEP_ANGLES[i]), m, solverStops)) : [];
       solvers.forEach((p) => p.catch(() => {}));
-      if (deep) step(level === "max" ? `Bước 2/5: ${[cloudModel(), ...helpers].map(title).join(", ")} giải song song` : "Bước 2/4: giải theo kế hoạch", undefined);
+      if (deep) step(level === "ultra" ? `Bước 2/7: vòng 1, ${[cloudModel(), ...helpers].map(title).join(", ")} giải độc lập`
+        : level === "max" ? `Bước 2/5: ${[cloudModel(), ...helpers].map(title).join(", ")} giải song song` : "Bước 2/4: giải theo kế hoạch", undefined);
       await answerWithTools(base, reply, node);
       await ensureAnswer(base, reply, node);
       const draft = splitThink(reply.content).answer.trim();
@@ -1664,6 +1689,65 @@
             reply.fallback = first;
             step("Bước 5/5: sửa lỗi lần cuối", undefined);
             await judge([...history, { role: "assistant", content: final1.slice(0, 12000) }, { role: "user", content: FIX_PROMPT.replace("{C}", f.answer.slice(0, 6000)) }], reply, node);
+          }
+        }
+      }
+
+      // Mức Ultra: vòng 1 giải độc lập; vòng 2 các mô hình trao đổi suy luận và sửa lời giải cho nhau; giám khảo tổng hợp;
+      // các mô hình khác kiểm tra chéo; giám khảo tinh chỉnh theo nhận xét; một mô hình khác kiểm tra lần cuối.
+      if (draft && level === "ultra") {
+        const tag = (t, i, model, text) => `<${t}_${"ABCDE"[i]} mo_hinh="${model}">\n${text}\n</${t}_${"ABCDE"[i]}>`;
+        const main = (reply.fallback = shelve("Vòng 1: lời giải 1"));
+        step("Bước 2/7: chờ các mô hình khác giải xong vòng 1", "Đang chờ các mô hình khác giải xong…");
+        const r1 = await gather(solvers, solverStops, Math.max(60000, 210000 - (Date.now() - solverStart)));
+        const team = [{ model: cloudModel(), name: main.model, answer: draft }];
+        r1.forEach((o, i) => { if (o) { keep(o, `Vòng 1: lời giải ${team.length + 1}`); team.push({ model: helpers[i], name: o.draft.model, answer: o.answer }); } });
+        // Bước 3: trao đổi. Mỗi mô hình đọc lời giải của cả nhóm, kiểm chứng chỗ mâu thuẫn và viết lại lời giải đã cải tiến.
+        const r1Text = team.map((x, i) => tag("loi_giai", i, x.name, x.answer.slice(0, 5000))).join("\n\n");
+        step(`Bước 3/7: ${team.map((x) => title(x.model)).join(", ")} trao đổi suy luận và sửa lời giải`, "Các mô hình đang trao đổi và sửa lời giải cho nhau…");
+        const dstops = [];
+        const r2 = await gather(team.map((x, i) => silentRun(withNote(base, DEBATE_PROMPT.replace("{S}", r1Text).replace("{L}", "ABCDE"[i])), x.model, dstops)), dstops, 180000);
+        r2.forEach((o, i) => { if (o) keep(o, `Vòng 2: lời giải ${i + 1} sau trao đổi`); });
+        const revised = team.map((x, i) => (r2[i] ? { model: x.model, name: r2[i].draft.model, answer: r2[i].answer } : x));
+        // Bước 4: giám khảo (mô hình đang chọn) tổng hợp các lời giải đã cải tiến.
+        step("Bước 4/7: giám khảo tổng hợp các lời giải đã cải tiến", undefined);
+        const [lead, ...rest] = revised;
+        const review = REVIEW_MULTI_PROMPT.replace("{N}", rest.length)
+          .replace("{B}", rest.length ? rest.map((x, i) => tag("loi_giai", i + 1, x.name, x.answer.slice(0, 5000))).join("\n\n") : "(không có)")
+          .replace("{K}", "(các lời giải trên đã được các mô hình trao đổi và sửa cho nhau một vòng)");
+        await judge([...history, { role: "assistant", content: lead.answer.slice(0, 8000) }, { role: "user", content: review }], reply, node);
+        let current = splitThink(reply.content).answer.trim();
+        if (current && !reply.judgeFailed) {
+          // Bước 5: các mô hình khác cùng soát câu trả lời của giám khảo.
+          const synth = shelve("Câu trả lời của giám khảo trước kiểm tra chéo");
+          const checkers = helpers.length ? helpers : [cloudModel()], cstops = [];
+          step(`Bước 5/7: ${checkers.map(title).join(", ")} kiểm tra chéo câu trả lời`, "Đang kiểm tra chéo…");
+          const crits = (await gather(checkers.map((m) => silentRun([...history, { role: "assistant", content: current.slice(0, 12000) },
+            { role: "user", content: CRITIC_PROMPT }], m, cstops)), cstops, 120000)).filter(Boolean);
+          crits.forEach((c) => keep(c, "Kiểm tra chéo"));
+          const problems = crits.filter((c) => !noErrors(c.answer));
+          if (!problems.length) restore(synth);
+          else {
+            // Bước 6: giám khảo tinh chỉnh theo các nhận xét (tự kiểm chứng từng ý, vì người soát cũng có thể sai).
+            reply.fallback = synth;
+            step("Bước 6/7: giám khảo tinh chỉnh theo các nhận xét", undefined);
+            await judge([...history, { role: "assistant", content: current.slice(0, 12000) },
+              { role: "user", content: FIX_PROMPT.replace("{C}", problems.map((c, i) => tag("nhan_xet", i, c.draft.model, c.answer.slice(0, 4000))).join("\n\n")) }], reply, node);
+          }
+          // Bước 7: một mô hình khác kiểm tra lần cuối; còn lỗi thì sửa thêm một lượt.
+          current = splitThink(reply.content).answer.trim();
+          if (current && !reply.judgeFailed) {
+            const before = shelve("Câu trả lời trước bước kiểm tra cuối");
+            const checker = helpers.at(-1) || cloudModel(), fstops = [];
+            step(`Bước 7/7: ${title(checker)} kiểm tra lần cuối`, "Đang kiểm tra lần cuối…");
+            const [f] = await gather([silentRun([...history, { role: "assistant", content: current.slice(0, 12000) }, { role: "user", content: FINAL_CHECK_PROMPT }], checker, fstops)], fstops, 120000);
+            keep(f, "Kiểm tra lần cuối");
+            if (!f || noErrors(f.answer)) restore(before);
+            else {
+              reply.fallback = before;
+              step("Bước 7/7: sửa lỗi lần cuối", undefined);
+              await judge([...history, { role: "assistant", content: current.slice(0, 12000) }, { role: "user", content: FIX_PROMPT.replace("{C}", f.answer.slice(0, 6000)) }], reply, node);
+            }
           }
         }
       }
@@ -2330,7 +2414,7 @@
         messages, stream: true,
         temperature: Number(settings.temperature), max_tokens: Number(settings.maxTokens), top_p: 0.95,
         model, ...p.extra,
-        ...((settings.level === "careful" || settings.level === "max") && !reply.fast ? { effort: "max" } : {}),
+        ...(["careful", "max", "ultra"].includes(settings.level) && !reply.fast ? { effort: "max" } : {}),
         // Mức Nhanh, hoặc khi cần viết ngay câu trả lời: không suy nghĩ dài.
         ...(reply.fast || settings.level === "fast" ? { thinking: { type: "disabled" } } : {}),
       });
@@ -3032,12 +3116,13 @@
     fast: ["Nhanh", "Trả lời ngay, không suy nghĩ dài. Hợp chào hỏi, câu đơn giản"],
     normal: ["Cân bằng", "Suy nghĩ bình thường. Hợp hầu hết câu hỏi"],
     careful: ["Kỹ", "Phân tích đề → giải → mô hình khác soát lỗi → sửa. Mất khoảng 1–3 phút"],
-    max: ["Tối đa", "Phân tích đề → 3 mô hình giải song song → kiểm tra chéo → tổng hợp → kiểm tra lần cuối. Chính xác nhất, mất 3–8 phút"],
+    max: ["Tối đa", "Phân tích đề → 3 mô hình giải song song → kiểm tra chéo → tổng hợp → kiểm tra lần cuối. Mất 3–8 phút"],
+    ultra: ["Ultra", "Hết công suất: 4 mô hình giải, trao đổi suy luận và sửa cho nhau → giám khảo tổng hợp → kiểm tra chéo → tinh chỉnh → kiểm tra lần cuối. Mạnh nhất, mất 6–15 phút"],
   };
   // Cài đặt cũ chỉ có nút Nghĩ kỹ bật/tắt: đang bật thì chuyển thành mức Tối đa.
   if ("deep" in settings) { if (settings.deep) settings.level = "max"; delete settings.deep; store.set("glm.settings", settings); }
   if (!LEVELS[settings.level]) settings.level = "normal";
-  // Khung chọn mức: tên mức ở trên, thanh trượt 4 nấc ở dưới (kéo, bấm hoặc dùng phím mũi tên).
+  // Khung chọn mức: tên mức ở trên, thanh trượt 5 nấc ở dưới (kéo, bấm hoặc dùng phím mũi tên).
   const LEVEL_KEYS = Object.keys(LEVELS);
   const deepBtn = $("deep"), levelPop = $("levelMenu");
   const paintDeep = () => {
@@ -3048,7 +3133,7 @@
     $("lpInput").setAttribute("aria-valuetext", name);
     $("lpRange").style.setProperty("--f", i / (LEVEL_KEYS.length - 1));
     deepBtn.title = `Mức suy nghĩ: ${name}`;
-    deepBtn.classList.toggle("on", settings.level === "careful" || settings.level === "max");
+    deepBtn.classList.toggle("on", ["careful", "max", "ultra"].includes(settings.level));
     if (!levelPop.hidden) placeLevels(); // mô tả dài ngắn khác nhau nên căn lại vị trí
   };
   // Đặt khung phía trên nút, mép phải thẳng với mép phải của nút.
