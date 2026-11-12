@@ -401,6 +401,27 @@
   .gen-tools button:hover { background: rgba(0,0,0,.82); }
   .gen-tools svg { width: 14px; height: 14px; }
   .gen-cap { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  /* Nhiều phiên bản ảnh trên cùng một dòng: hiện thành lưới 2 cột. */
+  .content p:has(.gen-card + .gen-card) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .content p:has(.gen-card + .gen-card) .gen-card { max-width: 100%; margin: 0; }
+  /* Thẻ file PowerPoint, Excel, Word. */
+  .file-card { margin: 0 0 12px; border: 1px solid var(--border); border-radius: 14px; background: var(--bg); overflow: hidden; }
+  .file-head { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
+  .file-badge { flex: none; width: 46px; height: 46px; border-radius: 10px; display: grid; place-items: center; color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .03em; }
+  .file-badge.pptx { background: #c43e1c; } .file-badge.xlsx { background: #107c41; } .file-badge.docx { background: #185abd; }
+  .file-name { flex: 1; min-width: 0; }
+  .file-name b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file-name small { color: var(--muted); font-size: 12px; }
+  .file-card .btn { display: inline-flex; align-items: center; gap: 6px; flex: none; }
+  .file-card .btn svg { width: 16px; height: 16px; }
+  .file-card details { border-top: 1px solid var(--border); padding: 8px 14px; }
+  .file-card summary { cursor: pointer; color: var(--muted); font-size: 13px; }
+  .file-outline { margin: 8px 0 4px; padding-left: 22px; font-size: 14px; }
+  .file-table { overflow-x: auto; margin-top: 8px; }
+  .file-table table { border-collapse: collapse; font-size: 13px; display: table; }
+  .file-table th, .file-table td { border: 1px solid var(--border); padding: 4px 8px; white-space: nowrap; }
+  .file-table th { background: var(--surface); }
+  .file-doc { margin-top: 8px; max-height: 360px; overflow-y: auto; font-size: 14px; }
   dialog { width: min(560px, calc(100vw - 32px)); border-radius: 20px; }
   dialog::backdrop { backdrop-filter: blur(3px); }
   .sec-title { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--brand); padding-top: 14px; border-top: 1px solid var(--border); }
@@ -977,9 +998,17 @@
       let m;
       if ((m = line.match(/^\s*```\s*([\w+#.-]*)/))) {
         const lang = m[1]; const buf = []; i++;
-        while (i < lines.length && !/^\s*```\s*$/.test(lines[i])) buf.push(lines[i++]);
-        i++;
+        // Dấu đóng khối là ``` đứng riêng; mô hình đôi khi viết dính chữ phía sau (```Đã xong…): vẫn coi là đóng khối,
+        // phần chữ phía sau được đọc tiếp như một dòng thường.
+        const closes = (l) => /^\s*```\s*$/.test(l) || /^\s*```(?![\w+#.-]*\s*$)/.test(l);
+        while (i < lines.length && !closes(lines[i])) buf.push(lines[i++]);
+        if (i < lines.length) {
+          const rest = lines[i].replace(/^\s*```/, "");
+          if (rest.trim()) lines[i] = rest; else i++;
+        }
         const code = buf.join("\n"), kind = lang.toLowerCase();
+        // Khối pptx, xlsx, docx: hiện thẻ file có nút Tải về (khi đang viết dở, JSON chưa đọc được thì hiện như code bình thường).
+        if (FILE_KINDS[kind]) { const card = fileCard(kind, code); if (card) { html += card; continue; } }
         // Hình SVG đã viết xong thì hiện ảnh luôn (thẻ <img> không chạy được script trong SVG).
         if (kind === "svg" && /<\/svg>\s*$/.test(code)) html += `<div class="svg-preview"><img alt="Hình do mô hình vẽ" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(code)}"></div>`;
         const preview = kind === "html" || kind === "svg"
@@ -1238,7 +1267,7 @@
           `<button type="button" data-img="download" title="Tải ảnh về máy">${ICON_DOWN}Tải về</button>` +
           (meta && !meta.edit ? `<button type="button" data-img="again" title="Vẽ lại với cùng mô tả">${ICON_REDO}Vẽ lại</button>` : "") +
           `<button type="button" data-img="edit" title="Sửa ảnh này bằng lời">${ICON_EDIT}Sửa</button></div>`);
-        if (meta?.model) card.insertAdjacentHTML("beforeend", `<div class="gen-cap">${meta.width}×${meta.height} · ${esc(meta.model)}${meta.edit ? " · sửa từ ảnh mẫu" : ""}</div>`);
+        if (meta?.model) card.insertAdjacentHTML("beforeend", `<div class="gen-cap">${meta.width}×${meta.height} · ${esc(meta.model)}${meta.seed != null ? ` · seed ${meta.seed}` : ""}${meta.edit ? " · sửa từ ảnh mẫu" : ""}</div>`);
       }
       else img.outerHTML = '<div class="gen-img-gone">(Ảnh đã được xoá khỏi máy này để tiết kiệm bộ nhớ.)</div>';
     });
@@ -1429,13 +1458,28 @@
     "- ```dev``` : Stack Overflow và GitHub, từ khoá tiếng Anh; cho lỗi lập trình, cách dùng thư viện, mã nguồn mẫu.\n" +
     "- ```dict``` : nghĩa, từ loại, ví dụ của một từ tiếng Anh (Wiktionary).\n\nVí dụ cách viết:\n```search\ngiá vàng SJC hôm nay\n```\nhoặc\n```weather\nĐà Lạt\n```\n\n" +
     "Tạo và sửa ảnh:\n" +
-    "- ```image\nratio: 16:9\nmô tả bằng tiếng Anh\n``` : tạo tranh, ảnh chụp, ảnh minh hoạ, phong cảnh, nhân vật, poster; ảnh sẽ hiện cho người dùng. " +
-    "Dòng ratio không bắt buộc (mặc định 1:1; có 16:9, 9:16, 4:3, 3:4, 3:2, 2:3, 21:9): hình nền máy tính, phong cảnh dùng 16:9; hình nền điện thoại, chân dung, poster dùng 9:16 hoặc 2:3. " +
-    "Mô tả tốt dài 40–120 từ, theo thứ tự: chủ thể (ngoại hình, trang phục, hành động, cảm xúc), bối cảnh, phong cách (photorealistic photo, anime, Studio Ghibli style, watercolor, oil painting, 3D render, pixel art…), " +
-    "ánh sáng, bảng màu, góc máy và ống kính (close-up, wide shot, 85mm, bokeh), chất lượng (highly detailed, sharp focus). Chữ cần hiện trong ảnh thì đặt trong ngoặc kép. " +
-    "Sửa ảnh người dùng gửi hoặc ảnh vừa tạo (đổi nền, thêm hoặc bớt vật, đổi phong cách, đổi màu…): thêm dòng edit: yes và mô tả thay đổi, ví dụ:\n" +
-    "```image\nedit: yes\nmake the cat wear a red scarf, keep everything else unchanged\n```\n" +
-    "Cần nhiều ảnh thì dùng nhiều khối image lần lượt (tối đa 4). Logo, icon, sơ đồ, biểu đồ thì vẽ bằng SVG thay vì dùng công cụ này.\n\n" +
+    "- ```image\nratio: 16:9\nstyle: anime\ncount: 2\nmô tả bằng tiếng Anh\n``` : tạo tranh, ảnh chụp, ảnh minh hoạ, phong cảnh, nhân vật, poster; ảnh sẽ hiện cho người dùng. " +
+    "Các dòng tuỳ chọn ở đầu khối, đều không bắt buộc:\n" +
+    "  ratio: 1:1 (mặc định), 16:9, 9:16, 4:3, 3:4, 3:2, 2:3, 21:9. Hình nền máy tính, phong cảnh dùng 16:9; hình nền điện thoại, chân dung, poster dùng 9:16 hoặc 2:3.\n" +
+    "  style: photo, anime, ghibli, watercolor, oil, 3d, pixel, sketch, flat, cinematic, cyberpunk, poster (tự thêm bộ từ khoá tối ưu cho phong cách đó).\n" +
+    "  count: 1–4, số phiên bản khác nhau để người dùng chọn (dùng 2–4 khi người dùng muốn nhiều mẫu hoặc chưa rõ ý).\n" +
+    "  size: large cho ảnh lớn, nét hơn (in ấn, hình nền).\n" +
+    "  seed: số nguyên, để vẽ lại đúng ảnh cũ (số seed ghi dưới mỗi ảnh).\n" +
+    "  edit: yes khi sửa ảnh người dùng gửi hoặc ảnh vừa tạo (đổi nền, thêm hoặc bớt vật, đổi phong cách, đổi màu…), mô tả rõ thay đổi và phần giữ nguyên.\n" +
+    "Mô tả tốt dài 40–120 từ, theo thứ tự: chủ thể (ngoại hình, trang phục, hành động, cảm xúc), bối cảnh, phong cách, ánh sáng, bảng màu, " +
+    "góc máy và ống kính (close-up, wide shot, 85mm, bokeh), chất lượng (highly detailed, sharp focus). Chữ cần hiện trong ảnh thì đặt trong ngoặc kép và giữ ngắn. " +
+    "Ví dụ sửa ảnh:\n```image\nedit: yes\nmake the cat wear a red scarf, keep everything else unchanged\n```\n" +
+    "Logo, icon, sơ đồ, biểu đồ thì vẽ bằng SVG thay vì dùng công cụ này.\n\n" +
+    "Xuất file (trang tự tạo file thật và hiện nút Tải về), dùng khi người dùng muốn file PowerPoint, Excel, Word hoặc nói xuất file, tải về:\n" +
+    "- ```pptx\n{JSON}\n``` : file PowerPoint. JSON gồm title, file (tên file không dấu), theme {bg, text, accent, muted, font} (màu là 6 chữ số hex, ví dụ \"0F172A\"), " +
+    "slides là danh sách, mỗi slide là một trong các dạng: {\"layout\":\"title\",\"title\":…,\"subtitle\":…}; {\"title\":…,\"bullets\":[…]}; " +
+    "{\"title\":…,\"table\":[[hàng tiêu đề],[…]]}; {\"title\":…,\"chart\":{\"type\":\"bar|line|pie|doughnut|area\",\"title\":…,\"labels\":[…],\"series\":[{\"name\":…,\"values\":[…]}]},\"bullets\":[…]}; " +
+    "{\"title\":…,\"left\":[…],\"right\":[…]} (hai cột). Slide nào cũng có thể thêm \"notes\" (ghi chú cho người thuyết trình). Ý bắt đầu bằng \"- \" trong bullets là ý phụ. " +
+    "Mỗi slide 3–6 ý ngắn; bài có slide tiêu đề, mục lục, nội dung, slide kết.\n" +
+    "- ```xlsx\n{JSON}\n``` : file Excel. JSON gồm file và sheets là danh sách {\"name\":…,\"rows\":[[tiêu đề cột…],[…]],\"widths\":[độ rộng cột]}. " +
+    "Ô bắt đầu bằng = là công thức Excel (ví dụ \"=SUM(B2:B10)\", \"=IF(C2>=5,\\\"Đạt\\\",\\\"Chưa đạt\\\")\"); số viết dạng số, không có dấu nghìn hay đơn vị trong ô.\n" +
+    "- ```docx\nnội dung Markdown\n``` : file Word, từ nội dung Markdown (tiêu đề #, ##, đoạn văn, danh sách, bảng).\n" +
+    "JSON phải hợp lệ (dấu ngoặc kép, không có dấu phẩy thừa). Sau khối file, nói ngắn gọn file gồm những gì.\n\n" +
     "Cách tra cứu: kiến thức của bạn có thể đã cũ, nên với thông tin có thể đã thay đổi hoặc bạn không chắc, hãy tra cứu thay vì đoán. " +
     "Chọn đúng nguồn chuyên biệt khi có (tin tức, thời tiết, tỷ giá, bài báo, lập trình, từ điển); câu hỏi phức tạp hoặc cần tổng hợp nhiều nguồn thì dùng research; còn lại dùng search. " +
     "Câu hỏi nhiều bước thì tra lần lượt từng dữ kiện còn thiếu, không đoán phần còn lại. " +
@@ -1503,7 +1547,8 @@
     {
       test: /slide|thuyết trình|trình chiếu|bài giảng|powerpoint|pptx?|presentation|deck/i,
       prompt:
-        "Kỹ năng làm slide: viết MỘT file HTML trong khối ```html. Mỗi slide là một <section> 16:9 phủ kín màn hình, " +
+        "Kỹ năng làm slide: nếu người dùng muốn file PowerPoint (nhắc tới pptx, PowerPoint, xuất file, tải về) thì viết một khối ```pptx theo phần Xuất file; " +
+        "còn không thì viết MỘT file HTML trong khối ```html. Mỗi slide là một <section> 16:9 phủ kín màn hình, " +
         "mỗi lúc chỉ hiện một slide; chuyển slide bằng phím ←/→, Space, PageUp/PageDown, và bấm chuột/chạm (nửa trái lùi, nửa phải tiến); " +
         "có số trang ở góc và thanh tiến độ. Có slide tiêu đề, các slide nội dung, slide kết. Mỗi slide một ý chính: " +
         "tiêu đề ngắn, tối đa 3–5 gạch đầu dòng, chữ to (dùng clamp/vw để co theo màn hình), màu và font đồng bộ, " +
@@ -1544,6 +1589,36 @@
         "bình phương hai vế không cùng dấu, quên trường hợp tham số bằng 0.",
       remind: "kiểm chứng đáp số bằng py-run (sympy để tính hoặc giải chính xác, hoặc vét cạn/mô phỏng với số nhỏ) trước khi kết luận",
       hard: true, // câu khó: mô hình GLM tự kiểm tra lại câu trả lời một lượt
+    },
+    {
+      test: /excel|xlsx|bảng tính|spreadsheet|google sheets?|file word|\bdocx?\b|xuất (ra )?file|tải về|powerpoint|pptx/i,
+      prompt:
+        "Kỹ năng làm file văn phòng (người dùng bấm Tải về để lấy file thật):\n" +
+        "- Excel (khối ```xlsx): hàng đầu là tiêu đề cột; mỗi cột một loại dữ liệu; số ghi dạng số, đơn vị ghi ở tiêu đề cột; cột tính toán và dòng tổng dùng công thức " +
+        "(SUM, AVERAGE, IF, VLOOKUP, ROUND, COUNTIF…) với địa chỉ ô đúng vị trí; nhiều nội dung thì chia nhiều trang tính; đặt widths cho cột chữ dài. " +
+        "Bảng điểm, bảng lương, ngân sách, thời khoá biểu, hoá đơn, theo dõi chi tiêu: luôn có dòng tổng và cột tự tính.\n" +
+        "- Word (khối ```docx): viết như văn bản hoàn chỉnh: tiêu đề, các mục ##, đoạn văn, danh sách, bảng. Văn bản hành chính Việt Nam thì có quốc hiệu, tiêu ngữ, " +
+        "địa danh và ngày tháng, tên văn bản, nội dung, nơi nhận, chức vụ và chữ ký.\n" +
+        "- PowerPoint (khối ```pptx): một chủ đề màu thống nhất hợp nội dung, slide tiêu đề, mục lục, các slide nội dung, slide kết; số liệu thì dùng bảng hoặc biểu đồ; " +
+        "mỗi slide có notes cho người thuyết trình.\n" +
+        "- Sau khối file, nói ngắn gọn file gồm những gì.",
+      remind: "xuất file bằng khối ```xlsx, ```docx hoặc ```pptx đúng định dạng ở phần Xuất file (JSON hợp lệ với xlsx và pptx)",
+    },
+    {
+      test: /thủ tục|giấy tờ|hồ sơ|căn cước|cccd|hộ chiếu|khai sinh|kết hôn|ly hôn|cư trú|luật|nghị định|thông tư|quy định|mức phạt|vi phạm|thuế|bảo hiểm|bhxh|bhyt|lương|thai sản|hợp đồng|vay|lãi suất|tiết kiệm|đầu tư|chứng khoán|sổ đỏ|nhà đất|sức khỏe|sức khoẻ|bệnh|triệu chứng|thuốc|sơ cứu|dinh dưỡng|nấu|món ăn|công thức nấu|sửa (máy|xe|điện|nước|nhà)|máy tính|điện thoại|wifi|mạng chậm|du lịch|visa|xin việc|\bcv\b|phỏng vấn|học bổng|du học|tuyển sinh|điểm chuẩn/i,
+      prompt:
+        "Kỹ năng kiến thức thực tế (đời sống ở Việt Nam):\n" +
+        "- Trả lời cụ thể, làm được ngay: các bước theo thứ tự, giấy tờ cần mang, nơi làm (kể cả làm trực tuyến), chi phí và thời gian ước tính, lỗi hay gặp và cách tránh.\n" +
+        "- Thủ tục hành chính, luật, thuế, bảo hiểm, phí, mức phạt, điểm chuẩn, giá cả thay đổi thường xuyên: tra cứu bản mới nhất trước khi trả lời (search, news; " +
+        "văn bản pháp luật thì tìm thêm với site:thuvienphapluat.vn hoặc site:chinhphu.vn; thủ tục thì site:dichvucong.gov.vn), ghi rõ tên, số hiệu văn bản, " +
+        "ngày hiệu lực và nguồn; nếu quy định vừa thay đổi (ví dụ sắp xếp lại đơn vị hành chính, thẻ căn cước mới) thì nói rõ.\n" +
+        "- Tiền bạc: tính bằng py-run (lãi kép, trả góp theo dư nợ giảm dần hoặc gốc đều, thuế thu nhập cá nhân theo biểu luỹ tiến, bảo hiểm trích từ lương), " +
+        "so sánh các lựa chọn bằng bảng, nói rõ rủi ro, không hứa lợi nhuận.\n" +
+        "- Sức khoẻ: giải thích dễ hiểu, nêu dấu hiệu cần đi khám hoặc cấp cứu ngay; không chẩn đoán chắc chắn, không kê thuốc phải có đơn; cấp cứu gọi 115 (cứu hoả 114, công an 113).\n" +
+        "- Công nghệ: hướng dẫn đúng hệ điều hành (Windows, macOS, Android, iOS), từng bước bấm vào đâu, cách kiểm tra đã thành công.\n" +
+        "- Nấu ăn, sửa chữa, việc nhà: định lượng cụ thể, dụng cụ cần có, lưu ý an toàn (điện, gas, hoá chất).\n" +
+        "- Nói rõ khi nào nên hỏi người có chuyên môn (luật sư, bác sĩ, kế toán, thợ) và nên mang theo gì.",
+      remind: "đưa các bước cụ thể làm được ngay; nếu liên quan tới quy định, thủ tục, giá, thuế, phí thì tra cứu bản mới nhất và ghi rõ văn bản, ngày hiệu lực, nguồn",
     },
     {
       test: /lập trình|viết (code|hàm|chương trình|script)|\bcode\b|\bbug\b|debug|gỡ lỗi|sửa lỗi|báo lỗi|\berror\b|exception|traceback|python|javascript|typescript|\bjava\b|c#|golang|\brust\b|\bphp\b|\bsql\b|\bapi\b|react|vue|node\.?js|django|flask|regex|refactor/i,
@@ -1952,11 +2027,17 @@
       let out = await tool.run(m[2].trim() ? m[2] : "");
       if (typeof out === "object") {
         // Ảnh tạo ra nằm trong reply.genImages; nội dung chỉ giữ một chỗ đánh dấu nhỏ để gửi lại cho mô hình.
-        if (out.image) {
-          reply.genImages = [...(reply.genImages || []), out.image];
-          reply.genMeta = [...(reply.genMeta || [])];
-          reply.genMeta[reply.genImages.length - 1] = out.meta || null;
-          reply.content += `\n\n![${(out.meta?.prompt || m[2]).trim().replace(/[\[\]\n]/g, " ").slice(0, 200)}](genimg:${reply.genImages.length - 1})\n\n`;
+        // Nhiều phiên bản thì đặt các chỗ đánh dấu trên cùng một dòng để hiện thành lưới.
+        const imgs = out.images || (out.image ? [out.image] : []), metas = out.metas || (out.meta ? [out.meta] : []);
+        if (imgs.length) {
+          const alt = (metas[0]?.prompt || m[2]).trim().replace(/[\[\]\n]/g, " ").slice(0, 200);
+          const marks = imgs.map((url, j) => {
+            reply.genImages = [...(reply.genImages || []), url];
+            reply.genMeta = [...(reply.genMeta || [])];
+            reply.genMeta[reply.genImages.length - 1] = metas[j] || null;
+            return `![${alt}](genimg:${reply.genImages.length - 1})`;
+          });
+          reply.content += `\n\n${marks.join(" ")}\n\n`;
         }
         out = out.out;
       }
@@ -2803,17 +2884,51 @@
     "1:1": [1024, 1024], "16:9": [1344, 768], "9:16": [768, 1344], "4:3": [1152, 864], "3:4": [864, 1152],
     "3:2": [1216, 816], "2:3": [816, 1216], "21:9": [1536, 656],
   };
+  // Phong cách có sẵn: thêm bộ từ khoá tối ưu cho mô hình vẽ.
+  const STYLES = {
+    photo: "photorealistic photograph, natural lighting, shot on 50mm lens, high detail, sharp focus, realistic textures",
+    anime: "anime style illustration, clean line art, vibrant cel shading, expressive eyes, detailed background",
+    ghibli: "Studio Ghibli inspired illustration, soft painted background, warm whimsical atmosphere, gentle colors",
+    watercolor: "watercolor painting, soft washes, visible paper texture, delicate brush strokes",
+    oil: "oil painting, rich impasto brush strokes, classical composition, dramatic lighting",
+    "3d": "3D render, Pixar style, soft global illumination, smooth materials, octane render",
+    pixel: "pixel art, 16-bit retro game style, crisp pixels, limited color palette",
+    sketch: "pencil sketch, graphite shading, hand-drawn lines, white paper",
+    flat: "flat vector illustration, minimal clean shapes, bold colors",
+    cinematic: "cinematic film still, dramatic lighting, shallow depth of field, anamorphic lens, color graded",
+    cyberpunk: "cyberpunk style, neon lights, rainy night city, high contrast, futuristic",
+    poster: "graphic poster design, bold typography, strong composition, print quality",
+  };
+  const STYLE_ALIAS = { "ảnh thật": "photo", "chân thực": "photo", "hoạt hình": "anime", "màu nước": "watercolor", "sơn dầu": "oil", "chì": "sketch", "phẳng": "flat", "điện ảnh": "cinematic" };
+  // Dòng tuỳ chọn ở đầu khối ```image: ratio, size, style, count, seed, edit.
+  const IMAGE_OPTS = { ratio: /^(ratio|aspect|tỉ lệ|tỷ lệ|khổ)$/i, size: /^(size|cỡ|kích thước)$/i, edit: /^(edit|sửa)$/i,
+    count: /^(count|n|số ảnh|số lượng)$/i, style: /^(style|phong cách)$/i, seed: /^seed$/i };
   function imageRequest(block) {
     const opts = {};
     const lines = block.trim().split("\n");
     while (lines.length) {
-      const o = lines[0].match(/^\s*(ratio|aspect|tỉ lệ|tỷ lệ|size|edit|sửa)\s*[:=]\s*(.+?)\s*$/i);
-      if (!o) break;
-      opts[/edit|sửa/i.test(o[1]) ? "edit" : "ratio"] = o[2].toLowerCase();
+      const o = lines[0].match(/^\s*([\p{L}\d ]+?)\s*[:=]\s*(.+?)\s*$/u);
+      const key = o && Object.keys(IMAGE_OPTS).find((k) => IMAGE_OPTS[k].test(o[1].trim()));
+      if (!key) break;
+      opts[key] = o[2].toLowerCase();
       lines.shift();
     }
-    const [width, height] = RATIOS[(opts.ratio || "").replace(/\s/g, "").replace("x", ":")] || RATIOS["1:1"];
-    return { prompt: lines.join(" ").replace(/\s+/g, " ").trim().slice(0, 1500), width, height, edit: /^(yes|có|true|1|last)/.test(opts.edit || "") };
+    // Cách viết cũ: size: 16:9 nghĩa là tỉ lệ.
+    const ratio = (opts.ratio || (/\d\s*[:x]\s*\d/.test(opts.size || "") ? opts.size : "")).replace(/\s/g, "").replace("x", ":");
+    let [width, height] = RATIOS[ratio] || RATIOS["1:1"];
+    if (/large|lớn|to|hd|2k/.test(opts.size || "")) {
+      // Phóng to 1,5 lần nhưng cạnh dài không quá 1920 (giới hạn của máy vẽ), giữ đúng tỉ lệ.
+      const k = Math.min(1.5, 1920 / Math.max(width, height)), big = (v) => Math.round((v * k) / 16) * 16;
+      [width, height] = [big(width), big(height)];
+    }
+    const style = STYLES[STYLE_ALIAS[opts.style] || opts.style];
+    const prompt = lines.join(" ").replace(/\s+/g, " ").trim();
+    return {
+      prompt: (prompt && style ? `${prompt}, ${style}` : prompt).slice(0, 1800), width, height,
+      edit: /^(yes|có|true|1|last)/.test(opts.edit || ""),
+      count: Math.min(4, Math.max(1, parseInt(opts.count) || 1)),
+      seed: /^\d+$/.test(opts.seed || "") ? Number(opts.seed) : undefined,
+    };
   }
   // Ảnh mẫu khi sửa ảnh: ảnh người dùng chọn "Sửa ảnh này", nếu không thì ảnh họ gửi kèm, nếu không thì ảnh vừa tạo.
   function editSources(chat) {
@@ -2849,23 +2964,35 @@
       const got = await Promise.allSettled(editSources(chat).slice(0, 4).map(refImage));
       refs = got.filter((r) => r.status === "fulfilled").map((r) => r.value);
     }
-    const meta = { prompt: req.prompt, width: req.width, height: req.height, edit: refs.length > 0 };
+    // Nhiều phiên bản: vẽ song song, mỗi ảnh một seed khác nhau.
+    const results = await Promise.all(Array.from({ length: req.count || 1 }, (_, i) => drawOne(req, refs, i === 0 ? req.seed : undefined)));
+    const ok = results.filter((r) => r.image);
+    if (!ok.length) return { out: results[0].out };
+    const first = ok[0].meta;
+    return {
+      out: (ok.length > 1 ? `Đã tạo ${ok.length} phiên bản ảnh ${first.width}x${first.height} bằng ${first.model} và hiển thị cho người dùng để chọn.` : ok[0].out) +
+        (ok.length < results.length ? ` (${results.length - ok.length} ảnh không tạo được.)` : ""),
+      images: ok.map((r) => r.image), metas: ok.map((r) => r.meta),
+    };
+  }
+  async function drawOne(req, refs, seed) {
+    seed ??= Math.floor(Math.random() * 2 ** 31);
+    const meta = { prompt: req.prompt, width: req.width, height: req.height, edit: refs.length > 0, seed };
     try {
       const signal = AbortSignal.any ? AbortSignal.any([controller.signal, AbortSignal.timeout(90000)]) : controller.signal;
       const res = await fetch(SHARED_URL.replace(/\/$/, "") + "/image", {
         method: "POST", headers: { "Content-Type": "application/json" }, signal,
-        body: JSON.stringify({ prompt: req.prompt, width: req.width, height: req.height, refs }),
+        body: JSON.stringify({ prompt: req.prompt, width: req.width, height: req.height, seed, refs }),
       });
       if (res.ok) {
         const j = await res.json();
-        meta.model = j.model || "FLUX";
+        Object.assign(meta, { model: j.model || "FLUX", seed: j.seed ?? seed });
         return { out: `Đã ${refs.length ? "sửa" : "tạo"} xong ảnh ${req.width}x${req.height} bằng ${meta.model} và hiển thị cho người dùng.`, image: j.image, meta };
       }
       if (res.status !== 501 && res.status !== 404 && res.status !== 405) return { out: "Lỗi: " + (await apiError(res)) };
     } catch (e) {
       if (e.name === "AbortError" && controller?.signal.aborted) throw e;
     }
-    const seed = Math.floor(Math.random() * 1e9);
     meta.model = "Pollinations"; meta.edit = false;
     const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(req.prompt)}?width=${req.width}&height=${req.height}&nologo=true&model=flux&seed=${seed}`;
     return {
@@ -3060,6 +3187,155 @@
   }));
   const CDN = "https://cdnjs.cloudflare.com/ajax/libs/";
 
+  // ---------- Xuất file PowerPoint, Excel, Word ----------
+  // Mô hình viết nội dung (JSON cho pptx và xlsx, Markdown cho docx), trang tạo file thật ngay trong trình duyệt.
+  const FILE_KINDS = { pptx: ["PowerPoint", "pptx"], xlsx: ["Excel", "xlsx"], docx: ["Word", "doc"] };
+  const PPTX_LIB = "https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js";
+  // JSON do mô hình viết đôi khi có dấu phẩy thừa hoặc chú thích: sửa nhẹ trước khi đọc.
+  function parseLoose(text) {
+    try { return JSON.parse(text); } catch {}
+    try { return JSON.parse(text.replace(/^\s*\/\/.*$/gm, "").replace(/,\s*([}\]])/g, "$1").replace(/,\s*$/, "")); } catch { return null; }
+  }
+  const fileName = (t) => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/gi, "d")
+    .replace(/[^\w-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "tai-lieu";
+  function fileCard(kind, code) {
+    const [label, ext] = FILE_KINDS[kind];
+    let name, summary, preview;
+    if (kind === "docx") {
+      if (!code.trim()) return "";
+      name = (code.match(/^#+\s+(.+)$/m)?.[1] || "Tài liệu").replace(/[*_`]/g, "").trim();
+      summary = `${code.split(/\s+/).filter(Boolean).length.toLocaleString("vi-VN")} chữ`;
+      preview = `<div class="content file-doc">${markdown(code)}</div>`;
+    } else {
+      const spec = parseLoose(code);
+      if (kind === "pptx") {
+        const slides = Array.isArray(spec?.slides) ? spec.slides : [];
+        if (!slides.length) return "";
+        name = spec.title || slides[0].title || "Bài thuyết trình";
+        summary = `${slides.length} slide`;
+        preview = `<ol class="file-outline">${slides.map((x) => `<li>${esc(String(x?.title || "(không tên)"))}</li>`).join("")}</ol>`;
+      } else {
+        const sheets = Array.isArray(spec?.sheets) ? spec.sheets.filter((x) => Array.isArray(x?.rows)) : [];
+        if (!sheets.length) return "";
+        name = spec.file || sheets[0].name || "Bảng tính";
+        summary = `${sheets.length} trang tính, ${sheets.reduce((n, x) => n + x.rows.length, 0)} dòng`;
+        const rows = sheets[0].rows;
+        preview = `<div class="file-table"><table>${rows.slice(0, 15).map((r, i) => `<tr>${(Array.isArray(r) ? r : [r]).map((c) =>
+          `<${i ? "td" : "th"}>${esc(String(c ?? ""))}</${i ? "td" : "th"}>`).join("")}</tr>`).join("")}</table></div>` +
+          (rows.length > 15 ? `<small>… và ${rows.length - 15} dòng nữa</small>` : "");
+      }
+    }
+    return `<div class="file-card" data-file="${kind}"><div class="file-head"><span class="file-badge ${kind}">${ext.toUpperCase()}</span>` +
+      `<span class="file-name"><b>${esc(String(name))}</b><small>${label} · ${summary}</small></span>` +
+      `<button type="button" class="btn primary" data-file-dl>${ICON_DOWN}Tải về</button></div>` +
+      `<details><summary>Xem nội dung</summary>${preview}</details><pre class="file-src" hidden>${esc(code)}</pre></div>`;
+  }
+  const saveBlob = (blob, name) => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = name; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  };
+  async function buildPptx(spec) {
+    await loadScript(PPTX_LIB);
+    const pptx = new PptxGenJS();
+    pptx.layout = "LAYOUT_WIDE"; // 13.33 x 7.5 inch
+    const hex = (c, d) => (/^#?[0-9a-f]{6}$/i.test(String(c || "")) ? String(c).replace("#", "") : d);
+    const th = spec.theme || {};
+    const bg = hex(th.bg, "FFFFFF"), text = hex(th.text, "1F2937"), accent = hex(th.accent, "2563EB"), muted = hex(th.muted, "6B7280");
+    const font = typeof th.font === "string" ? th.font : "Arial";
+    const palette = [accent, "F59E0B", "10B981", "EF4444", "8B5CF6", "06B6D4", "EC4899"];
+    const items = (list) => (Array.isArray(list) ? list : [list]).filter((x) => x != null).map((x) => {
+      const t = String(x), sub = /^\s*-\s+/.test(t);
+      return { text: t.replace(/^\s*-\s+/, ""), options: { bullet: sub ? { indent: 18 } : true, indentLevel: sub ? 1 : 0, fontSize: sub ? 18 : 22, breakLine: true } };
+    });
+    const box = (s, list, opt) => s.addText(items(list), { color: text, fontFace: font, valign: "top", paraSpaceAfter: 8, ...opt });
+    pptx.title = String(spec.title || "Bài thuyết trình");
+    (spec.slides || []).forEach((sl, idx) => {
+      sl = sl || {};
+      const s = pptx.addSlide();
+      s.background = { color: bg };
+      const isTitle = sl.layout === "title" || (idx === 0 && !sl.bullets && !sl.table && !sl.chart && !sl.left);
+      if (isTitle) {
+        s.addShape(pptx.ShapeType.rect, { x: 0, y: 6.9, w: 13.33, h: 0.6, fill: { color: accent }, line: { color: accent } });
+        s.addText(String(sl.title || spec.title || ""), { x: 0.8, y: 2.1, w: 11.7, h: 1.7, fontSize: 44, bold: true, color: text, fontFace: font, align: "center", valign: "middle" });
+        if (sl.subtitle) s.addText(String(sl.subtitle), { x: 0.8, y: 3.9, w: 11.7, h: 1, fontSize: 22, color: muted, fontFace: font, align: "center" });
+      } else {
+        s.addText(String(sl.title || ""), { x: 0.6, y: 0.35, w: 12.1, h: 0.9, fontSize: 30, bold: true, color: text, fontFace: font, valign: "middle" });
+        s.addShape(pptx.ShapeType.rect, { x: 0.6, y: 1.25, w: 1.2, h: 0.07, fill: { color: accent }, line: { color: accent } });
+        const top = 1.6, h = 5.2;
+        if (sl.left || sl.right) {
+          box(s, sl.left || [], { x: 0.6, y: top, w: 5.9, h });
+          box(s, sl.right || [], { x: 6.8, y: top, w: 5.9, h });
+        } else if (Array.isArray(sl.table) && sl.table.length) {
+          const rows = sl.table.map((r, ri) => (Array.isArray(r) ? r : [r]).map((c) => ({ text: String(c ?? ""),
+            options: ri === 0 ? { bold: true, color: "FFFFFF", fill: { color: accent } } : {} })));
+          s.addTable(rows, { x: 0.6, y: top, w: 12.1, fontSize: 14, fontFace: font, color: text, border: { type: "solid", pt: 0.5, color: "BFBFBF" }, valign: "middle" });
+        } else if (sl.chart && Array.isArray(sl.chart.series)) {
+          const types = { bar: "bar", line: "line", pie: "pie", doughnut: "doughnut", area: "area" };
+          const type = pptx.ChartType[types[sl.chart.type] || "bar"];
+          const data = sl.chart.series.map((se) => ({ name: String(se.name || ""), labels: (sl.chart.labels || []).map(String), values: (se.values || []).map(Number) }));
+          const round = /pie|doughnut/.test(sl.chart.type || "");
+          s.addChart(type, data, { x: 0.6, y: top, w: sl.bullets ? 7.6 : 12.1, h: 5, chartColors: palette, showLegend: data.length > 1 || round, legendPos: "b",
+            showTitle: !!sl.chart.title, title: String(sl.chart.title || ""), titleColor: text, legendColor: text, catAxisLabelColor: text, valAxisLabelColor: text,
+            showPercent: round, dataLabelColor: text });
+          if (sl.bullets) box(s, sl.bullets, { x: 8.5, y: top, w: 4.2, h });
+        } else if (sl.bullets) box(s, sl.bullets, { x: 0.6, y: top, w: 12.1, h });
+        if (sl.text) s.addText(String(sl.text), { x: 0.6, y: top, w: 12.1, h, fontSize: 20, color: text, fontFace: font, valign: "top" });
+        s.addText(String(idx + 1), { x: 12.2, y: 6.95, w: 0.7, h: 0.35, fontSize: 11, color: muted, align: "right" });
+      }
+      if (sl.notes) s.addNotes(String(sl.notes));
+    });
+    saveBlob(await pptx.write({ outputType: "blob" }), fileName(spec.file || spec.title || "bai-thuyet-trinh") + ".pptx");
+  }
+  async function buildXlsx(spec) {
+    await loadScript(CDN + "xlsx/0.18.5/xlsx.full.min.js");
+    const wb = XLSX.utils.book_new(), used = new Set();
+    spec.sheets.filter((x) => Array.isArray(x?.rows)).forEach((sh, i) => {
+      // Ô bắt đầu bằng = là công thức (Excel tự tính khi mở file); số dạng chữ như "1.500" vẫn giữ là chữ.
+      const rows = sh.rows.map((r) => (Array.isArray(r) ? r : [r]).map((c) => (typeof c === "string" && c.startsWith("=") ? { t: "n", f: c.slice(1) } : c ?? "")));
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      const ncol = Math.max(1, ...rows.map((r) => r.length));
+      ws["!cols"] = Array.from({ length: ncol }, (_, c) => ({ wch: Number(sh.widths?.[c]) ||
+        Math.min(50, Math.max(8, ...rows.map((r) => (typeof r[c] === "object" ? 10 : String(r[c] ?? "").length + 2)))) }));
+      if (rows.length > 1) ws["!autofilter"] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: rows.length - 1, c: ncol - 1 } }) };
+      let name = String(sh.name || `Trang ${i + 1}`).replace(/[\[\]:*?/\\]/g, " ").slice(0, 31).trim() || `Trang ${i + 1}`;
+      while (used.has(name.toLowerCase())) name = name.slice(0, 28) + " " + (i + 1);
+      used.add(name.toLowerCase());
+      XLSX.utils.book_append_sheet(wb, ws, name);
+    });
+    let data = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    // Công thức chưa có giá trị tính sẵn: bật "tính lại toàn bộ khi mở" để Excel hiện ngay kết quả.
+    try {
+      const zip = XLSX.CFB.read(new Uint8Array(data), { type: "array" });
+      const entry = zip.FileIndex[zip.FullPaths.findIndex((x) => /(^|\/)xl\/workbook\.xml$/.test(x))];
+      const xml = new TextDecoder().decode(entry.content);
+      if (!xml.includes("<calcPr")) {
+        entry.content = new TextEncoder().encode(xml.replace("</workbook>", '<calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>'));
+        data = XLSX.CFB.write(zip, { fileType: "zip", type: "array" });
+      }
+    } catch (e) { console.warn("Không bật được tính lại khi mở:", e); }
+    saveBlob(new Blob([data], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), fileName(spec.file || spec.sheets[0]?.name || "bang-tinh") + ".xlsx");
+  }
+  // Word mở được file HTML đặt đuôi .doc: dựng từ Markdown, kèm kiểu chữ và bảng cho đẹp.
+  function buildDoc(md) {
+    const body = markdown(md).replace(/<div class="code-head">[\s\S]*?<\/div>/g, "");
+    const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>tai lieu</title>` +
+      `<style>body{font-family:"Times New Roman",serif;font-size:13pt;line-height:1.5}h1{font-size:18pt;text-align:center}h2{font-size:15pt}h3{font-size:13pt}` +
+      `table{border-collapse:collapse;width:100%}td,th{border:1px solid #777;padding:4px 8px}th{background:#eee}pre{font-family:Consolas,monospace;font-size:10pt}</style></head><body>${body}</bo` + `dy></html>`; // tách chữ để Live Server không chèn mã vào giữa script
+    saveBlob(new Blob(["\ufeff" + html], { type: "application/msword" }), fileName(md.match(/^#+\s+(.+)$/m)?.[1] || "tai-lieu") + ".doc");
+  }
+  async function downloadFile(card, btn) {
+    const kind = card.dataset.file, code = card.querySelector(".file-src").textContent;
+    const old = btn.innerHTML;
+    btn.disabled = true; btn.textContent = "Đang tạo file…";
+    try {
+      if (kind === "pptx") await buildPptx(parseLoose(code));
+      else if (kind === "xlsx") await buildXlsx(parseLoose(code));
+      else buildDoc(code);
+    } catch (e) { alert("Không tạo được file: " + e.message); }
+    finally { btn.disabled = false; btn.innerHTML = old; }
+  }
+
   const attChip = (name, info) =>
     `<div class="att"><span class="file-ico">${ICON_FILE}</span><span class="name">${esc(name)}<small>${esc(info)}</small></span></div>`;
   const fileInfo = (f) => (f.pages ? `${f.pages} trang · ` : "") + `${f.text.length.toLocaleString("vi-VN")} ký tự`;
@@ -3249,6 +3525,8 @@
   els.thread.addEventListener("click", async (e) => {
     const imgBtn = e.target.closest("[data-img]");
     if (imgBtn) { imageAction(imgBtn); return; }
+    const fileBtn = e.target.closest("[data-file-dl]");
+    if (fileBtn) { downloadFile(fileBtn.closest(".file-card"), fileBtn); return; }
     const prevBtn = e.target.closest("[data-preview], [data-download], [data-full]");
     if (prevBtn) { codePreview(prevBtn); return; }
     const copyBtn = e.target.closest("[data-copy]");
@@ -3302,8 +3580,8 @@
       setBusy(true);
       card.classList.add("busy");
       try {
-        const r = await makeImage({ ...m.genMeta[i], edit: false }, null);
-        if (r.image) { m.genImages[i] = r.image; m.genMeta[i] = r.meta; chat.updated = Date.now(); saveChats(); }
+        const r = await makeImage({ ...m.genMeta[i], edit: false, seed: undefined, count: 1 }, null);
+        if (r.images?.length) { m.genImages[i] = r.images[0]; m.genMeta[i] = r.metas[0]; chat.updated = Date.now(); saveChats(); }
         else alert(r.out);
       } catch (e) { if (e.name !== "AbortError") alert(e.message); }
       finally { controller = null; setBusy(false); paintAssistant(node, m, false); }

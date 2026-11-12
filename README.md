@@ -87,6 +87,7 @@ Khi cần tính toán, mô hình tự viết code JavaScript, Python hoặc C++.
 - **Thời tiết** hiện tại và 3 ngày tới ([Open-Meteo](https://open-meteo.com)).
 - **Tỷ giá ngoại tệ** ([ExchangeRate-API](https://www.exchangerate-api.com)).
 - **Bài báo khoa học** ([OpenAlex](https://openalex.org)), gồm tóm tắt, tác giả, số trích dẫn.
+- **Kiến thức thực tế:** thủ tục, giấy tờ, luật, thuế, bảo hiểm, tài chính cá nhân, sức khoẻ và sơ cứu, công nghệ, nấu ăn, sửa chữa, học tập, việc làm, du lịch. GLM đưa các bước cụ thể làm được ngay, và với quy định, phí, giá cả thì tra cứu bản mới nhất (kể cả Cổng Dịch vụ công, văn bản pháp luật) rồi ghi rõ nguồn.
 - **Lập trình:** câu hỏi và câu trả lời hay nhất trên Stack Overflow, cùng kho mã trên GitHub.
 - **Từ điển tiếng Anh** ([Wiktionary](https://en.wiktionary.org)).
 
@@ -97,7 +98,8 @@ Các trang đã tra hiện thành danh sách **Nguồn** dưới câu trả lờ
 - **Nhân vật:** chọn trong menu mô hình ở khung chat, gồm Thầy dạy Toán, Huấn luyện viên IOI, Dịch giả Anh–Việt, Gia sư tiếng Anh, Trợ lý viết văn. Có thể tự tạo thêm trong **Cài đặt**.
 - **Kho kiến thức:** **Cài đặt → Kho kiến thức → Thêm tài liệu** (PDF, Word, Excel, văn bản). Mỗi câu hỏi, GLM tự tìm đoạn liên quan trong kho và ghi rõ tài liệu đã dùng. Tài liệu chỉ lưu trong trình duyệt.
 - **Học từ câu trả lời được thích:** khi bạn hỏi câu giống câu cũ, các câu trả lời bạn đã bấm thích được dùng làm mẫu, để GLM trả lời đúng văn phong bạn muốn.
-- **Tạo và sửa ảnh:** nhờ "vẽ…" hoặc "tạo bức tranh…", GLM tự viết mô tả chi tiết và chọn khổ ảnh (vuông, ngang 16:9, dọc 9:16…). Trên mỗi ảnh có nút **Tải về**, **Vẽ lại** (cùng mô tả, ảnh khác) và **Sửa** (gõ thay đổi, ví dụ "đổi nền thành bãi biển"). Gửi ảnh của bạn kèm "biến ảnh này thành tranh anime" cũng được. Ảnh do FLUX.2 trên Cloudflare vẽ; sửa ảnh cần bật Workers AI theo [worker/README.md](worker/README.md).
+- **Tạo và sửa ảnh:** nhờ "vẽ…" hoặc "tạo bức tranh…", GLM tự viết mô tả chi tiết và chọn khổ ảnh (vuông, ngang 16:9, dọc 9:16…). Có thể xin **nhiều phiên bản cùng lúc** (2–4 ảnh hiện thành lưới), **ảnh cỡ lớn**, và **phong cách có sẵn** (ảnh thật, anime, Ghibli, màu nước, sơn dầu, 3D, pixel art, phác thảo chì, điện ảnh, cyberpunk, poster). Dưới mỗi ảnh ghi số seed để vẽ lại đúng ảnh đó. Trên mỗi ảnh có nút **Tải về**, **Vẽ lại** (cùng mô tả, ảnh khác) và **Sửa** (gõ thay đổi, ví dụ "đổi nền thành bãi biển"). Ảnh do FLUX.2 trên Cloudflare vẽ; sửa ảnh cần bật Workers AI theo [worker/README.md](worker/README.md).
+- **Xuất file PowerPoint, Excel, Word:** nhờ "làm file PowerPoint…", "tạo file Excel…" hoặc "xuất file Word…". Câu trả lời hiện một thẻ file có nút **Tải về**, file được tạo ngay trong trình duyệt: PowerPoint có slide tiêu đề, gạch đầu dòng, bảng, biểu đồ, hai cột và ghi chú người thuyết trình; Excel có nhiều trang tính và công thức (tự tính khi mở); Word có tiêu đề, danh sách và bảng.
 - **Đồng bộ giữa các máy:** **Cài đặt → Đồng bộ giữa các máy**. Cần bật trên Cloudflare theo [worker/README.md](worker/README.md).
 - **Sắp xếp đoạn chat:** bấm nút `⋯` cạnh đoạn chat để ghim, đổi tên, chuyển vào thư mục. GLM tự đặt tên đoạn chat sau câu trả lời đầu tiên.
 
