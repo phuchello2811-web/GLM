@@ -69,7 +69,14 @@ Mô hình nào quá tải hoặc trả lời quá chậm thì trang tự chuyể
 
 Giao diện có lịch sử chat (lưu trong trình duyệt), hiện quá trình suy nghĩ của mô hình, nút dừng và tạo lại câu trả lời, chế độ sáng/tối. Vào **Cài đặt** để đổi lời nhắc hệ thống hoặc nhiệt độ.
 
-Bật nút **Nghĩ kỹ** trong khung chat để **ba mô hình giải song song** (mô hình đang chọn và hai mô hình mạnh khác họ, ví dụ Nemotron 3 Ultra, Mistral Large 4, Nemotron 3.5 Super VL), mỗi mô hình một góc nhìn: giải bình thường, giải theo hướng khác, và đóng vai người phản biện tìm bẫy trong đề. Sau đó mô hình đang chọn làm giám khảo: tóm tắt đáp án từng lời giải, tự kiểm chứng chỗ khác nhau bằng code hoặc tra cứu (không tin theo số đông), kiểm chứng lại kể cả khi các lời giải giống nhau, rồi viết câu trả lời cuối. Mọi mô hình suy nghĩ ở mức cao nhất. Mô hình nào quá chậm thì bị dừng sau khoảng 3 phút và giám khảo dùng phần đã viết. Các lời giải nháp vẫn xem được bên trên câu trả lời, kèm tên mô hình.
+Nút **mức suy nghĩ** (biểu tượng bóng đèn) trong khung chat có 4 mức:
+
+- **Nhanh**: trả lời ngay, không suy nghĩ dài. Hợp chào hỏi, câu đơn giản.
+- **Cân bằng** (mặc định): suy nghĩ bình thường. Mô hình GLM tự chấm lại câu toán, logic, lập trình thi đấu.
+- **Kỹ**: suy nghĩ ở mức cao nhất, rồi luôn tự chấm và sửa câu trả lời một lượt. Chậm hơn khoảng 2 lần.
+- **Tối đa**: **ba mô hình giải song song** (mô hình đang chọn và hai mô hình mạnh khác họ), mỗi mô hình một góc nhìn: giải bình thường, giải theo hướng khác, và đóng vai người phản biện tìm bẫy trong đề. Sau đó mô hình đang chọn làm giám khảo: tóm tắt đáp án từng lời giải, tự kiểm chứng chỗ khác nhau bằng code hoặc tra cứu (không tin theo số đông), kiểm chứng lại kể cả khi các lời giải giống nhau, rồi viết câu trả lời cuối. Mô hình nào quá chậm thì bị dừng sau khoảng 3 phút và giám khảo dùng phần đã viết. Mất khoảng 1–4 phút.
+
+Các lời giải nháp vẫn xem được bên trên câu trả lời, kèm tên mô hình.
 
 Khi cần tính toán, mô hình tự viết code JavaScript hoặc Python. Trang chạy code đó ngay trong trình duyệt (cách ly, không truy cập mạng; Python chạy bằng [Pyodide](https://pyodide.org), có sẵn numpy, pandas, sympy) rồi đưa kết quả cho mô hình, nên phép tính luôn chính xác. Khi bạn nhờ viết code, mô hình chạy thử với vài ví dụ, tự sửa nếu lỗi, rồi mới đưa code cuối cùng. Code trong câu trả lời được tô màu cho dễ đọc. Khi cần thông tin thực tế, mô hình tự tra cứu rồi trả lời kèm nguồn. Câu hỏi có chữ như "hiện nay", "mới nhất", "hôm nay", "giá"… thì bắt buộc phải tra, vì kiến thức có sẵn của mô hình đã cũ. Các nguồn (đều miễn phí, không cần key):
 

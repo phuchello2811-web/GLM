@@ -495,10 +495,12 @@
         <span id="chipTitle">GLM-4.7 Flash</span>
         <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
       </button>
-      <button class="deep" id="deep" type="button" title="Ba mô hình giải song song độc lập (một mô hình đóng vai phản biện tìm bẫy), rồi mô hình chính chấm, kiểm chứng chỗ khác nhau bằng code và viết câu trả lời cuối. Chính xác nhất nhưng chậm hơn.">
+      <button class="deep chip" id="deep" type="button" aria-haspopup="menu" aria-expanded="false" title="Chọn mức suy nghĩ">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2Z"/></svg>
-        Nghĩ kỹ
+        <span id="levelTitle">Cân bằng</span>
+        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
       </button>
+      <div class="model-menu" id="levelMenu" role="menu" hidden></div>
       <div class="spacer"></div>
       <button class="send" id="send" type="submit" disabled title="Gửi">
         <svg id="sendIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
@@ -636,7 +638,7 @@
   const SHARED_URL = "https://glm.phuchello2811.workers.dev/";
 
   const settings = Object.assign(
-    { system: "", temperature: 0.6, maxTokens: 16384, think: "collapsed", deep: false, tools: true,
+    { system: "", temperature: 0.6, maxTokens: 16384, think: "collapsed", level: "normal", tools: true,
       provider: "shared", models: {} },
     store.get("glm.settings", {})
   );
@@ -705,6 +707,7 @@
   let menuAnchor = null;
   function toggleModelMenu(anchor) {
     const menu = $("modelMenu");
+    $("levelMenu").hidden = true;
     if (menuAnchor) menuAnchor.setAttribute("aria-expanded", "false");
     if (!anchor || anchor === menuAnchor) { menu.hidden = true; menuAnchor = null; return; }
     let html = "";
@@ -784,6 +787,7 @@
   };
   document.addEventListener("click", (e) => { if (!e.target.closest("#modelMenu")) toggleModelMenu(null); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") toggleModelMenu(null); });
+  addEventListener("resize", () => { $("levelMenu").hidden = true; });
   addEventListener("resize", () => toggleModelMenu(null));
 
   let chats = store.get("glm.chats", []);
@@ -1490,7 +1494,7 @@
     const councilStops = [];
     try {
       // Nghĩ kỹ: các mô hình khác bắt đầu giải song song ngay (không hiện ra), cùng lúc mô hình chính giải.
-      if (settings.deep) {
+      if (settings.level === "max") {
         const models = await councilModels();
         councilStart = Date.now();
         council = models.map((m, i) => silentDraft(history, m, DEEP_ANGLES[i], councilStops));
@@ -1500,15 +1504,16 @@
       await answerWithTools(history, reply, node);
       await ensureAnswer(history, reply, node);
       const draft = splitThink(reply.content).answer.trim();
-      // Mô hình GLM với câu khó (toán, logic, lập trình thi đấu) mà không bật Nghĩ kỹ: tự chấm lại và sửa câu trả lời một lượt.
-      if (!settings.deep && draft && /^glm/.test(cloudModel()) && activeSkills(chat).some((k) => k.hard)) {
+      // Mức Kỹ: luôn tự chấm lại. Mức Cân bằng: chỉ mô hình GLM với câu khó.
+      const selfCheck = settings.level === "careful" || (settings.level === "normal" && /^glm/.test(cloudModel()) && activeSkills(chat).some((k) => k.hard));
+      if (draft && selfCheck) {
         reply.drafts = [{ content: reply.content, reasoning: reply.reasoning, thinkSecs: reply.thinkSecs, model: reply.drafter }];
         Object.assign(reply, { content: "", reasoning: "", thinkSecs: null, tps: null, review: true, via: undefined });
         await judge([...history, { role: "assistant", content: draft }, { role: "user", content: REVIEW_PROMPT }], reply, node);
       }
       // Chế độ Nghĩ kỹ: chờ các mô hình khác giải xong, rồi mô hình chính làm giám khảo: so sánh, kiểm chứng chỗ khác nhau
       // và viết câu trả lời cuối. Không mô hình nào khác giải được thì chỉ tự kiểm tra lời giải đầu.
-      if (settings.deep && draft) {
+      if (settings.level === "max" && draft) {
         reply.drafts = [{ content: reply.content, reasoning: reply.reasoning, thinkSecs: reply.thinkSecs, model: reply.drafter }];
         Object.assign(reply, { content: "", reasoning: "", thinkSecs: null, tps: null, review: true, via: undefined, notice: "Đang chờ các mô hình khác giải xong…" });
         paintAssistant(node, reply, true);
@@ -2157,8 +2162,9 @@
         messages, stream: true,
         temperature: Number(settings.temperature), max_tokens: Number(settings.maxTokens), top_p: 0.95,
         model, ...p.extra,
-        ...(settings.deep && !reply.fast ? { effort: "max" } : {}),
-        ...(reply.fast ? { thinking: { type: "disabled" } } : {}), // viết ngay, không suy nghĩ dài
+        ...((settings.level === "careful" || settings.level === "max") && !reply.fast ? { effort: "max" } : {}),
+        // Mức Nhanh, hoặc khi cần viết ngay câu trả lời: không suy nghĩ dài.
+        ...(reply.fast || settings.level === "fast" ? { thinking: { type: "disabled" } } : {}),
       });
       let hung = false;
       for (let attempt = 0; ; attempt++) {
@@ -2853,9 +2859,43 @@
   els.form.addEventListener("submit", (e) => { e.preventDefault(); send(els.input.value); });
   els.send.addEventListener("click", (e) => { if (controller) { e.preventDefault(); controller.abort(); } });
 
+  // Mức suy nghĩ: nhanh (tắt suy nghĩ dài), cân bằng, kỹ (suy nghĩ tối đa và tự chấm lại), tối đa (3 mô hình giải song song).
+  const LEVELS = {
+    fast: ["Nhanh", "Trả lời ngay, không suy nghĩ dài. Hợp chào hỏi, câu đơn giản"],
+    normal: ["Cân bằng", "Suy nghĩ bình thường. Hợp hầu hết câu hỏi"],
+    careful: ["Kỹ", "Suy nghĩ ở mức cao nhất, rồi tự chấm và sửa câu trả lời. Chậm hơn khoảng 2 lần"],
+    max: ["Tối đa", "3 mô hình giải song song, rồi chấm và kiểm chứng bằng code. Chính xác nhất, mất 1–4 phút"],
+  };
+  // Cài đặt cũ chỉ có nút Nghĩ kỹ bật/tắt: đang bật thì chuyển thành mức Tối đa.
+  if ("deep" in settings) { if (settings.deep) settings.level = "max"; delete settings.deep; store.set("glm.settings", settings); }
+  if (!LEVELS[settings.level]) settings.level = "normal";
   const deepBtn = $("deep");
-  const paintDeep = () => deepBtn.classList.toggle("on", settings.deep);
-  deepBtn.onclick = () => { settings.deep = !settings.deep; store.set("glm.settings", settings); paintDeep(); };
+  const paintDeep = () => {
+    $("levelTitle").textContent = LEVELS[settings.level][0];
+    deepBtn.classList.toggle("on", settings.level === "careful" || settings.level === "max");
+  };
+  deepBtn.onclick = (e) => {
+    e.stopPropagation();
+    const menu = $("levelMenu");
+    if (!menu.hidden) { menu.hidden = true; deepBtn.setAttribute("aria-expanded", "false"); return; }
+    toggleModelMenu(null);
+    menu.innerHTML = `<div class="group">Mức suy nghĩ</div>` + Object.entries(LEVELS).map(([k, [t, d]]) =>
+      `<button role="menuitemradio" data-level="${k}" aria-checked="${k === settings.level}"><span><b>${t}</b><small>${d}</small></span>${TICK}</button>`).join("");
+    menu.hidden = false;
+    deepBtn.setAttribute("aria-expanded", "true");
+    const r = deepBtn.getBoundingClientRect();
+    menu.style.left = Math.max(16, Math.min(r.left, innerWidth - menu.offsetWidth - 16)) + "px";
+    menu.style.top = Math.max(16, r.top - menu.offsetHeight - 6) + "px";
+  };
+  $("levelMenu").onclick = (e) => {
+    const b = e.target.closest("[data-level]");
+    if (!b) return;
+    settings.level = b.dataset.level;
+    store.set("glm.settings", settings);
+    paintDeep();
+    $("levelMenu").hidden = true; deepBtn.setAttribute("aria-expanded", "false");
+  };
+  document.addEventListener("click", (e) => { if (!e.target.closest("#levelMenu")) { $("levelMenu").hidden = true; deepBtn.setAttribute("aria-expanded", "false"); } });
   paintDeep();
 
   $("newChat").onclick = newChat;
