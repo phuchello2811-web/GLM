@@ -746,14 +746,29 @@
       }
     };
     if (Date.now() - statusAt < 90_000) { paint(); return; }
+    const loading = loadModelStatus();
+    paint();
+    await loading;
+    paint();
+  }
+  function loadModelStatus() {
+    if (Date.now() - statusAt < 90_000) return Promise.resolve();
     if (!statusLoading) {
-      modelStatus = { enabled: true, models: {} }; paint();
+      modelStatus = { enabled: true, models: {} };
       statusLoading = fetch(SHARED_URL.replace(/\/$/, "") + "/status", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" })
         .then((r) => (r.ok ? r.json() : null)).catch(() => null)
         .then((j) => { modelStatus = j?.models ? j : null; statusAt = j ? Date.now() : 0; statusLoading = null; });
-    } else paint();
-    await statusLoading;
-    paint();
+    }
+    return statusLoading;
+  }
+  // Mô hình cho lần giải thứ hai của chế độ Nghĩ kỹ: mô hình mạnh khác mô hình đang chọn và đang sẵn sàng,
+  // theo thứ tự ưu tiên; không có thì dùng GLM của Z.ai.
+  const SECOND_ORDER = ["glm-5.3-flash", "nemotron-3-ultra", "deepseek-v4.1-flash", "mistral-large-4", "step-5", "minimax-m3.1-flash", "nemotron-3.5-super-vl"];
+  async function secondModel() {
+    const cur = cloudModel();
+    await Promise.race([loadModelStatus(), new Promise((ok) => setTimeout(ok, 4000))]);
+    const ready = SECOND_ORDER.find((m) => m !== cur && modelStatus?.models?.[m]?.ok);
+    return ready || (cur !== "glm-4.7-flash" ? "glm-4.7-flash" : "glm-4.5-flash");
   }
   $("modelChip").onclick = (e) => { e.stopPropagation(); toggleModelMenu(e.currentTarget); };
   $("modelMenu").onclick = (e) => {
@@ -779,6 +794,7 @@
   let currentId = null;
   let controller = null;
   let genChat = null; // đoạn chat đang được trả lời
+  let passModel = null; // mô hình dùng cho lần giải thứ hai của chế độ Nghĩ kỹ (khác mô hình đang chọn)
 
   // Ảnh và file làm bộ nhớ trình duyệt (khoảng 5MB) đầy nhanh: hết chỗ thì bỏ dần ảnh/file của các đoạn chat cũ nhất.
   function saveChats(sync = true) {
@@ -1119,7 +1135,7 @@
     drafts.forEach((dr, i) => {
       const d = splitThink((dr.reasoning ? `<think>${dr.reasoning}</think>` : "") + dr.content);
       const secs = dr.thinkSecs ? `, suy nghĩ ${dr.thinkSecs} giây` : "";
-      const name = drafts.length > 1 ? `Lời giải nháp ${i + 1}` : "Bản nháp đầu tiên";
+      const name = (drafts.length > 1 ? `Lời giải nháp ${i + 1}` : "Bản nháp đầu tiên") + (dr.model ? ` (${esc(dr.model)})` : "");
       html += `<details class="think"><summary>${name}${secs}</summary><div class="think-body draft">` +
         `<div class="content">${markdown(d.answer.trim())}</div></div></details>`;
     });
@@ -1449,9 +1465,9 @@
       // Chế độ Nghĩ kỹ: giải thêm một lần độc lập (không thấy lời giải đầu), rồi so sánh hai lời giải,
       // kiểm tra chỗ khác nhau và viết câu trả lời cuối cùng. Lần giải thứ hai lỗi thì chỉ tự kiểm tra lời giải đầu.
       if (settings.deep && draft) {
-        const keep = () => ({ content: reply.content, reasoning: reply.reasoning, thinkSecs: reply.thinkSecs });
-        reply.drafts = [keep()];
-        Object.assign(reply, { content: "", reasoning: "", thinkSecs: null, tps: null, second: true });
+        const keep = (model) => ({ content: reply.content, reasoning: reply.reasoning, thinkSecs: reply.thinkSecs, model });
+        reply.drafts = [keep(modelTitle("shared", cloudModel()))];
+        Object.assign(reply, { content: "", reasoning: "", thinkSecs: null, tps: null, second: true, via: undefined });
         let draft2 = "";
         try {
           const again = history.map((m) => ({ ...m }));
@@ -1459,11 +1475,13 @@
           const add = "\n\n(Hãy giải lại từ đầu một cách độc lập và cẩn thận, theo một hướng tiếp cận KHÁC với cách làm thông thường, " +
             "và tự kiểm chứng kết quả bằng code hoặc tra cứu trước khi kết luận.)";
           if (typeof last.content === "string") last.content += add; else last.content = [{ ...last.content[0], text: last.content[0].text + add }, ...last.content.slice(1)];
-          await answerWithTools(again, reply, node);
+          // Lời giải thứ hai do một mô hình khác làm: hai mô hình khác nhau ít mắc cùng một lỗi hơn.
+          passModel = await secondModel();
+          try { await answerWithTools(again, reply, node); } finally { passModel = null; }
           draft2 = splitThink(reply.content).answer.trim();
-          if (draft2) reply.drafts.push(keep());
+          if (draft2) reply.drafts.push(keep(reply.drafter || modelTitle("shared", cloudModel())));
         } catch (e) { if (e.name === "AbortError") throw e; console.warn("Lần giải thứ hai bị lỗi:", e); }
-        Object.assign(reply, { content: "", reasoning: "", thinkSecs: null, tps: null, second: false, review: true });
+        Object.assign(reply, { content: "", reasoning: "", thinkSecs: null, tps: null, second: false, review: true, via: undefined });
         const review = draft2
           ? REVIEW_TWO_PROMPT.replace("{B}", draft2)
           : REVIEW_PROMPT;
@@ -2023,7 +2041,8 @@
     // Mô hình trên NVIDIA: máy chủ tự xử lý ảnh (dùng GLM-5.3 Flash) và tự chuyển sang GLM của Z.ai khi bận,
     // nên trang chỉ thử thêm các mô hình của Z.ai.
     const onNvidia = (m) => PROVIDERS.shared.nvidia.includes(m);
-    const order = vision ? [["shared", onNvidia(cloudModel()) ? cloudModel() : PROVIDERS.shared.vision]] : [[settings.provider, cloudModel()]];
+    const chosen = passModel || cloudModel();
+    const order = vision ? [["shared", onNvidia(chosen) ? chosen : PROVIDERS.shared.vision]] : [[settings.provider, chosen]];
     if (!vision) for (const id of Object.keys(PROVIDERS)) for (const m of PROVIDERS[id].models) if ((id !== order[0][0] || m !== order[0][1]) && !onNvidia(m)) order.push([id, m]);
     const retries = vision ? 4 : 1;
     let res = null, used, model;
@@ -2034,6 +2053,7 @@
         messages, stream: true,
         temperature: Number(settings.temperature), max_tokens: Number(settings.maxTokens), top_p: 0.95,
         model, ...p.extra,
+        ...(settings.deep ? { effort: "max" } : {}),
       });
       let hung = false;
       for (let attempt = 0; ; attempt++) {
@@ -2070,12 +2090,13 @@
     const real = res.headers.get("X-GLM-Model") || (onNvidia(model) ? (vision ? PROVIDERS.shared.vision : "glm-4.7-flash") : null);
     const asked = model;
     if (real && PROVIDERS[used].titles[real]) model = real;
+    reply.drafter = modelTitle(used, model);
     if (vision) reply.via = `${modelTitle(used, model)} (mô hình đọc được ảnh)`;
-    else if (used !== settings.provider || model !== cloudModel()) {
+    else if (used !== settings.provider || model !== chosen) {
       // Máy chủ ghi lý do không dùng được GLM-5.3 Flash (key sai, hết lượt, quá lâu…) trong X-GLM-Note.
       let note = "";
       try { note = decodeURIComponent(res.headers.get("X-GLM-Note") || ""); } catch {}
-      reply.via = `${modelTitle(used, model)} vì ` + (note || `${modelTitle(used, asked === model ? cloudModel() : asked)} đang ${onNvidia(asked) && real !== asked ? "bận hoặc chưa bật" : "quá tải"}`);
+      reply.via = `${modelTitle(used, model)} vì ` + (note || `${modelTitle(used, asked === model ? chosen : asked)} đang ${onNvidia(asked) && real !== asked ? "bận hoặc chưa bật" : "quá tải"}`);
     }
     setStatus("ok", `${PROVIDERS[used].name} · ${modelTitle(used, model)}`);
 

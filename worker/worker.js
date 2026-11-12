@@ -19,15 +19,26 @@ const VISION_MODEL = "glm-4.6v-flash"; // mô hình miễn phí duy nhất của
 // Bản miễn phí của NVIDIA hay quá tải (xếp hàng nhiều phút, hoặc trả 200 mà không gửi gì): chỉ chờ chữ đầu tiên tối đa
 // NVIDIA_WAIT, không được thì dùng GLM của Z.ai và tạm bỏ qua mô hình đó một lúc để các câu sau khỏi phải chờ lại.
 const NVIDIA_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
+// think: cách bật suy nghĩ của từng loại mô hình ("effort" = reasoning_effort, "kwargs" = chat_template_kwargs).
+// trial: chỉ để kiểm tra xem có dùng được không (POST /status với {"all": true}), trang chưa hiện trong menu.
 const NVIDIA_MODELS = {
-  "glm-5.3-flash": { id: "z-ai/glm-5.3-flash", title: "GLM-5.3 Flash", vision: true, effort: true },
-  "nemotron-3-ultra": { id: "nvidia/nemotron-3-ultra-550b-a55b", title: "Nemotron 3 Ultra" },
-  "nemotron-3.5-super-vl": { id: "nvidia/nemotron-3.5-super-vl-120b-a12b", title: "Nemotron 3.5 Super VL", vision: true },
-  "nemotron-3.5-lightning": { id: "nvidia/nemotron-3.5-lightning-30b-a3b", title: "Nemotron 3.5 Lightning" },
+  "glm-5.3-flash": { id: "z-ai/glm-5.3-flash", title: "GLM-5.3 Flash", vision: true, think: "effort" },
+  "nemotron-3-ultra": { id: "nvidia/nemotron-3-ultra-550b-a55b", title: "Nemotron 3 Ultra", think: "kwargs" },
+  "nemotron-3.5-super-vl": { id: "nvidia/nemotron-3.5-super-vl-120b-a12b", title: "Nemotron 3.5 Super VL", vision: true, think: "kwargs" },
+  "nemotron-3.5-lightning": { id: "nvidia/nemotron-3.5-lightning-30b-a3b", title: "Nemotron 3.5 Lightning", think: "kwargs" },
   "mistral-large-4": { id: "mistralai/mistral-large-4-1t-a52b", title: "Mistral Large 4" },
-  "deepseek-v4.1-flash": { id: "deepseek-ai/deepseek-v4.1-flash", title: "DeepSeek V4.1 Flash" },
+  "deepseek-v4.1-flash": { id: "deepseek-ai/deepseek-v4.1-flash", title: "DeepSeek V4.1 Flash", think: "kwargs" },
   "minimax-m3.1-flash": { id: "minimaxai/minimax-m3.1-flash", title: "MiniMax M3.1 Flash" },
   "step-5": { id: "stepfun-ai/step-5-preview", title: "Step 5" },
+  "nemotron-3-super": { id: "nvidia/nemotron-3-super-120b-a12b", title: "Nemotron 3 Super", think: "kwargs", trial: true },
+  "nemotron-nano-3": { id: "nvidia/nemotron-nano-3-30b-a3b", title: "Nemotron Nano 3", think: "kwargs", trial: true },
+  "llama-nemotron-ultra": { id: "nvidia/llama-3.1-nemotron-ultra-253b-v1", title: "Llama Nemotron Ultra", trial: true },
+  "llama-3.2-90b-vision": { id: "meta/llama-3.2-90b-vision-instruct", title: "Llama 3.2 90B Vision", vision: true, trial: true },
+  "kimi-k2.6": { id: "moonshotai/kimi-k2.6", title: "Kimi K2.6", trial: true },
+  "gemma-4-31b": { id: "google/gemma-4-31b-it", title: "Gemma 4 31B", trial: true },
+  "gemma-3-12b": { id: "google/gemma-3-12b-it", title: "Gemma 3 12B", trial: true },
+  "palmyra-creative": { id: "writer/palmyra-creative-122b", title: "Palmyra Creative", trial: true },
+  "laguna-xs": { id: "poolside/laguna-xs-2.1", title: "Laguna XS", trial: true },
 };
 const NVIDIA_WAIT = 25_000; // chờ chữ đầu tiên tối đa 25 giây
 const STALL = 90_000; // đang trả lời mà đứng yên quá 90 giây thì ngắt, để trang tự nối lại
@@ -105,7 +116,7 @@ export default {
 
     if (kind === "image") return makeImage(body, env, json, fail);
     if (kind === "sync") return sync(body, env, json, fail);
-    if (kind === "status") return json(await nvidiaStatus(env));
+    if (kind === "status") return json(await nvidiaStatus(env, body.all === true));
 
     if (!Array.isArray(body.messages) || !body.messages.length) return fail(400, "Thiếu tin nhắn.");
 
@@ -128,6 +139,7 @@ export default {
       top_p: clamp(body.top_p, 0.01, 1, 0.95),
       max_tokens: Math.round(clamp(body.max_tokens, 1, MAX_TOKENS, 4096)),
       thinking: { type: body.thinking?.type === "disabled" ? "disabled" : "enabled" },
+      effort: body.effort === "max" ? "max" : "high", // chế độ Nghĩ kỹ: GLM-5.3 suy nghĩ ở mức tối đa
     };
 
     // Mô hình trên NVIDIA: thử NVIDIA trước. Câu hỏi có ảnh mà mô hình đã chọn không đọc được ảnh thì dùng GLM-5.3 Flash.
@@ -154,7 +166,7 @@ export default {
       upstream = await fetch(UPSTREAM, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${env.ZAI_API_KEY}` },
-        body: JSON.stringify({ ...clean, model: m }),
+        body: JSON.stringify({ ...clean, effort: undefined, model: m }),
       });
       if (!BUSY.includes(upstream.status)) break;
     }
@@ -173,7 +185,10 @@ export default {
 // Gọi một mô hình trên NVIDIA. Thành công: { body } là luồng trả lời; thất bại: { note, cool } (lý do, thời gian tạm bỏ qua).
 async function callNvidia(name, clean, env, wait) {
   const spec = NVIDIA_MODELS[name];
-  const { thinking, ...rest } = clean;
+  const { thinking, effort, ...rest } = clean;
+  const on = thinking.type !== "disabled";
+  const think = spec.think === "effort" ? { reasoning_effort: on ? effort : "low" }
+    : spec.think === "kwargs" ? { chat_template_kwargs: { enable_thinking: on, thinking: on } } : {};
   const timer = new AbortController(), t = setTimeout(() => timer.abort(), wait);
   const timeout = new Promise((_, no) => timer.signal.addEventListener("abort", () => no(new Error("timeout"))));
   timeout.catch(() => {});
@@ -184,7 +199,7 @@ async function callNvidia(name, clean, env, wait) {
       signal: timer.signal,
       // Thiếu Accept: text/event-stream thì NVIDIA giữ lại cả câu trả lời tới khi viết xong mới gửi (giống mã mẫu của NVIDIA).
       headers: { "Content-Type": "application/json", Accept: "text/event-stream", Authorization: `Bearer ${env.NVIDIA_API_KEY}` },
-      body: JSON.stringify({ ...rest, stream: true, model: spec.id, ...(spec.effort ? { reasoning_effort: thinking.type === "disabled" ? "low" : "high" } : {}) }),
+      body: JSON.stringify({ ...rest, stream: true, model: spec.id, ...think }),
     }), timeout]);
     if (!res.ok) {
       const detail = (await res.text().catch(() => "")).replace(/nvapi-[\w-]+/g, "nvapi-…").replace(/\s+/g, " ").slice(0, 160);
@@ -227,13 +242,15 @@ async function callNvidia(name, clean, env, wait) {
   }
 }
 
-// Kiểm tra nhanh từng mô hình NVIDIA (lưu kết quả 2 phút). Mô hình đang bị tạm bỏ qua thì báo luôn, không gọi lại.
-async function nvidiaStatus(env) {
+// Kiểm tra nhanh từng mô hình NVIDIA (lưu kết quả 2 phút), gửi đúng tham số suy nghĩ như khi chat thật.
+// Mô hình đang bị tạm bỏ qua thì báo luôn, không gọi lại. all = kiểm tra cả các mô hình thử (trial).
+async function nvidiaStatus(env, all) {
   if (!env.NVIDIA_API_KEY) return { enabled: false, models: {} };
-  if (statusCache && Date.now() - statusCache.at < 120_000) return statusCache.data;
-  const probe = { messages: [{ role: "user", content: "Hi" }], stream: true, temperature: 0.6, top_p: 0.95, max_tokens: 8, thinking: { type: "disabled" } };
+  const cache = statusCache?.[all ? "all" : "menu"];
+  if (cache && Date.now() - cache.at < 120_000) return cache.data;
+  const probe = { messages: [{ role: "user", content: "Hi" }], stream: true, temperature: 0.6, top_p: 0.95, max_tokens: 16, thinking: { type: "enabled" }, effort: "high" };
   const models = {};
-  await Promise.all(Object.keys(NVIDIA_MODELS).map(async (name) => {
+  await Promise.all(Object.keys(NVIDIA_MODELS).filter((n) => all || !NVIDIA_MODELS[n].trial).map(async (name) => {
     const down = nvidiaDown.get(name);
     if (down && down.until > Date.now()) { models[name] = { ok: false, note: down.note, gone: down.gone }; return; }
     const start = Date.now();
@@ -241,8 +258,8 @@ async function nvidiaStatus(env) {
     if (r.body) { r.body.cancel().catch(() => {}); nvidiaDown.delete(name); models[name] = { ok: true, ms: Date.now() - start }; }
     else { nvidiaDown.set(name, { until: Date.now() + r.cool, note: r.note, gone: r.gone }); models[name] = { ok: false, note: r.note, gone: r.gone }; }
   }));
-  statusCache = { at: Date.now(), data: { enabled: true, models } };
-  return statusCache.data;
+  statusCache = { ...statusCache, [all ? "all" : "menu"]: { at: Date.now(), data: { enabled: true, models } } };
+  return statusCache[all ? "all" : "menu"].data;
 }
 
 // Tạo ảnh hoặc sửa ảnh. Trang gửi: prompt, width/height (256–1920), seed, refs (ảnh mẫu dạng data:image/...;base64).
