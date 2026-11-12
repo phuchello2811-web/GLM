@@ -572,7 +572,6 @@
       <label>Nhiệt độ
         <input id="setTemp" type="number" step="0.05" min="0" max="2">
       </label>
-      <label class="check"><input type="checkbox" id="setTools"> Cho AI dùng công cụ: chạy code (JavaScript, Python, C++), tra cứu (Wikipedia, web, tin tức, nghiên cứu sâu, thời tiết, tỷ giá, bài báo khoa học, Stack Overflow, GitHub, từ điển), tạo và sửa ảnh</label>
       <label>Lời nhắc hệ thống
         <textarea id="setSystem" placeholder="Ví dụ: Luôn trả lời bằng tiếng Việt."></textarea>
       </label>
@@ -671,7 +670,7 @@
   const SHARED_URL = "https://glm.phuchello2811.workers.dev/";
 
   const settings = Object.assign(
-    { system: "", temperature: 0.6, think: "collapsed", level: "normal", tools: true,
+    { system: "", temperature: 0.6, think: "collapsed", level: "normal",
       provider: "shared", models: {} },
     store.get("glm.settings", {})
   );
@@ -712,6 +711,7 @@
   // Không còn giới hạn độ dài do người dùng chọn: luôn xin mức cao nhất (máy chủ tự hạ theo từng mô hình),
   // và khi vẫn chạm giới hạn thì trang tự yêu cầu viết tiếp (xem answerWithTools).
   delete settings.maxTokens;
+  delete settings.tools; // công cụ luôn bật, không còn ô tắt trong Cài đặt
   if (!PROVIDERS[settings.provider]) settings.provider = "shared";
   for (const id in settings.models) if (!PROVIDERS[id]?.models.includes(settings.models[id])) delete settings.models[id];
   store.set("glm.settings", settings);
@@ -1596,7 +1596,7 @@
     const parts = [`Hôm nay là ${today}. Kiến thức có sẵn của bạn chỉ cập nhật đến khoảng năm 2024–2025, nên những gì xảy ra sau đó (ai đang giữ chức vụ, giá cả, phiên bản mới, kết quả thi đấu, sự kiện gần đây) bạn phải tra cứu, không được đoán.`, THINK_PROMPT];
     if (/^glm/.test(cloudModel())) parts.push(GLM_PROMPT);
     if (settings.system.trim()) parts.push(settings.system.trim());
-    if (settings.tools) parts.push(TOOL_PROMPT);
+    parts.push(TOOL_PROMPT); // công cụ (chạy code, tra cứu, tạo ảnh) luôn được bật
     for (const k of activeSkills(chat)) if (k.prompt) parts.push(k.prompt);
     let mem = MEMORY_PROMPT;
     if (memories.length) mem += "\n\nNhững điều bạn đã ghi nhớ về người dùng:\n" + memories.map((m) => "- " + m.text).join("\n");
@@ -1909,7 +1909,7 @@
   async function answerWithTools(messages, reply, node) {
     for (let round = 0; ; round++) {
       const start = reply.content.length;
-      const allowTool = settings.tools && round < TOOL_ROUNDS;
+      const allowTool = round < TOOL_ROUNDS;
       // Máy chủ đôi khi ngắt luồng giữa chừng ("network error"): gửi lại tối đa 2 lần, cho mô hình viết tiếp từ chỗ dừng.
       for (let retry = 0; ; retry++) {
         const partial = reply.content.slice(start).trim();
@@ -3385,7 +3385,6 @@
     $("setSystem").value = settings.system;
     $("setTemp").value = settings.temperature;
     $("setThink").value = settings.think;
-    $("setTools").checked = settings.tools;
     renderMemories();
     $("trainCount").value = `${trainingExamples().length} câu trả lời đã được thích`;
     renderPersonas(); renderKb(); paintSync();
@@ -3397,7 +3396,6 @@
     settings.system = $("setSystem").value;
     settings.temperature = parseFloat($("setTemp").value) || 0.6;
     settings.think = $("setThink").value;
-    settings.tools = $("setTools").checked;
     store.set("glm.settings", settings);
     paintProvider(); checkServer(); renderThread();
   });
