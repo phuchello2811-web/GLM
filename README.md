@@ -75,7 +75,7 @@ Nút **Mức suy nghĩ** (biểu tượng bóng đèn) trong khung chat mở m�
 - **Cân bằng** (mặc định): suy nghĩ bình thường. Mô hình GLM tự chấm lại câu toán, logic, lập trình thi đấu.
 - **Kỹ** (4 bước, khoảng 1–3 phút): phân tích đề (yêu cầu, dữ kiện, bẫy, kế hoạch, cách kiểm chứng) → giải theo kế hoạch với suy nghĩ ở mức cao nhất → một mô hình khác đóng vai người chấm, soát từng bước và chạy code kiểm chứng → sửa lỗi và viết câu trả lời cuối (người chấm không thấy lỗi thì giữ nguyên).
 - **Tối đa** (5 bước, khoảng 3–8 phút): phân tích đề → **ba mô hình giải song song** (mô hình đang chọn và hai mô hình mạnh khác họ), mỗi mô hình một góc nhìn: giải bình thường, giải theo hướng khác, đóng vai người phản biện tìm bẫy → **kiểm tra chéo**: cả ba mô hình soát tất cả lời giải và chạy code kiểm chứng → mô hình đang chọn tổng hợp, tự kiểm chứng chỗ khác nhau (không tin theo số đông) và viết câu trả lời → một mô hình khác **kiểm tra lần cuối**, còn lỗi thì sửa thêm một lượt. Bước nào quá chậm thì bị dừng đúng hạn và dùng phần đã viết.
-- **Ultra** (7 bước, hết công suất, khoảng 6–15 phút): phân tích đề → vòng 1: **bốn mô hình** giải độc lập → vòng 2: các mô hình **trao đổi suy luận**, đọc lời giải của cả nhóm, kiểm chứng chỗ mâu thuẫn bằng code rồi viết lại lời giải đã cải tiến → giám khảo tổng hợp → ba mô hình khác **kiểm tra chéo** câu trả lời → giám khảo **tinh chỉnh** theo nhận xét → một mô hình khác kiểm tra lần cuối.
+- **Ultra** (8 bước, hết công suất): phân tích đề → vòng 1: **bốn mô hình** giải độc lập → vòng 2: các mô hình **trao đổi suy luận**, đọc lời giải của cả nhóm, kiểm chứng chỗ mâu thuẫn bằng code rồi viết lại lời giải đã cải tiến → so sánh kết luận, **còn bất đồng thì thêm vòng 3** chỉ bàn về chỗ bất đồng → giám khảo tổng hợp → ba mô hình khác **kiểm tra chéo** → giám khảo **tinh chỉnh** theo nhận xét → kiểm tra lần cuối (sửa xong thì kiểm lại thêm một lượt). **Lưu ý: Ultra chạy rất lâu (khoảng 6–20 phút), chỉ dùng cho bài khó hoặc việc lớn.**
 
 Các lời giải nháp vẫn xem được bên trên câu trả lời, kèm tên mô hình.
 
@@ -121,6 +121,8 @@ GLM được dạy thêm vài kỹ năng, tự bật khi câu hỏi đúng chủ
 - **Làm trang web:** viết trọn một file HTML có thiết kế đẹp, chế độ tối, chạy tốt trên điện thoại, dùng được bằng bàn phím, lưu dữ liệu và xử lý lỗi; game có điều khiển cảm ứng. Phần logic phức tạp được chạy thử trước. Bấm **Xem trước** dưới khối code để dùng ngay trong khung chat, hoặc **Tải về** để lấy file.
 - **Làm slide:** slide dạng HTML, chuyển trang bằng phím mũi tên hoặc chạm; bấm **Toàn màn hình** để trình chiếu.
 - **Vẽ hình:** logo, icon, biểu đồ được vẽ bằng SVG và hiện ảnh ngay trong chat.
+- **Lập trình:** nắm rõ yêu cầu, viết code sạch có xử lý lỗi và trường hợp biên, chạy thử bằng Python, JavaScript hoặc C++ trước khi đưa code cuối; gỡ lỗi theo các bước tái hiện, tìm nguyên nhân, sửa đúng gốc, chạy lại; chú ý bảo mật và độ phức tạp.
+- **Toán:** giải theo chiến lược Polya và kỹ thuật riêng từng phân môn (đại số, bất đẳng thức, hình học, số học, tổ hợp, giải tích, xác suất), kiểm chứng bằng sympy hoặc vét cạn, trình bày kiểu bài làm (điều kiện, lời giải, đáp số) và loại nghiệm ngoại lai.
 - **Lập trình thi đấu (IOI, ICPC, Codeforces, HSG Tin):** phân tích ràng buộc và độ phức tạp, chọn thuật toán, viết C++17, rồi chạy C++ thật để so sánh với lời giải vét cạn trên ví dụ của đề và vài trăm test ngẫu nhiên trước khi nộp.
 
 Muốn dạy mô hình theo văn phong hoặc kiến thức riêng của bạn, xem [FINETUNE.md](FINETUNE.md).
