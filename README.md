@@ -73,8 +73,8 @@ Nút **mức suy nghĩ** (biểu tượng bóng đèn) trong khung chat có 4 m�
 
 - **Nhanh**: trả lời ngay, không suy nghĩ dài. Hợp chào hỏi, câu đơn giản.
 - **Cân bằng** (mặc định): suy nghĩ bình thường. Mô hình GLM tự chấm lại câu toán, logic, lập trình thi đấu.
-- **Kỹ**: suy nghĩ ở mức cao nhất, rồi luôn tự chấm và sửa câu trả lời một lượt. Chậm hơn khoảng 2 lần.
-- **Tối đa**: **ba mô hình giải song song** (mô hình đang chọn và hai mô hình mạnh khác họ), mỗi mô hình một góc nhìn: giải bình thường, giải theo hướng khác, và đóng vai người phản biện tìm bẫy trong đề. Sau đó mô hình đang chọn làm giám khảo: tóm tắt đáp án từng lời giải, tự kiểm chứng chỗ khác nhau bằng code hoặc tra cứu (không tin theo số đông), kiểm chứng lại kể cả khi các lời giải giống nhau, rồi viết câu trả lời cuối. Mô hình nào quá chậm thì bị dừng sau khoảng 3 phút và giám khảo dùng phần đã viết. Mất khoảng 1–4 phút.
+- **Kỹ** (4 bước, khoảng 1–3 phút): phân tích đề (yêu cầu, dữ kiện, bẫy, kế hoạch, cách kiểm chứng) → giải theo kế hoạch với suy nghĩ ở mức cao nhất → một mô hình khác đóng vai người chấm, soát từng bước và chạy code kiểm chứng → sửa lỗi và viết câu trả lời cuối (người chấm không thấy lỗi thì giữ nguyên).
+- **Tối đa** (5 bước, khoảng 3–8 phút): phân tích đề → **ba mô hình giải song song** (mô hình đang chọn và hai mô hình mạnh khác họ), mỗi mô hình một góc nhìn: giải bình thường, giải theo hướng khác, đóng vai người phản biện tìm bẫy → **kiểm tra chéo**: cả ba mô hình soát tất cả lời giải và chạy code kiểm chứng → mô hình đang chọn tổng hợp, tự kiểm chứng chỗ khác nhau (không tin theo số đông) và viết câu trả lời → một mô hình khác **kiểm tra lần cuối**, còn lỗi thì sửa thêm một lượt. Bước nào quá chậm thì bị dừng đúng hạn và dùng phần đã viết.
 
 Các lời giải nháp vẫn xem được bên trên câu trả lời, kèm tên mô hình.
 

@@ -1142,7 +1142,7 @@
     drafts.forEach((dr, i) => {
       const d = splitThink((dr.reasoning ? `<think>${dr.reasoning}</think>` : "") + dr.content);
       const secs = dr.thinkSecs ? `, suy nghĩ ${dr.thinkSecs} giây` : "";
-      const name = (drafts.length > 1 ? `Lời giải nháp ${i + 1}` : "Bản nháp đầu tiên") + (dr.model ? ` (${esc(dr.model)})` : "");
+      const name = esc(dr.label || (drafts.length > 1 ? `Lời giải nháp ${i + 1}` : "Bản nháp đầu tiên")) + (dr.model ? ` (${esc(dr.model)})` : "");
       html += `<details class="think"><summary>${name}${secs}</summary><div class="think-body draft">` +
         `<div class="content">${markdown(d.answer.trim())}</div></div></details>`;
     });
@@ -1156,7 +1156,7 @@
     }
     html += `<div class="content${streaming && !thinking ? " cursor" : ""}">${markdown(answer.replace(MEMO_TAG, "").replace(/\[\[[^\]]*$/, "").trim())}</div>`;
     if (m.notice) html += `<div class="shimmer" style="font-size:14px">${esc(m.notice)}</div>`;
-    if (m.council && streaming) html += `<div class="memo">${ICON_CHECK}Nghĩ kỹ: ${esc(m.council.join(", "))} giải song song, rồi ${esc(m.council[0])} chấm và kiểm chứng</div>`;
+    if (m.stage && streaming) html += `<div class="memo">${ICON_CHECK}${esc(m.stage)}</div>`;
     if (m.sources?.length && !streaming) {
       // Nguồn được trích trong câu trả lời đứng trước.
       const cited = (s) => (answer.includes(s.url) ? 0 : 1);
@@ -1270,24 +1270,60 @@
     "đã sửa nếu có lỗi. Chỉ viết câu trả lời cuối cùng như thể trả lời lần đầu, không nhắc tới việc kiểm tra, " +
     "và dùng cùng ngôn ngữ với câu hỏi.";
 
-  // Chế độ Nghĩ kỹ: các mô hình khác giải song song với các góc nhìn khác nhau, rồi mô hình chính làm giám khảo.
+  // Mức Kỹ và Tối đa: các bước phân tích đề, giải, soát lỗi, kiểm tra chéo, tổng hợp và kiểm tra lần cuối.
+  const ANALYZE_PROMPT =
+    "(Bước phân tích: CHƯA giải và CHƯA tính đáp số. Hãy phân tích đề ngắn gọn bằng gạch đầu dòng: " +
+    "1) yêu cầu chính xác của đề, viết lại bằng lời của mình; 2) dữ kiện, ẩn số, ràng buộc, điều kiện ngầm; " +
+    "3) bẫy, chữ dễ đọc nhầm, các cách hiểu khác có thể có; 4) dạng bài và kiến thức, công thức, thuật toán liên quan; " +
+    "5) kế hoạch giải từng bước; 6) cách kiểm chứng đáp số (chạy code, thay ngược, vét cạn trường hợp nhỏ, tra cứu).)";
+  const ANALYSIS_NOTE =
+    "(Bản phân tích đề đã làm trước để tham khảo; nếu thấy chỗ nào trong đó chưa đúng thì tự sửa:\n<phan_tich>\n{A}\n</phan_tich>\n" +
+    "Hãy giải theo kế hoạch này thật cẩn thận và kiểm chứng đáp số trước khi kết luận.)";
   const DEEP_ANGLES = [
     "(Hãy tự giải độc lập từ đầu thật cẩn thận, theo một hướng tiếp cận KHÁC với cách làm thông thường, " +
       "và tự kiểm chứng kết quả bằng code hoặc tra cứu trước khi kết luận.)",
     "(Hãy giải độc lập từ đầu với vai trò người phản biện khó tính: đọc kỹ đề để tìm bẫy và các cách hiểu khác, " +
       "liệt kê giả định, giải từng bước, rồi kiểm chứng đáp số bằng code, vét cạn trường hợp nhỏ hoặc tra cứu.)",
   ];
+  const CRITIC_PROMPT =
+    "Hãy đóng vai người chấm bài khó tính và soát câu trả lời vừa rồi. KHÔNG viết lại lời giải. " +
+    "Kiểm tra từng bước lập luận, từng phép tính, từng dòng code: chạy code để kiểm chứng phép tính và đáp số, thử trường hợp biên " +
+    "và phản ví dụ, đối chiếu với đề (trả lời đúng câu hỏi chưa, có bỏ sót ý nào không, có hiểu sai đề không). " +
+    "Kết quả: liệt kê từng lỗi hoặc thiếu sót cụ thể, kèm mức độ (nghiêm trọng hoặc nhỏ) và cách sửa. " +
+    "Nếu đã kiểm chứng kỹ mà không thấy lỗi nào thì chỉ ghi: KHÔNG CÓ LỖI.";
+  const FIX_PROMPT =
+    "Dưới đây là nhận xét của người chấm về câu trả lời vừa rồi:\n\n<nhan_xet>\n{C}\n</nhan_xet>\n\n" +
+    "Người chấm cũng có thể sai: với từng ý, tự kiểm chứng (chạy code, thay số, tra cứu) rồi mới sửa. Sau đó viết câu trả lời cuối cùng " +
+    "hoàn chỉnh và đúng nhất cho câu hỏi ban đầu, như thể trả lời lần đầu: không nhắc tới người chấm hay việc sửa, dùng cùng ngôn ngữ với câu hỏi.";
+  const CROSS_PROMPT =
+    "(Bước kiểm tra chéo. Dưới đây là các lời giải cho câu hỏi trên, do các mô hình khác nhau làm độc lập:\n\n{S}\n\n" +
+    "Đừng giải lại từ đầu. Hãy kiểm tra từng lời giải: chạy code để kiểm chứng phép tính và đáp số, thử trường hợp biên, " +
+    "tìm lỗi lập luận và chỗ hiểu sai đề. Cuối cùng cho biết: đáp án đúng là gì và vì sao, lời giải nào đúng, lời giải nào sai ở đâu.)";
   const REVIEW_MULTI_PROMPT =
     "Dưới đây là {N} lời giải khác cho cùng câu hỏi, do các mô hình khác làm độc lập (câu trả lời vừa rồi của bạn là lời giải A):\n\n" +
-    "{B}\n\n" +
+    "{B}\n\nVà kết quả kiểm tra chéo các lời giải (người kiểm tra cũng có thể sai):\n\n{K}\n\n" +
     "Hãy làm giám khảo nghiêm khắc:\n" +
-    "1) Tóm tắt đáp án hoặc kết luận cuối của từng lời giải (A, B, C…).\n" +
-    "2) Chỗ nào các lời giải khác nhau (kết quả, lập luận, code): tự kiểm chứng để xác định bên đúng bằng cách thay số, chạy code, " +
+    "1) Tóm tắt đáp án hoặc kết luận cuối của từng lời giải và ý chính của các nhận xét kiểm tra chéo.\n" +
+    "2) Chỗ nào các lời giải hoặc nhận xét khác nhau: tự kiểm chứng để xác định bên đúng bằng cách thay số, chạy code, " +
     "vét cạn trường hợp nhỏ hoặc tra cứu. Số đông không phải là bằng chứng.\n" +
     "3) Kể cả khi mọi lời giải giống nhau, vẫn kiểm chứng lại bằng một cách độc lập; tìm lỗi mà tất cả cùng mắc và trường hợp đặc biệt bị bỏ sót.\n" +
     "4) Gộp những phần tốt nhất: lập luận chặt nhất, ví dụ rõ nhất, code đúng và gọn nhất.\n" +
     "Sau đó viết câu trả lời cuối cùng hoàn chỉnh và đúng nhất cho câu hỏi ban đầu, như thể trả lời lần đầu: " +
     "không nhắc tới A, B, C hay việc so sánh, dùng cùng ngôn ngữ với câu hỏi.";
+  const FINAL_CHECK_PROMPT =
+    "Hãy kiểm tra lần cuối câu trả lời vừa rồi như một giám khảo độc lập: đối chiếu với đề, kiểm chứng đáp số và các phép tính quan trọng " +
+    "bằng code, chạy thử code (nếu có) với vài ví dụ và trường hợp biên. KHÔNG viết lại câu trả lời. " +
+    "Nếu mọi thứ đều đúng thì chỉ ghi: KHÔNG CÓ LỖI. Nếu có lỗi, liệt kê cụ thể từng lỗi và cách sửa.";
+  // Người chấm kết luận không có lỗi (chỉ tin khi không kèm lỗi nghiêm trọng nào).
+  const noErrors = (t) => /KHÔNG CÓ LỖI/.test(t) && !/nghiêm trọng|cần sửa|bị sai|sai ở/i.test(t);
+  // Thêm lời dặn vào cuối câu hỏi gần nhất (bản sao, không đổi lịch sử chat).
+  function withNote(msgs, text) {
+    const copy = msgs.map((m) => ({ ...m }));
+    const last = copy.findLast((m) => m.role === "user");
+    if (typeof last.content === "string") last.content += "\n\n" + text;
+    else last.content = [{ ...last.content[0], text: last.content[0].text + "\n\n" + text }, ...last.content.slice(1)];
+    return copy;
+  }
   const THINK_PROMPT =
     "Cách suy nghĩ. Trước hết đánh giá câu hỏi: đơn giản (chào hỏi, sự thật quen thuộc, việc ngắn) thì trả lời ngay, gọn; " +
     "khó (toán, logic, code, khoa học, phân tích, so sánh, lập kế hoạch, câu hỏi nhiều bước) thì suy nghĩ đầy đủ theo các bước:\n" +
@@ -1490,48 +1526,102 @@
 
     controller = new AbortController();
     setBusy(true);
-    let council = [], councilStart = 0;
-    const councilStops = [];
+    const level = settings.level;
+    // Ghi chép của các bước (phân tích, lời giải nháp, nhận xét) hiện bên trên câu trả lời cuối.
+    const notes = [];
+    const step = (text, notice) => { reply.stage = text; reply.notice = notice; paintAssistant(node, reply, true); };
+    // Cất phần đang hiện thành một ghi chép rồi để trống cho bước tiếp theo.
+    const shelve = (label) => {
+      const n = { content: reply.content, reasoning: reply.reasoning, thinkSecs: reply.thinkSecs, model: reply.drafter, label };
+      notes.push(n); reply.drafts = [...notes];
+      Object.assign(reply, { content: "", reasoning: "", thinkSecs: null, tps: null, review: true, via: undefined });
+      return n;
+    };
+    const keep = (r, label) => { if (r) { notes.push({ ...r.draft, label }); reply.drafts = [...notes]; } };
+    // Người chấm không thấy lỗi: lấy lại câu trả lời đã cất làm câu trả lời cuối.
+    const restore = (n) => {
+      notes.splice(notes.indexOf(n), 1); reply.drafts = [...notes];
+      Object.assign(reply, { content: n.content, reasoning: n.reasoning, thinkSecs: n.thinkSecs, review: false, via: undefined });
+    };
+    const title = (m) => modelTitle("shared", m);
     try {
-      // Nghĩ kỹ: các mô hình khác bắt đầu giải song song ngay (không hiện ra), cùng lúc mô hình chính giải.
-      if (settings.level === "max") {
-        const models = await councilModels();
-        councilStart = Date.now();
-        council = models.map((m, i) => silentDraft(history, m, DEEP_ANGLES[i], councilStops));
-        council.forEach((p) => p.catch(() => {}));
-        reply.council = [modelTitle("shared", cloudModel()), ...models.map((m) => modelTitle("shared", m))];
+      const deep = level === "careful" || level === "max";
+      const total = level === "max" ? 5 : 4;
+      const helpers = deep ? await councilModels(level === "max" ? 2 : 1) : [];
+      let base = history;
+      // Bước 1: phân tích đề (chưa giải), để bước giải đi đúng hướng và biết cách kiểm chứng.
+      if (deep) {
+        step(`Bước 1/${total}: phân tích đề`, "Đang phân tích đề…");
+        const astops = [];
+        const [a] = await gather([silentRun(withNote(history, ANALYZE_PROMPT), cloudModel(), astops, true)], astops, 60000);
+        if (a) { keep(a, "Phân tích đề"); base = withNote(history, ANALYSIS_NOTE.replace("{A}", a.answer.slice(0, 4000))); }
       }
-      await answerWithTools(history, reply, node);
-      await ensureAnswer(history, reply, node);
+      // Bước 2: giải. Mức Tối đa: hai mô hình khác giải song song (không hiện ra), mỗi mô hình một góc nhìn.
+      const solverStops = [], solverStart = Date.now();
+      const solvers = level === "max" ? helpers.map((m, i) => silentRun(withNote(base, DEEP_ANGLES[i]), m, solverStops)) : [];
+      solvers.forEach((p) => p.catch(() => {}));
+      if (deep) step(level === "max" ? `Bước 2/5: ${[cloudModel(), ...helpers].map(title).join(", ")} giải song song` : "Bước 2/4: giải theo kế hoạch", undefined);
+      await answerWithTools(base, reply, node);
+      await ensureAnswer(base, reply, node);
       const draft = splitThink(reply.content).answer.trim();
-      // Mức Kỹ: luôn tự chấm lại. Mức Cân bằng: chỉ mô hình GLM với câu khó.
-      const selfCheck = settings.level === "careful" || (settings.level === "normal" && /^glm/.test(cloudModel()) && activeSkills(chat).some((k) => k.hard));
-      if (draft && selfCheck) {
-        reply.drafts = [{ content: reply.content, reasoning: reply.reasoning, thinkSecs: reply.thinkSecs, model: reply.drafter }];
-        Object.assign(reply, { content: "", reasoning: "", thinkSecs: null, tps: null, review: true, via: undefined });
+
+      // Mức Cân bằng: mô hình GLM với câu khó (toán, logic, lập trình thi đấu) tự chấm lại một lượt.
+      if (draft && level === "normal" && /^glm/.test(cloudModel()) && activeSkills(chat).some((k) => k.hard)) {
+        reply.fallback = shelve("Bản nháp đầu tiên");
         await judge([...history, { role: "assistant", content: draft }, { role: "user", content: REVIEW_PROMPT }], reply, node);
       }
-      // Chế độ Nghĩ kỹ: chờ các mô hình khác giải xong, rồi mô hình chính làm giám khảo: so sánh, kiểm chứng chỗ khác nhau
-      // và viết câu trả lời cuối. Không mô hình nào khác giải được thì chỉ tự kiểm tra lời giải đầu.
-      if (settings.level === "max" && draft) {
-        reply.drafts = [{ content: reply.content, reasoning: reply.reasoning, thinkSecs: reply.thinkSecs, model: reply.drafter }];
-        Object.assign(reply, { content: "", reasoning: "", thinkSecs: null, tps: null, review: true, via: undefined, notice: "Đang chờ các mô hình khác giải xong…" });
-        paintAssistant(node, reply, true);
-        // Chờ các mô hình khác thêm tối đa 60 giây sau khi mô hình chính xong (tổng không quá khoảng 3 phút);
-        // mô hình nào chưa xong thì dừng (lời giải dở dang vẫn được dùng nếu đủ dài).
-        const wait = Math.max(60000, 180000 - (Date.now() - councilStart));
-        const timer = setTimeout(() => councilStops.forEach((c) => c.abort()), wait);
-        const others = (await Promise.allSettled(council)).map((r) => (r.status === "fulfilled" ? r.value : null)).filter(Boolean);
-        clearTimeout(timer);
-        if (controller.signal.aborted) throw new DOMException("", "AbortError");
-        reply.drafts.push(...others.map((o) => o.draft));
-        delete reply.notice;
-        // Mỗi lời giải gửi cho giám khảo tối đa 6000 ký tự để không quá dài.
-        const review = others.length
-          ? REVIEW_MULTI_PROMPT.replace("{N}", others.length).replace("{B}", others.map((o, i) =>
-            `<loi_giai_${"BCDE"[i]} mo_hinh="${o.draft.model}">\n${o.answer.slice(0, 6000)}\n</loi_giai_${"BCDE"[i]}>`).join("\n\n"))
-          : REVIEW_PROMPT;
+
+      // Mức Kỹ: một mô hình khác soát lỗi (không viết lại), rồi mô hình chính sửa và viết câu trả lời cuối.
+      if (draft && level === "careful") {
+        const main = (reply.fallback = shelve("Lời giải nháp"));
+        const critic = helpers[0] || cloudModel(), stops = [];
+        step(`Bước 3/4: ${title(critic)} soát lỗi từng bước`, "Người chấm đang kiểm tra…");
+        const [c] = await gather([silentRun([...history, { role: "assistant", content: draft.slice(0, 12000) }, { role: "user", content: CRITIC_PROMPT }], critic, stops)], stops, 120000);
+        keep(c, "Nhận xét của người chấm");
+        if (c && noErrors(c.answer)) restore(main);
+        else {
+          step("Bước 4/4: sửa lỗi và viết câu trả lời cuối", undefined);
+          await judge([...history, { role: "assistant", content: draft.slice(0, 12000) },
+            { role: "user", content: c ? FIX_PROMPT.replace("{C}", c.answer.slice(0, 6000)) : REVIEW_PROMPT }], reply, node);
+        }
+      }
+
+      // Mức Tối đa: chờ các lời giải khác, kiểm tra chéo, tổng hợp, rồi một mô hình khác kiểm tra lần cuối.
+      if (draft && level === "max") {
+        const main = (reply.fallback = shelve("Lời giải 1"));
+        step("Bước 2/5: chờ các mô hình khác giải xong", "Đang chờ các mô hình khác giải xong…");
+        // Chờ thêm tối đa 60 giây sau khi mô hình chính xong (tổng không quá khoảng 3 phút); lời giải dở dang vẫn dùng nếu đủ dài.
+        const others = (await gather(solvers, solverStops, Math.max(60000, 180000 - (Date.now() - solverStart)))).filter(Boolean);
+        others.forEach((o, i) => keep(o, `Lời giải ${i + 2}`));
+        const sols = [{ model: main.model, answer: draft }, ...others.map((o) => ({ model: o.draft.model, answer: o.answer }))];
+        const tag = (t, i, model, text) => `<${t}_${"ABCD"[i]} mo_hinh="${model}">\n${text}\n</${t}_${"ABCD"[i]}>`;
+        // Bước 3: kiểm tra chéo, mỗi mô hình soát tất cả các lời giải.
+        const checkers = [cloudModel(), ...helpers], cstops = [];
+        step(`Bước 3/5: ${checkers.map(title).join(", ")} kiểm tra chéo`, "Đang kiểm tra chéo các lời giải…");
+        const solText = sols.map((x, i) => tag("loi_giai", i, x.model, x.answer.slice(0, 6000))).join("\n\n");
+        const crits = (await gather(checkers.map((m) => silentRun(withNote(history, CROSS_PROMPT.replace("{S}", solText)), m, cstops)), cstops, 90000)).filter(Boolean);
+        crits.forEach((c) => keep(c, "Kiểm tra chéo"));
+        // Bước 4: mô hình chính tổng hợp, kiểm chứng và viết câu trả lời.
+        step("Bước 4/5: tổng hợp, kiểm chứng và viết câu trả lời", undefined);
+        const review = REVIEW_MULTI_PROMPT.replace("{N}", others.length)
+          .replace("{B}", others.length ? others.map((o, i) => tag("loi_giai", i + 1, o.draft.model, o.answer.slice(0, 6000))).join("\n\n") : "(không có)")
+          .replace("{K}", crits.length ? crits.map((c, i) => tag("kiem_tra", i, c.draft.model, c.answer.slice(0, 4000))).join("\n\n") : "(không có)");
         await judge([...history, { role: "assistant", content: draft.slice(0, 8000) }, { role: "user", content: review }], reply, node);
+        // Bước 5: một mô hình khác kiểm tra lần cuối; còn lỗi thì sửa thêm một lượt.
+        const final1 = splitThink(reply.content).answer.trim();
+        if (final1 && !reply.judgeFailed) {
+          const first = shelve("Câu trả lời trước bước kiểm tra cuối");
+          const checker = helpers[0] || cloudModel(), fstops = [];
+          step(`Bước 5/5: ${title(checker)} kiểm tra lần cuối`, "Đang kiểm tra lần cuối…");
+          const [f] = await gather([silentRun([...history, { role: "assistant", content: final1.slice(0, 12000) }, { role: "user", content: FINAL_CHECK_PROMPT }], checker, fstops)], fstops, 90000);
+          keep(f, "Kiểm tra lần cuối");
+          if (!f || noErrors(f.answer)) restore(first);
+          else {
+            reply.fallback = first;
+            step("Bước 5/5: sửa lỗi lần cuối", undefined);
+            await judge([...history, { role: "assistant", content: final1.slice(0, 12000) }, { role: "user", content: FIX_PROMPT.replace("{C}", f.answer.slice(0, 6000)) }], reply, node);
+          }
+        }
       }
     } catch (e) {
       if (e.name !== "AbortError") {
@@ -1539,15 +1629,16 @@
           ? `Không kết nối được tới ${PROVIDERS[settings.provider].name}. Kiểm tra kết nối mạng rồi thử lại.`
           : e.message;
       }
-      // Dừng hoặc lỗi giữa chừng: lấy lời giải đầu tiên làm câu trả lời.
-      if (reply.drafts && !splitThink(reply.content).answer.trim()) {
-        Object.assign(reply, reply.drafts[0], { review: false, second: false });
-        delete reply.drafts;
+      // Dừng hoặc lỗi giữa chừng: lấy câu trả lời tốt nhất đã có (lời giải chính hoặc câu trả lời trước bước cuối).
+      if (reply.fallback && !splitThink(reply.content).answer.trim()) {
+        const fb = reply.fallback;
+        Object.assign(reply, { content: fb.content, reasoning: fb.reasoning, thinkSecs: fb.thinkSecs, review: false });
+        if (reply.drafts) reply.drafts = reply.drafts.filter((d) => d !== fb);
       }
     } finally {
       controller?.abort(); // dừng các lời giải của hội đồng còn đang chạy
       controller = null;
-      delete reply.notice; delete reply.council;
+      delete reply.notice; delete reply.stage; delete reply.fallback; delete reply.judgeFailed;
       saveRemembered(reply, chat.messages.at(-2)?.content || "");
       setBusy(false);
       chat.updated = Date.now();
@@ -1587,31 +1678,35 @@
       await answerWithTools([...messages.slice(0, -1), { ...last, content: last.content + "\n\n(Viết ngay câu trả lời cuối cùng hoàn chỉnh, không suy nghĩ dài.)" }], reply, node);
     } finally { delete reply.fast; delete reply.notice; }
     if (splitThink(reply.content).answer.trim()) return;
-    const first = reply.drafts[0];
-    Object.assign(reply, { content: first.content, reasoning: first.reasoning, thinkSecs: first.thinkSecs, review: false, truncated: false,
-      via: `${first.model || modelTitle("shared", cloudModel())} (bước chấm lại không viết xong nên đây là lời giải nháp 1)` });
-    reply.drafts = reply.drafts.slice(1);
+    const first = reply.fallback || reply.drafts[0];
+    Object.assign(reply, { content: first.content, reasoning: first.reasoning, thinkSecs: first.thinkSecs, review: false, truncated: false, judgeFailed: true,
+      via: `${first.model || modelTitle("shared", cloudModel())} (bước chấm lại không viết xong nên đây là ${(first.label || "lời giải nháp 1").toLowerCase()})` });
+    reply.drafts = reply.drafts.filter((d) => d !== first);
     if (!reply.drafts.length) delete reply.drafts;
   }
 
-  // Một lời giải của hội đồng Nghĩ kỹ: chạy với mô hình riêng, không hiện ra trong lúc làm.
-  async function silentDraft(history, model, angle, stops) {
-    const msgs = history.map((m) => ({ ...m }));
-    const last = msgs.findLast((m) => m.role === "user");
-    const add = "\n\n" + angle;
-    if (typeof last.content === "string") last.content += add;
-    else last.content = [{ ...last.content[0], text: last.content[0].text + add }, ...last.content.slice(1)];
-    const r = { role: "assistant", content: "", reasoning: "", forceModel: model, stop: new AbortController() };
+  // Một bước chạy ngầm của mức Kỹ/Tối đa (phân tích, lời giải, nhận xét): mô hình riêng, không hiện ra, có nút dừng riêng.
+  async function silentRun(msgs, model, stops, fast = false) {
+    // fast: không suy nghĩ dài (dùng cho bước chỉ cần liệt kê, như phân tích đề).
+    const r = { role: "assistant", content: "", reasoning: "", forceModel: model, stop: new AbortController(), fast };
     controller.signal.addEventListener("abort", () => r.stop.abort(), { once: true });
     stops.push(r.stop);
     const box = document.createElement("div");
     try { await answerWithTools(msgs, r, box); await ensureAnswer(msgs, r, box); } catch (e) { if (!r.stop.signal.aborted) throw e; }
-    // Hết giờ mà đã viết được phần đáng kể thì vẫn đưa cho giám khảo, ghi rõ là chưa viết xong.
+    // Hết giờ mà đã viết được phần đáng kể thì vẫn dùng, ghi rõ là chưa viết xong.
     const answer = splitThink(r.content).answer.replace(/```output[\s\S]*?```/g, "").trim();
     const cut = r.stop.signal.aborted;
     if (!answer || (cut && answer.length < 300)) return null;
     const name = (r.drafter || modelTitle("shared", model)) + (cut ? ", chưa viết xong" : "");
-    return { answer: answer + (cut ? "\n…(lời giải này chưa viết xong vì hết thời gian)" : ""), draft: { content: r.content, reasoning: r.reasoning, thinkSecs: r.thinkSecs, model: name } };
+    return { answer: answer + (cut ? "\n…(phần này chưa viết xong vì hết thời gian)" : ""), draft: { content: r.content, reasoning: r.reasoning, thinkSecs: r.thinkSecs, model: name } };
+  }
+  // Chờ các bước chạy ngầm, tối đa ms mili giây; quá hạn thì dừng những bước chưa xong.
+  async function gather(promises, stops, ms) {
+    const timer = setTimeout(() => stops.forEach((c) => c.abort()), ms);
+    const res = (await Promise.allSettled(promises)).map((r) => (r.status === "fulfilled" ? r.value : null));
+    clearTimeout(timer);
+    if (!controller || controller.signal.aborted) throw new DOMException("", "AbortError");
+    return res;
   }
 
   // Lấy các thẻ [[NHỚ: …]] ra khỏi câu trả lời và lưu vào bộ nhớ dài hạn.
@@ -2863,8 +2958,8 @@
   const LEVELS = {
     fast: ["Nhanh", "Trả lời ngay, không suy nghĩ dài. Hợp chào hỏi, câu đơn giản"],
     normal: ["Cân bằng", "Suy nghĩ bình thường. Hợp hầu hết câu hỏi"],
-    careful: ["Kỹ", "Suy nghĩ ở mức cao nhất, rồi tự chấm và sửa câu trả lời. Chậm hơn khoảng 2 lần"],
-    max: ["Tối đa", "3 mô hình giải song song, rồi chấm và kiểm chứng bằng code. Chính xác nhất, mất 1–4 phút"],
+    careful: ["Kỹ", "Phân tích đề → giải → mô hình khác soát lỗi → sửa. Mất khoảng 1–3 phút"],
+    max: ["Tối đa", "Phân tích đề → 3 mô hình giải song song → kiểm tra chéo → tổng hợp → kiểm tra lần cuối. Chính xác nhất, mất 3–8 phút"],
   };
   // Cài đặt cũ chỉ có nút Nghĩ kỹ bật/tắt: đang bật thì chuyển thành mức Tối đa.
   if ("deep" in settings) { if (settings.deep) settings.level = "max"; delete settings.deep; store.set("glm.settings", settings); }
