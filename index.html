@@ -539,7 +539,7 @@
           <input id="setMax" type="number" step="256" min="256">
         </label>
       </div>
-      <label class="check"><input type="checkbox" id="setTools"> Cho AI dùng công cụ: chạy code, tra cứu (Wikipedia, web, tin tức, nghiên cứu sâu, thời tiết, tỷ giá, bài báo khoa học, Stack Overflow, GitHub, từ điển), tạo và sửa ảnh</label>
+      <label class="check"><input type="checkbox" id="setTools"> Cho AI dùng công cụ: chạy code (JavaScript, Python, C++), tra cứu (Wikipedia, web, tin tức, nghiên cứu sâu, thời tiết, tỷ giá, bài báo khoa học, Stack Overflow, GitHub, từ điển), tạo và sửa ảnh</label>
       <label>Lời nhắc hệ thống
         <textarea id="setSystem" placeholder="Ví dụ: Luôn trả lời bằng tiếng Việt."></textarea>
       </label>
@@ -885,10 +885,10 @@
       .replace(/\u0001(\d+)\u0001/g, (_, i) => mathSpan(maths[i], false));
   }
 
-  const CODE_LABELS = { "js-run": "JavaScript · đã chạy", "py-run": "Python · đã chạy", "python-run": "Python · đã chạy", search: "Tra cứu Wikipedia và web", news: "Tin tức", research: "Nghiên cứu sâu", wiki: "Tra cứu Wikipedia", web: "Tìm trên web", read: "Đọc trang web", image: "Tạo ảnh",
+  const CODE_LABELS = { "js-run": "JavaScript · đã chạy", "py-run": "Python · đã chạy", "python-run": "Python · đã chạy", "cpp-run": "C++ · đã chạy", search: "Tra cứu Wikipedia và web", news: "Tin tức", research: "Nghiên cứu sâu", wiki: "Tra cứu Wikipedia", web: "Tìm trên web", read: "Đọc trang web", image: "Tạo ảnh",
     weather: "Thời tiết", rate: "Tỷ giá", papers: "Tìm bài báo khoa học", dev: "Tìm trên Stack Overflow và GitHub", dict: "Tra từ điển", output: "Kết quả" };
   // Ngôn ngữ để tô màu code; khối không có tên ngôn ngữ thì để highlight.js tự đoán.
-  const HL_LANG = new Proxy({ "js-run": "javascript", "py-run": "python", "python-run": "python", search: null, news: null, research: null, wiki: null, web: null, read: null, image: null, weather: null, rate: null, papers: null, dev: null, dict: null, output: null, "": "auto" }, {
+  const HL_LANG = new Proxy({ "js-run": "javascript", "py-run": "python", "python-run": "python", "cpp-run": "cpp", search: null, news: null, research: null, wiki: null, web: null, read: null, image: null, weather: null, rate: null, papers: null, dev: null, dict: null, output: null, "": "auto" }, {
     get: (t, k) => (k in t ? t[k] : String(k).toLowerCase()),
   });
 
@@ -1287,7 +1287,8 @@
   ];
   const CRITIC_PROMPT =
     "Hãy đóng vai người chấm bài khó tính và soát câu trả lời vừa rồi. KHÔNG viết lại lời giải. " +
-    "Kiểm tra từng bước lập luận, từng phép tính, từng dòng code: chạy code để kiểm chứng phép tính và đáp số, thử trường hợp biên " +
+    "Kiểm tra từng bước lập luận, từng phép tính, từng dòng code: chạy code để kiểm chứng phép tính và đáp số (câu trả lời có code C++ thì chạy " +
+    "chính code đó bằng cpp-run với ví dụ trong đề và so sánh với lời giải vét cạn), thử trường hợp biên " +
     "và phản ví dụ, đối chiếu với đề (trả lời đúng câu hỏi chưa, có bỏ sót ý nào không, có hiểu sai đề không). " +
     "Kết quả: liệt kê từng lỗi hoặc thiếu sót cụ thể, kèm mức độ (nghiêm trọng hoặc nhỏ) và cách sửa. " +
     "Nếu đã kiểm chứng kỹ mà không thấy lỗi nào thì chỉ ghi: KHÔNG CÓ LỖI.";
@@ -1307,12 +1308,14 @@
     "2) Chỗ nào các lời giải hoặc nhận xét khác nhau: tự kiểm chứng để xác định bên đúng bằng cách thay số, chạy code, " +
     "vét cạn trường hợp nhỏ hoặc tra cứu. Số đông không phải là bằng chứng.\n" +
     "3) Kể cả khi mọi lời giải giống nhau, vẫn kiểm chứng lại bằng một cách độc lập; tìm lỗi mà tất cả cùng mắc và trường hợp đặc biệt bị bỏ sót.\n" +
-    "4) Gộp những phần tốt nhất: lập luận chặt nhất, ví dụ rõ nhất, code đúng và gọn nhất.\n" +
+    "4) Gộp những phần tốt nhất: lập luận chặt nhất, ví dụ rõ nhất, code đúng và gọn nhất. Code trong câu trả lời cuối phải là code bạn đã chạy " +
+    "thử thành công bằng công cụ (C++ thì dùng cpp-run), không phải code mới viết hay dịch lại mà chưa chạy.\n" +
     "Sau đó viết câu trả lời cuối cùng hoàn chỉnh và đúng nhất cho câu hỏi ban đầu, như thể trả lời lần đầu: " +
     "không nhắc tới A, B, C hay việc so sánh, dùng cùng ngôn ngữ với câu hỏi.";
   const FINAL_CHECK_PROMPT =
     "Hãy kiểm tra lần cuối câu trả lời vừa rồi như một giám khảo độc lập: đối chiếu với đề, kiểm chứng đáp số và các phép tính quan trọng " +
-    "bằng code, chạy thử code (nếu có) với vài ví dụ và trường hợp biên. KHÔNG viết lại câu trả lời. " +
+    "bằng code, chạy thử chính code trong câu trả lời (C++ thì dùng cpp-run) với ví dụ trong đề, vài test ngẫu nhiên so với lời giải vét cạn " +
+    "và trường hợp biên. KHÔNG viết lại câu trả lời. " +
     "Nếu mọi thứ đều đúng thì chỉ ghi: KHÔNG CÓ LỖI. Nếu có lỗi, liệt kê cụ thể từng lỗi và cách sửa.";
   // Người chấm kết luận không có lỗi (chỉ tin khi không kèm lỗi nghiêm trọng nào).
   const noErrors = (t) => /KHÔNG CÓ LỖI/.test(t) && !/nghiêm trọng|cần sửa|bị sai|sai ở/i.test(t);
@@ -1357,7 +1360,9 @@
     "Hệ thống sẽ chạy và gửi lại kết quả để bạn trả lời tiếp. Không tự đoán kết quả.\n\n" +
     "Tính toán và chạy code:\n" +
     "- ```js-run\n// JavaScript, dùng console.log để in kết quả\n``` (số nguyên trên 15 chữ số dùng BigInt, ví dụ 123n * 456n)\n" +
-    "- ```py-run\n# Python 3, dùng print; numpy, pandas, sympy, scipy tự cài khi import\n``` (chạy trong trình duyệt: không có mạng, không đọc file của người dùng, không có input())\n\n" +
+    "- ```py-run\n# Python 3, dùng print; numpy, pandas, sympy, scipy tự cài khi import\n``` (chạy trong trình duyệt: không có mạng, không đọc file của người dùng, không có input())\n" +
+    "- ```cpp-run\n// C++17, trình biên dịch GCC thật, dùng cout để in kết quả\n``` : biên dịch và chạy C++ (tối đa khoảng 20 giây). Muốn đưa dữ liệu vào cin thì thêm một dòng ---INPUT--- " +
+    "ở cuối code rồi viết dữ liệu bên dưới. Code được gửi lên Compiler Explorer (godbolt.org) để chạy, nên không đưa thông tin riêng tư của người dùng vào.\n\n" +
     "Tra cứu kiến thức (mỗi khối chỉ ghi từ khoá hoặc đường dẫn):\n" +
     "- ```search``` : tìm cùng lúc trên Wikipedia và web. Dùng mặc định cho mọi câu hỏi về sự kiện, nhân vật, số liệu, tin tức, sản phẩm…\n" +
     "- ```wiki``` : chỉ Wikipedia (kiến thức bách khoa). Từ khoá có dấu tiếng Việt tra bản tiếng Việt; từ khoá tiếng Anh tra bản tiếng Anh, thường đầy đủ hơn.\n" +
@@ -1385,10 +1390,11 @@
     "Đối chiếu nhiều nguồn khi chúng khác nhau, ưu tiên nguồn chính thống và mới nhất. Tổng cộng tra cứu tối đa 5 lần cho một câu hỏi; " +
     "khi thông tin đã đủ thì trả lời ngay. Khi trả lời dựa trên tra cứu, ghi nguồn ngay sau ý dùng nó dưới dạng link [tên trang](đường dẫn); " +
     "chỉ dùng đường dẫn có trong kết quả tra cứu, không tự tạo đường dẫn.\n\n" +
-    "Khi người dùng nhờ viết code Python hoặc JavaScript: BẮT BUỘC chạy thử trước khi trả lời. Bước đầu tiên của câu trả lời " +
-    "là một khối py-run hoặc js-run chứa code kèm vài lệnh in kết quả với ví dụ, gồm cả trường hợp đặc biệt (rỗng, số âm, rất lớn…). " +
+    "Khi người dùng nhờ viết code Python, JavaScript hoặc C++: BẮT BUỘC chạy thử trước khi trả lời. Bước đầu tiên của câu trả lời " +
+    "là một khối py-run, js-run hoặc cpp-run chứa code kèm vài lệnh in kết quả với ví dụ, gồm cả trường hợp đặc biệt (rỗng, số âm, rất lớn…). " +
     "Nếu lỗi hoặc kết quả sai, tìm nguyên nhân, sửa rồi chạy lại. Không bao giờ tự viết kết quả chạy thử mà chưa chạy. " +
-    "Khi đã chạy đúng, trình bày code cuối cùng trong khối ```python hoặc ```javascript bình thường (không có -run), " +
+    "Khi đã chạy đúng, trình bày code cuối cùng trong khối ```python, ```javascript hoặc ```cpp bình thường (không có -run), " +
+    "và code cuối phải đúng là code đã chạy qua kiểm tra, không viết lại hay dịch sang ngôn ngữ khác sau khi kiểm tra. " +
     "giải thích ngắn cách hoạt động và độ phức tạp nếu liên quan. Code dùng thư viện không chạy được trong trình duyệt " +
     "(ví dụ requests, tkinter, đọc file) thì không cần chạy thử, chỉ kiểm tra kỹ bằng đầu.\n\n" +
     "Ví dụ, người dùng nhờ \"viết hàm Python đảo ngược chuỗi\", bạn bắt đầu bằng:\n" +
@@ -1400,7 +1406,7 @@
     "CHỈ KHI người dùng yêu cầu rõ ràng bạn ghi nhớ điều gì (ví dụ \"hãy nhớ…\", \"nhớ giúp tôi…\"), thêm vào cuối " +
     "câu trả lời một dòng: [[NHỚ: nội dung cần nhớ, viết ngắn gọn]]. Không bao giờ dùng dòng này trong các trường hợp khác.";
 
-  const RUN_BLOCK = /```(js-run|py-run|python-run|search|wiki|web|news|research|read|weather|rate|papers|dev|dict|image)[^\n]*\n([\s\S]*?)\n\s*```/;
+  const RUN_BLOCK = /```(js-run|py-run|python-run|cpp-run|search|wiki|web|news|research|read|weather|rate|papers|dev|dict|image)[^\n]*\n([\s\S]*?)\n\s*```/;
   const MEMO_TAG = /\[\[\s*[Nn][Hh][ỚớOo]\s*:\s*([^\]]+?)\s*\]\]/g;
 
   // Kỹ năng chuyên sâu: chỉ thêm vào lời nhắc khi câu hỏi gần đây đúng chủ đề, để mô hình tập trung.
@@ -1470,10 +1476,13 @@
         "Giải thích ngắn vì sao thuật toán đúng; nếu chỉ đạt một phần subtask thì nói rõ.\n" +
         "4) Viết lời giải C++17 (trừ khi người dùng muốn ngôn ngữ khác): ios::sync_with_stdio(false); cin.tie(nullptr); " +
         "dùng long long khi có thể tràn số, lấy modulo đúng chỗ, mảng đủ kích thước, khởi tạo lại dữ liệu giữa các test.\n" +
-        "5) Kiểm tra: C++ không chạy được ở đây, nên viết cùng thuật toán bằng Python kèm một lời giải vét cạn, " +
-        "rồi dùng py-run so sánh hai lời giải trên vài trăm test ngẫu nhiên nhỏ và các test biên (stress test). Sai thì sửa rồi chạy lại.\n" +
-        "6) Trình bày: ý tưởng, độ phức tạp thời gian và bộ nhớ, code C++ cuối cùng trong khối ```cpp.",
-      remind: "lời giải cuối bằng C++17 trong khối ```cpp; trước đó chạy py-run so sánh thuật toán (viết bằng Python) với lời giải vét cạn trên nhiều test ngẫu nhiên nhỏ",
+        "5) Kiểm tra bằng cpp-run (chạy C++ thật): viết MỘT chương trình gồm hàm solve (đúng lời giải sẽ nộp), hàm brute (vét cạn, chắc chắn đúng) " +
+        "và main tự chạy các ví dụ trong đề rồi sinh vài trăm test ngẫu nhiên nhỏ (mt19937 với seed cố định, kể cả test biên như n = 1), " +
+        "so sánh solve với brute, in OK hoặc test sai đầu tiên kèm hai kết quả. Sai thì tìm lỗi, sửa rồi chạy lại tới khi OK. " +
+        "Nếu cần thì chạy thêm một test lớn nhất theo giới hạn để đo thời gian.\n" +
+        "6) Trình bày: ý tưởng, độ phức tạp thời gian và bộ nhớ, code C++ cuối cùng trong khối ```cpp. Code cuối phải dùng ĐÚNG hàm solve đã qua kiểm tra " +
+        "(chỉ đổi main để đọc input và in output), không viết lại hay dịch từ ngôn ngữ khác.",
+      remind: "lời giải cuối bằng C++17 trong khối ```cpp; trước đó BẮT BUỘC chạy cpp-run một chương trình so sánh hàm solve với lời giải vét cạn trên ví dụ của đề và vài trăm test ngẫu nhiên nhỏ cho tới khi in OK, rồi nộp đúng hàm solve đó",
       hard: true,
     },
   ];
@@ -1750,7 +1759,7 @@
       reply.content = reply.content.slice(0, cut);
       const tool = TOOLS[m[1]] || TOOLS["py-run"];
       const search = tool.lookup;
-      reply.notice = m[1] !== "js-run" && !tool.lookup && !pyReady ? "Đang tải Python (lần đầu mất khoảng 10–20 giây)…" : tool.notice;
+      reply.notice = /^py/.test(m[1]) && !pyReady ? "Đang tải Python (lần đầu mất khoảng 10–20 giây)…" : tool.notice;
       paintAssistant(node, reply, true);
       let out = await tool.run(m[2].trim() ? m[2] : "");
       if (typeof out === "object") {
@@ -2070,6 +2079,7 @@
   const TOOLS = {
     "js-run": { notice: "Đang chạy code…", run: (c) => runJs(c) },
     "py-run": { notice: "Đang chạy code…", run: (c) => runPy(c) },
+    "cpp-run": { notice: "Đang biên dịch và chạy C++…", run: (c) => runCpp(c) },
     "python-run": { notice: "Đang chạy code…", run: (c) => runPy(c) },
     search: { lookup: true, label: "Tra cứu Wikipedia và web", notice: "Đang tra cứu Wikipedia và web…", run: (q) => searchAll(q) },
     wiki: { lookup: true, label: "Tra cứu Wikipedia", notice: "Đang tra cứu Wikipedia…", run: (q) => searchWiki(q.trim()) },
@@ -2177,6 +2187,34 @@
       w.onerror = (e) => { e.preventDefault(); kill("Lỗi: " + e.message); };
       w.postMessage(code);
     });
+  }
+
+  // Chạy C++ thật qua Compiler Explorer (godbolt.org, GCC 13.2, miễn phí, có CORS). Dữ liệu cho cin đặt sau dòng ---INPUT---.
+  const GODBOLT = "https://godbolt.org/api/compiler/g132/compile";
+  async function runCpp(block) {
+    const [code, stdin = ""] = block.split(/^---INPUT---\s*$/m);
+    const plain = (t) => t.replace(/\x1b\[[0-9;]*[A-Za-z]/g, "");
+    const lines = (arr) => plain((arr || []).map((x) => x.text).join("\n")).trim();
+    try {
+      const signal = AbortSignal.any ? AbortSignal.any([controller.signal, AbortSignal.timeout(60000)]) : controller.signal;
+      const res = await fetch(GODBOLT, {
+        method: "POST", signal, headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          source: code, lang: "c++", allowStoreCodeDebug: false,
+          options: { userArguments: "-O2 -std=c++17", executeParameters: { args: [], stdin: stdin.replace(/^\n/, "") },
+            compilerOptions: { executorRequest: true }, filters: { execute: true }, tools: [], libraries: [] },
+        }),
+      });
+      if (res.status === 429) return "Lỗi: Compiler Explorer đang giới hạn lượt, đợi một lúc rồi chạy lại.";
+      if (!res.ok) return `Lỗi: Compiler Explorer trả lỗi ${res.status}.`;
+      const j = await res.json();
+      const cut = (t) => (t.length > 4000 ? t.slice(0, 4000) + "\n…(đã cắt bớt)" : t);
+      if (j.buildResult && j.buildResult.code !== 0) return cut("Lỗi biên dịch:\n" + lines(j.buildResult.stderr).split("\n").slice(0, 40).join("\n"));
+      const out = lines(j.stdout), err = lines(j.stderr);
+      if (j.timedOut) return cut((out ? out + "\n" : "") + "Lỗi: chương trình chạy quá thời gian (khoảng 20 giây) nên đã bị dừng.");
+      return cut((out || "(không có gì được in ra, hãy dùng cout)") + (err ? "\n[stderr]\n" + err : "") +
+        (j.code ? `\n(chương trình kết thúc với mã lỗi ${j.code})` : "") + `\n(thời gian chạy ${j.execTime ?? "?"} ms)`);
+    } catch (e) { return toolError(e); }
   }
 
   async function apiError(res) {
