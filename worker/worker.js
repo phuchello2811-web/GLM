@@ -59,7 +59,11 @@ const IMAGE_FALLBACK = "@cf/black-forest-labs/flux-1-schnell";
 const MAX_REFS = 4; // số ảnh mẫu tối đa khi sửa ảnh (mỗi ảnh phải nhỏ hơn 512x512, trang tự thu nhỏ)
 const SYNC_ROW_MAX = 1_900_000; // D1 giới hạn mỗi dòng khoảng 2MB
 const MAX_BODY = 8 * 1024 * 1024; // đoạn chat (kể cả ảnh) nặng quá 8MB thì từ chối
-const MAX_TOKENS = 16384; // đủ cho mô hình nghĩ lâu với bài khó mà không bị cắt
+// Độ dài trả lời tối đa: trang xin mức cao nhất, máy chủ hạ xuống mức mỗi mô hình cho phép (Z.ai báo đúng các mức này).
+// Câu trả lời vẫn chạm giới hạn thì trang tự yêu cầu viết tiếp.
+const MAX_TOKENS = 131072;
+const MODEL_MAX_TOKENS = { "glm-4.7-flash": 131072, "glm-4.5-flash": 98304, "glm-4.6v-flash": 32768 };
+const NVIDIA_MAX_TOKENS = 32768; // NVIDIA chê lớn quá thì thử lại với 16384
 const BUSY = [429, 502, 503, 504, 524]; // mã lỗi khi Z.ai quá tải hoặc treo
 
 // Đếm lượt trong bộ nhớ: mỗi máy chủ Cloudflare đếm riêng nên chỉ là chặn tương đối.
@@ -137,7 +141,7 @@ export default {
       stream: body.stream !== false,
       temperature: clamp(body.temperature, 0, 1, 0.6),
       top_p: clamp(body.top_p, 0.01, 1, 0.95),
-      max_tokens: Math.round(clamp(body.max_tokens, 1, MAX_TOKENS, 4096)),
+      max_tokens: Math.round(clamp(body.max_tokens, 1, MAX_TOKENS, 16384)),
       thinking: { type: body.thinking?.type === "disabled" ? "disabled" : "enabled" },
       effort: body.effort === "max" ? "max" : "high", // chế độ Nghĩ kỹ: GLM-5.3 suy nghĩ ở mức tối đa
     };
@@ -171,7 +175,7 @@ export default {
         upstream = await fetch(UPSTREAM, {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${env.ZAI_API_KEY}` },
-          body: JSON.stringify({ ...clean, effort: undefined, model: m }),
+          body: JSON.stringify({ ...clean, effort: undefined, model: m, max_tokens: Math.min(clean.max_tokens, MODEL_MAX_TOKENS[m] || 32768) }),
         });
         if (upstream.status !== 429 && upstream.status !== 503) break;
       }
@@ -201,13 +205,19 @@ async function callNvidia(name, clean, env, wait) {
   timeout.catch(() => {});
   let reader;
   try {
-    const res = await Promise.race([fetch(NVIDIA_URL, {
+    const send = (max_tokens) => Promise.race([fetch(NVIDIA_URL, {
       method: "POST",
       signal: timer.signal,
       // Thiếu Accept: text/event-stream thì NVIDIA giữ lại cả câu trả lời tới khi viết xong mới gửi (giống mã mẫu của NVIDIA).
       headers: { "Content-Type": "application/json", Accept: "text/event-stream", Authorization: `Bearer ${env.NVIDIA_API_KEY}` },
-      body: JSON.stringify({ ...rest, stream: true, model: spec.id, ...think }),
+      body: JSON.stringify({ ...rest, stream: true, model: spec.id, ...think, max_tokens }),
     }), timeout]);
+    let res = await send(Math.min(rest.max_tokens, NVIDIA_MAX_TOKENS));
+    // Một số mô hình có ngữ cảnh ngắn hơn: chê max_tokens quá lớn thì thử lại một lần với mức nhỏ hơn.
+    if (res.status === 400) {
+      const text = await res.text().catch(() => "");
+      res = /max_tokens|context|too large|maximum/i.test(text) ? await send(16384) : new Response(text, { status: 400 });
+    }
     if (!res.ok) {
       const detail = (await res.text().catch(() => "")).replace(/nvapi-[\w-]+/g, "nvapi-…").replace(/\s+/g, " ").slice(0, 160);
       clearTimeout(t);
