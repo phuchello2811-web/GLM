@@ -46,10 +46,10 @@ Mở https://phuchello2811-web.github.io/GLM/ (hoặc mở `index.html` bằng *
 
 Trang dùng **GLM miễn phí** qua máy chủ chung (dựng theo [worker/README.md](worker/README.md)). Ai mở link cũng chat được ngay, không cần key hay tài khoản. Bấm nút tên mô hình trong khung chat (hoặc ở đầu trang) để chọn:
 
-- **GLM-5.3 Flash**: mạnh nhất (thế hệ GLM-5), mặc định, đọc được cả ảnh. Chạy miễn phí trên NVIDIA, cần thêm key NVIDIA vào máy chủ theo [worker/README.md](worker/README.md). Chưa có key hoặc NVIDIA bận thì máy chủ tự dùng GLM-4.7 Flash và ghi chú dưới câu trả lời.
-- **GLM-4.7 Flash**: giỏi suy luận và viết code, dự phòng khi GLM-5.3 Flash bận.
-- **GLM-4.5 Flash**: ít quá tải hơn, trả lời nhanh.
-- **GLM-4.6V Flash**: bản đa phương thức, hay bị quá tải.
+- **GLM-5.3 Flash**: thông minh nhất, suy luận, toán và code giỏi nhất, đọc được ảnh. Mặc định. Cần thêm key NVIDIA vào máy chủ theo [worker/README.md](worker/README.md).
+- **GLM-4.7 Flash**: suy luận tốt, viết code giỏi, trả lời ổn định.
+- **GLM-4.5 Flash**: trả lời nhanh nhất, hợp câu hỏi ngắn và trò chuyện.
+- **GLM-4.6V Flash**: chuyên đọc ảnh (ảnh chụp, tài liệu, biểu đồ).
 
 Mô hình nào quá tải hoặc trả lời quá chậm thì trang tự chuyển sang mô hình GLM khác. Trang chỉ dùng mô hình miễn phí, không có chỗ nhập API key. Trang không dùng mô hình tải về máy; muốn chạy offline thì dùng `./chat.sh` hoặc `./server.sh` ở trên.
 
