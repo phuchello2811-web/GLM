@@ -51,6 +51,16 @@ Trang dùng **GLM miễn phí** qua máy chủ chung (dựng theo [worker/README
 - **GLM-4.5 Flash**: trả lời nhanh nhất, hợp câu hỏi ngắn và trò chuyện.
 - **GLM-4.6V Flash**: chuyên đọc ảnh (ảnh chụp, tài liệu, biểu đồ).
 
+Nhóm **Mô hình khác** (cũng cần key NVIDIA):
+
+- **Kimi K2.6**: rất mạnh về lập trình và việc nhiều bước, nhớ được tài liệu dài.
+- **DeepSeek V4.1 Flash**: suy luận và toán rất tốt, trả lời gọn gàng.
+- **MiniMax M3.1 Flash**: nhanh, viết code và tóm tắt văn bản dài tốt.
+- **Mistral Large 4**: viết văn hay, dịch và dùng nhiều ngôn ngữ giỏi.
+- **Gemma 4 31B**: nhẹ và nhanh, trò chuyện tự nhiên.
+
+Khi mở menu, mỗi mô hình có nhãn **Sẵn sàng** hoặc **Đang quá tải**. Bản miễn phí của NVIDIA hay quá tải: mô hình nào không trả lời trong 25 giây thì máy chủ trả lời bằng GLM-4.7 Flash, ghi lý do dưới câu trả lời, và tạm bỏ qua mô hình đó 5 phút.
+
 Mô hình nào quá tải hoặc trả lời quá chậm thì trang tự chuyển sang mô hình GLM khác. Trang chỉ dùng mô hình miễn phí, không có chỗ nhập API key. Trang không dùng mô hình tải về máy; muốn chạy offline thì dùng `./chat.sh` hoặc `./server.sh` ở trên.
 
 Giao diện có lịch sử chat (lưu trong trình duyệt), hiện quá trình suy nghĩ của mô hình, nút dừng và tạo lại câu trả lời, chế độ sáng/tối. Vào **Cài đặt** để đổi lời nhắc hệ thống hoặc nhiệt độ.

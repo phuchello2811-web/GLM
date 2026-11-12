@@ -56,9 +56,9 @@ Không cần tạo bảng, Worker tự tạo ở lần đồng bộ đầu tiên
 
 Muốn dùng: trong trang chat, vào **Cài đặt → Đồng bộ giữa các máy → Bật đồng bộ**, chép mã, rồi trên máy kia chọn **Nhập mã → Kết nối**.
 
-## Bước 7: Bật GLM-5.3 Flash qua NVIDIA (miễn phí)
+## Bước 7: Bật GLM-5.3 Flash và các mô hình NVIDIA (miễn phí)
 
-GLM-5.3 Flash là thế hệ GLM-5, mạnh hơn GLM-4.7 Flash nhiều và đọc được ảnh. NVIDIA cho dùng miễn phí khoảng 40 lượt mỗi phút cho cả tài khoản, không cần thẻ tín dụng.
+GLM-5.3 Flash là thế hệ GLM-5, mạnh hơn GLM-4.7 Flash nhiều và đọc được ảnh. Cùng key này còn mở thêm Kimi K2.6, DeepSeek V4.1 Flash, MiniMax M3.1 Flash, Mistral Large 4 và Gemma 4 31B. NVIDIA cho dùng miễn phí khoảng 40 lượt mỗi phút cho cả tài khoản, không cần thẻ tín dụng.
 
 1. Vào https://build.nvidia.com, bấm **Login** và tạo tài khoản NVIDIA miễn phí (cần xác minh số điện thoại).
 2. Mở https://build.nvidia.com/settings/api-keys, bấm **Generate API Key**, rồi chép key (bắt đầu bằng `nvapi-`). Đừng dán key này cho ai, kể cả vào khung chat.
@@ -66,7 +66,7 @@ GLM-5.3 Flash là thế hệ GLM-5, mạnh hơn GLM-4.7 Flash nhiều và đọc
 
 Kiểm tra: hỏi một câu trong trang chat. Nếu dưới câu trả lời **không** có dòng "trả lời bằng GLM-4.7 Flash vì GLM-5.3 Flash đang bận hoặc chưa bật" là GLM-5.3 Flash đã chạy.
 
-NVIDIA ghi rằng bản miễn phí dùng để thử nghiệm và phát triển, và có thể đổi điều kiện bất cứ lúc nào. Khi NVIDIA lỗi, bận hoặc hết lượt, máy chủ tự dùng GLM-4.7 Flash của Z.ai, nên trang vẫn chạy.
+NVIDIA ghi rằng bản miễn phí dùng để thử nghiệm và phát triển, và có thể đổi điều kiện bất cứ lúc nào. Bản miễn phí hay quá tải (nhiều người báo trên diễn đàn NVIDIA): Worker chỉ chờ chữ đầu tiên tối đa 25 giây, không được thì trả lời bằng GLM-4.7 Flash của Z.ai và tạm bỏ qua mô hình đó 5 phút. Menu chọn mô hình hiện mô hình nào đang **Sẵn sàng** (Worker kiểm tra qua đường dẫn `/status`).
 
 ## Tuỳ chỉnh (không bắt buộc)
 

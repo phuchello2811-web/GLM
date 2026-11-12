@@ -137,6 +137,11 @@
   .model-menu button:hover { background: var(--hover); }
   .model-menu b { display: block; font-weight: 600; font-size: 14px; }
   .model-menu small { display: block; color: var(--muted); font-size: 12px; margin-top: 1px; }
+  .model-menu .st { font-style: normal; font-weight: 500; font-size: 11px; padding: 1px 7px; border-radius: 999px; margin-left: 6px; vertical-align: 1px; }
+  .model-menu .st:empty { display: none; }
+  .model-menu .st.ok { color: var(--ok); background: rgba(16,163,127,.12); }
+  .model-menu .st.busy { color: var(--danger); background: rgba(217,48,37,.1); }
+  .model-menu .st.wait { color: var(--muted); background: var(--surface); }
   .model-menu .tick { margin-left: auto; width: 18px; height: 18px; flex: none; visibility: hidden; }
   .model-menu [aria-checked="true"] .tick { visibility: visible; }
   .topbar .spacer { flex: 1; }
@@ -641,7 +646,10 @@
       name: "GLM miễn phí",
       url: SHARED_URL,
       // Phải khớp FREE_MODELS trong worker/worker.js.
-      models: ["glm-5.3-flash", "glm-4.7-flash", "glm-4.5-flash", "glm-4.6v-flash"],
+      models: ["glm-5.3-flash", "glm-4.7-flash", "glm-4.5-flash", "glm-4.6v-flash",
+        "kimi-k2.6", "deepseek-v4.1-flash", "minimax-m3.1-flash", "mistral-large-4", "gemma-4-31b"],
+      // Chạy trên NVIDIA (phải khớp NVIDIA_MODELS trong worker/worker.js); máy chủ tự dùng GLM của Z.ai khi chúng bận.
+      nvidia: ["glm-5.3-flash", "kimi-k2.6", "deepseek-v4.1-flash", "minimax-m3.1-flash", "mistral-large-4", "gemma-4-31b"],
       // Mô hình đọc được ảnh: câu hỏi có ảnh luôn gửi tới đây.
       vision: "glm-4.6v-flash",
       titles: {
@@ -649,6 +657,11 @@
         "glm-4.7-flash": ["GLM-4.7 Flash", "Suy luận tốt, viết code giỏi, trả lời ổn định"],
         "glm-4.5-flash": ["GLM-4.5 Flash", "Trả lời nhanh nhất, hợp câu hỏi ngắn và trò chuyện"],
         "glm-4.6v-flash": ["GLM-4.6V Flash", "Chuyên đọc ảnh: ảnh chụp, tài liệu, biểu đồ"],
+        "kimi-k2.6": ["Kimi K2.6", "Rất mạnh về lập trình và việc nhiều bước, nhớ được tài liệu dài"],
+        "deepseek-v4.1-flash": ["DeepSeek V4.1 Flash", "Suy luận và toán rất tốt, trả lời gọn gàng"],
+        "minimax-m3.1-flash": ["MiniMax M3.1 Flash", "Nhanh, viết code và tóm tắt văn bản dài tốt"],
+        "mistral-large-4": ["Mistral Large 4", "Viết văn hay, dịch và dùng nhiều ngôn ngữ giỏi"],
+        "gemma-4-31b": ["Gemma 4 31B", "Nhẹ và nhanh, trò chuyện tự nhiên"],
       },
       modelHelp: "Dùng chung máy chủ của trang, không cần key hay tài khoản. Tối đa 20 câu hỏi mỗi phút. Mô hình đang quá tải hoặc chưa bật thì tự chuyển sang mô hình khác.",
       extra: { thinking: { type: "enabled" } },
@@ -691,10 +704,12 @@
     if (!anchor || anchor === menuAnchor) { menu.hidden = true; menuAnchor = null; return; }
     let html = "";
     for (const id of Object.keys(PROVIDERS)) {
-      html += `<div class="group">${PROVIDERS[id].name}</div>`;
+      let group = "";
       for (const m of PROVIDERS[id].models) {
+        const g = m.startsWith("glm") ? "GLM" : "Mô hình khác";
+        if (g !== group) { html += `<div class="group">${g}</div>`; group = g; }
         const [title, desc] = PROVIDERS[id].titles[m];
-        html += `<button role="menuitemradio" data-key="${id}:${m}" aria-checked="${`${id}:${m}` === currentChoice()}"><span><b>${title}</b><small>${desc}</small></span>${TICK}</button>`;
+        html += `<button role="menuitemradio" data-key="${id}:${m}" aria-checked="${`${id}:${m}` === currentChoice()}"><span><b>${title}<em class="st" data-st="${m}"></em></b><small>${desc}</small></span>${TICK}</button>`;
       }
     }
     html += `<div class="group">Nhân vật</div>`;
@@ -705,11 +720,36 @@
     menu.innerHTML = html;
     menu.hidden = false;
     menuAnchor = anchor;
+    paintModelStatus();
     anchor.setAttribute("aria-expanded", "true");
     // Nút ở đầu trang thì mở xuống dưới, nút trong khung chat thì mở lên trên.
     const r = anchor.getBoundingClientRect(), w = menu.offsetWidth, h = menu.offsetHeight;
     menu.style.left = Math.max(16, Math.min(r.left, innerWidth - w - 16)) + "px";
     menu.style.top = (r.top > innerHeight / 2 ? Math.max(16, r.top - h - 6) : r.bottom + 6) + "px";
+  }
+  // Trạng thái các mô hình chạy trên NVIDIA (sẵn sàng hay đang quá tải), máy chủ kiểm tra và lưu 2 phút.
+  let modelStatus = null, statusAt = 0, statusLoading = null;
+  async function paintModelStatus() {
+    const paint = () => {
+      for (const el of document.querySelectorAll("#modelMenu [data-st]")) {
+        const st = modelStatus?.models?.[el.dataset.st];
+        if (!PROVIDERS.shared.nvidia.includes(el.dataset.st) || !modelStatus) { el.className = "st"; el.textContent = ""; continue; }
+        if (!modelStatus.enabled) { el.className = "st busy"; el.textContent = "Chưa bật"; el.title = "Máy chủ chưa có NVIDIA_API_KEY"; continue; }
+        if (!st) { el.className = "st wait"; el.textContent = "Đang kiểm tra…"; continue; }
+        el.className = "st " + (st.ok ? "ok" : "busy");
+        el.textContent = st.ok ? "Sẵn sàng" : "Đang quá tải";
+        el.title = st.ok ? `Trả lời sau ${(st.ms / 1000).toFixed(1)} giây` : `${st.note || ""}. Chọn vẫn được: khi bận, máy chủ tự trả lời bằng GLM-4.7 Flash.`;
+      }
+    };
+    if (Date.now() - statusAt < 90_000) { paint(); return; }
+    if (!statusLoading) {
+      modelStatus = { enabled: true, models: {} }; paint();
+      statusLoading = fetch(SHARED_URL.replace(/\/$/, "") + "/status", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" })
+        .then((r) => (r.ok ? r.json() : null)).catch(() => null)
+        .then((j) => { modelStatus = j?.models ? j : null; statusAt = j ? Date.now() : 0; statusLoading = null; });
+    } else paint();
+    await statusLoading;
+    paint();
   }
   $("modelChip").onclick = (e) => { e.stopPropagation(); toggleModelMenu(e.currentTarget); };
   $("modelMenu").onclick = (e) => {
@@ -1976,8 +2016,11 @@
     // thì chuyển ngay sang mô hình khác. Thứ tự: mô hình đang chọn trước, rồi các mô hình còn lại.
     // Câu hỏi có ảnh chỉ gửi được tới mô hình đọc ảnh, nên thử lại nhiều lần hơn thay vì đổi mô hình.
     const vision = messages.some((m) => Array.isArray(m.content));
-    const order = vision ? [["shared", cloudModel() === "glm-5.3-flash" ? "glm-5.3-flash" : PROVIDERS.shared.vision]] : [[settings.provider, cloudModel()]];
-    if (!vision) for (const id of Object.keys(PROVIDERS)) for (const m of PROVIDERS[id].models) if (id !== order[0][0] || m !== order[0][1]) order.push([id, m]);
+    // Mô hình trên NVIDIA: máy chủ tự xử lý ảnh (dùng GLM-5.3 Flash) và tự chuyển sang GLM của Z.ai khi bận,
+    // nên trang chỉ thử thêm các mô hình của Z.ai.
+    const onNvidia = (m) => PROVIDERS.shared.nvidia.includes(m);
+    const order = vision ? [["shared", onNvidia(cloudModel()) ? cloudModel() : PROVIDERS.shared.vision]] : [[settings.provider, cloudModel()]];
+    if (!vision) for (const id of Object.keys(PROVIDERS)) for (const m of PROVIDERS[id].models) if ((id !== order[0][0] || m !== order[0][1]) && !onNvidia(m)) order.push([id, m]);
     const retries = vision ? 4 : 1;
     let res = null, used, model;
     for (let i = 0; i < order.length; i++) {
@@ -1990,8 +2033,8 @@
       });
       let hung = false;
       for (let attempt = 0; ; attempt++) {
-        // GLM-5.3 Flash: máy chủ có thể chờ NVIDIA tới 60 giây rồi mới chuyển sang Z.ai, nên chờ lâu hơn.
-        const slow = new AbortController(), timer = setTimeout(() => slow.abort(), m === "glm-5.3-flash" ? 100000 : 60000);
+        // Mô hình trên NVIDIA: máy chủ có thể chờ NVIDIA tới 25 giây rồi mới chuyển sang Z.ai, nên chờ lâu hơn.
+        const slow = new AbortController(), timer = setTimeout(() => slow.abort(), onNvidia(m) ? 90000 : 60000);
         const both = AbortSignal.any ? AbortSignal.any([signal, slow.signal]) : signal;
         try {
           res = await fetch(p.url, { method: "POST", headers: { "Content-Type": "application/json" }, body, signal: both });
@@ -2020,7 +2063,7 @@
     if (!res.ok) throw new Error(await apiError(res));
     // Máy chủ cho biết mô hình thật đã trả lời (nó tự đổi khi GLM-5.3 Flash chưa bật, quá tải hoặc lỗi).
     // Worker bản cũ không gửi tên mô hình và chưa có GLM-5.3 Flash: khi đó nó đã dùng mô hình dự phòng của Z.ai.
-    const real = res.headers.get("X-GLM-Model") || (model === "glm-5.3-flash" ? (vision ? PROVIDERS.shared.vision : "glm-4.7-flash") : null);
+    const real = res.headers.get("X-GLM-Model") || (onNvidia(model) ? (vision ? PROVIDERS.shared.vision : "glm-4.7-flash") : null);
     const asked = model;
     if (real && PROVIDERS[used].titles[real]) model = real;
     if (vision) reply.via = `${modelTitle(used, model)} (mô hình đọc được ảnh)`;
@@ -2028,7 +2071,7 @@
       // Máy chủ ghi lý do không dùng được GLM-5.3 Flash (key sai, hết lượt, quá lâu…) trong X-GLM-Note.
       let note = "";
       try { note = decodeURIComponent(res.headers.get("X-GLM-Note") || ""); } catch {}
-      reply.via = `${modelTitle(used, model)} vì ` + (note || `${modelTitle(used, asked === model ? cloudModel() : asked)} đang ${asked === "glm-5.3-flash" && real !== asked ? "bận hoặc chưa bật" : "quá tải"}`);
+      reply.via = `${modelTitle(used, model)} vì ` + (note || `${modelTitle(used, asked === model ? cloudModel() : asked)} đang ${onNvidia(asked) && real !== asked ? "bận hoặc chưa bật" : "quá tải"}`);
     }
     setStatus("ok", `${PROVIDERS[used].name} · ${modelTitle(used, model)}`);
 

@@ -10,14 +10,27 @@
 // - POST /        chat với GLM (Z.ai).
 // - POST /image   tạo ảnh bằng Cloudflare Workers AI (cần binding AI, xem README).
 // - POST /sync    đồng bộ lịch sử chat giữa các máy (cần binding D1 tên DB, xem README).
+// - POST /status  kiểm tra mô hình NVIDIA nào đang trả lời được (để menu chọn mô hình hiện trạng thái).
 
 const UPSTREAM = "https://api.z.ai/api/paas/v4/chat/completions";
 const FREE_MODELS = ["glm-4.7-flash", "glm-4.5-flash", "glm-4.6v-flash"];
 const VISION_MODEL = "glm-4.6v-flash"; // mô hình miễn phí duy nhất của Z.ai đọc được ảnh
-// GLM-5.3 Flash chạy miễn phí trên NVIDIA (build.nvidia.com, khoảng 40 lượt mỗi phút cho cả tài khoản), cần biến bí mật NVIDIA_API_KEY.
-// Đọc được cả ảnh. Chưa có key, NVIDIA bận hoặc lỗi thì tự dùng mô hình miễn phí của Z.ai.
+// Các mô hình miễn phí trên NVIDIA (build.nvidia.com, khoảng 40 lượt mỗi phút cho cả tài khoản), cần biến bí mật NVIDIA_API_KEY.
+// Bản miễn phí của NVIDIA hay quá tải (xếp hàng nhiều phút, hoặc trả 200 mà không gửi gì): chỉ chờ chữ đầu tiên tối đa
+// NVIDIA_WAIT, không được thì dùng GLM của Z.ai và tạm bỏ qua mô hình đó một lúc để các câu sau khỏi phải chờ lại.
 const NVIDIA_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
-const NVIDIA_MODELS = { "glm-5.3-flash": "z-ai/glm-5.3-flash" };
+const NVIDIA_MODELS = {
+  "glm-5.3-flash": { id: "z-ai/glm-5.3-flash", title: "GLM-5.3 Flash", vision: true, effort: true },
+  "kimi-k2.6": { id: "moonshotai/kimi-k2.6", title: "Kimi K2.6" },
+  "deepseek-v4.1-flash": { id: "deepseek-ai/deepseek-v4.1-flash", title: "DeepSeek V4.1 Flash" },
+  "minimax-m3.1-flash": { id: "minimaxai/minimax-m3.1-flash", title: "MiniMax M3.1 Flash" },
+  "mistral-large-4": { id: "mistralai/mistral-large-4-1t-a52b", title: "Mistral Large 4" },
+  "gemma-4-31b": { id: "google/gemma-4-31b-it", title: "Gemma 4 31B" },
+};
+const NVIDIA_WAIT = 25_000; // chờ chữ đầu tiên tối đa 25 giây
+const STALL = 90_000; // đang trả lời mà đứng yên quá 90 giây thì ngắt, để trang tự nối lại
+const nvidiaDown = new Map(); // mô hình -> { until, note }: tạm bỏ qua sau khi lỗi
+let statusCache = null; // kết quả kiểm tra các mô hình NVIDIA gần nhất
 const MAX_IMAGES = 8;
 const DEFAULT_ORIGINS = [
   "https://phuchello2811-web.github.io",
@@ -25,7 +38,7 @@ const DEFAULT_ORIGINS = [
   "http://localhost:5500",
 ];
 const PER_MINUTE = 20; // số lượt hỏi tối đa mỗi phút cho mỗi IP
-const LIMITS = { chat: PER_MINUTE, image: 6, sync: 40 }; // giới hạn mỗi phút theo từng loại yêu cầu
+const LIMITS = { chat: PER_MINUTE, image: 6, sync: 40, status: 10 }; // giới hạn mỗi phút theo từng loại yêu cầu
 // Tạo ảnh: FLUX.2 [klein] 4B (đẹp, nhanh, sửa được ảnh có sẵn; khoảng 100 neuron mỗi ảnh 1024x1024,
 // gói miễn phí 10.000 neuron mỗi ngày). Lỗi thì dùng FLUX.1 [schnell] (chỉ ảnh vuông, không sửa ảnh).
 const IMAGE_MODEL = "@cf/black-forest-labs/flux-2-klein-4b";
@@ -72,7 +85,7 @@ export default {
     if (request.method !== "POST") return fail(405, "Chỉ nhận POST.");
     if (!allowed) return fail(403, "Trang này không được phép dùng máy chủ chung.");
     const route = new URL(request.url).pathname.replace(/\/+$/, "") || "/";
-    const kind = route === "/image" ? "image" : route === "/sync" ? "sync" : "chat";
+    const kind = { "/image": "image", "/sync": "sync", "/status": "status" }[route] || "chat";
     if (kind === "chat" && route !== "/") return fail(404, "Không có đường dẫn này.");
     if (kind === "chat" && !env.ZAI_API_KEY) return fail(500, "Máy chủ chưa được cài API key (biến bí mật ZAI_API_KEY).");
 
@@ -90,6 +103,7 @@ export default {
 
     if (kind === "image") return makeImage(body, env, json, fail);
     if (kind === "sync") return sync(body, env, json, fail);
+    if (kind === "status") return json(await nvidiaStatus(env));
 
     if (!Array.isArray(body.messages) || !body.messages.length) return fail(400, "Thiếu tin nhắn.");
 
@@ -114,37 +128,20 @@ export default {
       thinking: { type: body.thinking?.type === "disabled" ? "disabled" : "enabled" },
     };
 
-    // Thử NVIDIA trước nếu trang chọn GLM-5.3 Flash. Chờ tối đa 60 giây để máy chủ bắt đầu trả lời.
-    // Không dùng được thì ghi lý do vào X-GLM-Note để trang hiện cho người dùng.
-    let upstream, used, note = "";
-    if (env.NVIDIA_API_KEY && NVIDIA_MODELS[body.model]) {
-      const { thinking, ...rest } = clean;
-      const timer = new AbortController(), t = setTimeout(() => timer.abort(), 60_000);
-      try {
-        upstream = await fetch(NVIDIA_URL, {
-          method: "POST",
-          signal: timer.signal,
-          // Thiếu Accept: text/event-stream thì NVIDIA giữ lại cả câu trả lời tới khi viết xong mới gửi (giống mã mẫu của NVIDIA).
-          headers: {
-            "Content-Type": "application/json",
-            Accept: rest.stream ? "text/event-stream" : "application/json",
-            Authorization: `Bearer ${env.NVIDIA_API_KEY}`,
-          },
-          body: JSON.stringify({ ...rest, model: NVIDIA_MODELS[body.model], reasoning_effort: thinking.type === "disabled" ? "low" : "high" }),
-        });
-      } catch {
-        upstream = null;
-        note = timer.signal.aborted ? "NVIDIA không trả lời sau 60 giây (đang quá đông)" : "không kết nối được tới NVIDIA";
-      }
-      clearTimeout(t);
-      if (upstream?.ok) used = body.model;
-      else if (upstream) {
-        const detail = (await upstream.text().catch(() => "")).replace(/nvapi-[\w-]+/g, "nvapi-…").replace(/\s+/g, " ").slice(0, 160);
-        note = upstream.status === 401 || upstream.status === 403 ? `key NVIDIA bị từ chối (${upstream.status}), kiểm tra lại NVIDIA_API_KEY`
-          : upstream.status === 429 ? "NVIDIA hết lượt miễn phí trong phút này (429)"
-          : upstream.status === 404 ? "tài khoản NVIDIA chưa dùng được GLM-5.3 Flash (404)"
-          : `NVIDIA báo lỗi ${upstream.status}: ${detail}`;
-        upstream = null;
+    // Mô hình trên NVIDIA: thử NVIDIA trước. Câu hỏi có ảnh mà mô hình đã chọn không đọc được ảnh thì dùng GLM-5.3 Flash.
+    // Không dùng được thì trả lời bằng GLM của Z.ai và ghi lý do vào X-GLM-Note để trang hiện cho người dùng.
+    let upstream, used, note = "", stream = null;
+    let nv = NVIDIA_MODELS[body.model] ? body.model : null;
+    if (nv && images && !NVIDIA_MODELS[nv].vision) nv = "glm-5.3-flash";
+    if (nv) {
+      const title = NVIDIA_MODELS[nv].title, down = nvidiaDown.get(nv);
+      if (!env.NVIDIA_API_KEY) note = `${title} chưa được bật trên máy chủ (thiếu NVIDIA_API_KEY)`;
+      else if (!clean.stream) note = `${title} chỉ dùng khi trả lời dạng luồng`;
+      else if (down && down.until > Date.now()) note = `${title} ${down.note}; máy chủ sẽ thử lại sau ${Math.ceil((down.until - Date.now()) / 60_000)} phút`;
+      else {
+        const r = await callNvidia(nv, clean, env, NVIDIA_WAIT);
+        if (r.body) { nvidiaDown.delete(nv); used = nv; stream = r.body; }
+        else { nvidiaDown.set(nv, { until: Date.now() + r.cool, note: r.note }); note = `${title} ${r.note}`; }
       }
     }
 
@@ -159,17 +156,92 @@ export default {
       });
       if (!BUSY.includes(upstream.status)) break;
     }
-    if (BUSY.includes(upstream.status)) return fail(429, "Máy chủ GLM miễn phí đang quá tải. Đợi một lúc rồi thử lại.");
+    if (!stream && BUSY.includes(upstream.status)) return fail(429, "Máy chủ GLM miễn phí đang quá tải. Đợi một lúc rồi thử lại.");
     // Không trả nguyên lỗi xác thực của Z.ai về trình duyệt để khỏi lộ chi tiết về key.
-    if (upstream.status === 401 || upstream.status === 403) return fail(502, "API key trên máy chủ chung bị sai hoặc đã bị thu hồi.");
+    if (!stream && (upstream.status === 401 || upstream.status === 403)) return fail(502, "API key trên máy chủ chung bị sai hoặc đã bị thu hồi.");
     const headers = new Headers(cors);
-    headers.set("Content-Type", upstream.headers.get("Content-Type") || "application/json");
+    headers.set("Content-Type", stream ? "text/event-stream" : upstream.headers.get("Content-Type") || "application/json");
     headers.set("Cache-Control", "no-store");
     headers.set("X-GLM-Model", used); // mô hình thật đã trả lời, để trang ghi chú khi máy chủ tự đổi mô hình
     if (note) headers.set("X-GLM-Note", encodeURIComponent(note)); // header chỉ nhận chữ không dấu nên phải mã hoá
-    return new Response(upstream.body, { status: upstream.status, headers });
+    return new Response(stream || upstream.body, { status: stream ? 200 : upstream.status, headers });
   },
 };
+
+// Gọi một mô hình trên NVIDIA. Thành công: { body } là luồng trả lời; thất bại: { note, cool } (lý do, thời gian tạm bỏ qua).
+async function callNvidia(name, clean, env, wait) {
+  const spec = NVIDIA_MODELS[name];
+  const { thinking, ...rest } = clean;
+  const timer = new AbortController(), t = setTimeout(() => timer.abort(), wait);
+  const timeout = new Promise((_, no) => timer.signal.addEventListener("abort", () => no(new Error("timeout"))));
+  timeout.catch(() => {});
+  let reader;
+  try {
+    const res = await Promise.race([fetch(NVIDIA_URL, {
+      method: "POST",
+      signal: timer.signal,
+      // Thiếu Accept: text/event-stream thì NVIDIA giữ lại cả câu trả lời tới khi viết xong mới gửi (giống mã mẫu của NVIDIA).
+      headers: { "Content-Type": "application/json", Accept: "text/event-stream", Authorization: `Bearer ${env.NVIDIA_API_KEY}` },
+      body: JSON.stringify({ ...rest, stream: true, model: spec.id, ...(spec.effort ? { reasoning_effort: thinking.type === "disabled" ? "low" : "high" } : {}) }),
+    }), timeout]);
+    if (!res.ok) {
+      const detail = (await res.text().catch(() => "")).replace(/nvapi-[\w-]+/g, "nvapi-…").replace(/\s+/g, " ").slice(0, 160);
+      clearTimeout(t);
+      if (res.status === 401 || res.status === 403) return { note: `bị từ chối (${res.status}): kiểm tra lại NVIDIA_API_KEY`, cool: 600_000 };
+      if (res.status === 429) return { note: "hết lượt miễn phí trong phút này (429)", cool: 60_000 };
+      if (res.status === 404 || res.status === 410) return { note: `không còn trên NVIDIA (${res.status})`, cool: 3_600_000 };
+      return { note: `báo lỗi ${res.status}: ${detail}`, cool: 300_000 };
+    }
+    // NVIDIA đôi khi trả 200 rồi không gửi gì: đọc tới khi có dòng dữ liệu đầu tiên.
+    reader = res.body.getReader();
+    const chunks = [], dec = new TextDecoder();
+    let text = "";
+    while (!/data:\s*\{/.test(text)) {
+      const { value, done } = await Promise.race([reader.read(), timeout]);
+      if (done) break;
+      chunks.push(value); text += dec.decode(value, { stream: true });
+    }
+    clearTimeout(t);
+    if (!/data:\s*\{/.test(text)) return { note: "không trả về nội dung", cool: 300_000 };
+    const body = new ReadableStream({
+      start(c) { for (const ch of chunks) c.enqueue(ch); },
+      async pull(c) {
+        let stall;
+        const r = await Promise.race([reader.read(), new Promise((ok) => { stall = setTimeout(() => ok(null), STALL); })]);
+        clearTimeout(stall);
+        if (!r) { reader.cancel().catch(() => {}); c.error(new Error("NVIDIA ngừng gửi dữ liệu")); }
+        else if (r.done) c.close();
+        else c.enqueue(r.value);
+      },
+      cancel() { reader.cancel().catch(() => {}); },
+    });
+    return { body };
+  } catch {
+    clearTimeout(t);
+    reader?.cancel().catch(() => {});
+    return timer.signal.aborted
+      ? { note: `không trả lời sau ${wait / 1000} giây (đang quá đông)`, cool: 300_000 }
+      : { note: "không kết nối được", cool: 120_000 };
+  }
+}
+
+// Kiểm tra nhanh từng mô hình NVIDIA (lưu kết quả 2 phút). Mô hình đang bị tạm bỏ qua thì báo luôn, không gọi lại.
+async function nvidiaStatus(env) {
+  if (!env.NVIDIA_API_KEY) return { enabled: false, models: {} };
+  if (statusCache && Date.now() - statusCache.at < 120_000) return statusCache.data;
+  const probe = { messages: [{ role: "user", content: "Hi" }], stream: true, temperature: 0.6, top_p: 0.95, max_tokens: 8, thinking: { type: "disabled" } };
+  const models = {};
+  await Promise.all(Object.keys(NVIDIA_MODELS).map(async (name) => {
+    const down = nvidiaDown.get(name);
+    if (down && down.until > Date.now()) { models[name] = { ok: false, note: down.note }; return; }
+    const start = Date.now();
+    const r = await callNvidia(name, probe, env, 20_000);
+    if (r.body) { r.body.cancel().catch(() => {}); nvidiaDown.delete(name); models[name] = { ok: true, ms: Date.now() - start }; }
+    else { nvidiaDown.set(name, { until: Date.now() + r.cool, note: r.note }); models[name] = { ok: false, note: r.note }; }
+  }));
+  statusCache = { at: Date.now(), data: { enabled: true, models } };
+  return statusCache.data;
+}
 
 // Tạo ảnh hoặc sửa ảnh. Trang gửi: prompt, width/height (256–1920), seed, refs (ảnh mẫu dạng data:image/...;base64).
 async function makeImage(body, env, json, fail) {
