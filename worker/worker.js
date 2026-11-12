@@ -124,7 +124,12 @@ export default {
         upstream = await fetch(NVIDIA_URL, {
           method: "POST",
           signal: timer.signal,
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${env.NVIDIA_API_KEY}` },
+          // Thiếu Accept: text/event-stream thì NVIDIA giữ lại cả câu trả lời tới khi viết xong mới gửi (giống mã mẫu của NVIDIA).
+          headers: {
+            "Content-Type": "application/json",
+            Accept: rest.stream ? "text/event-stream" : "application/json",
+            Authorization: `Bearer ${env.NVIDIA_API_KEY}`,
+          },
           body: JSON.stringify({ ...rest, model: NVIDIA_MODELS[body.model], reasoning_effort: thinking.type === "disabled" ? "low" : "high" }),
         });
       } catch {
