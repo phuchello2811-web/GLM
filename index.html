@@ -413,6 +413,9 @@
   .file-name b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .file-name small { color: var(--muted); font-size: 12px; }
   .file-card .btn { display: inline-flex; align-items: center; gap: 6px; flex: none; }
+  .file-btns { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+  @media (max-width: 560px) { .file-head { flex-wrap: wrap; } .file-btns { width: 100%; justify-content: flex-start; } }
+  .deck-preview iframe { aspect-ratio: 16 / 9; height: auto; resize: none; background: #000; }
   .file-card .btn svg { width: 16px; height: 16px; }
   .file-card details { border-top: 1px solid var(--border); padding: 8px 14px; }
   .file-card summary { cursor: pointer; color: var(--muted); font-size: 13px; }
@@ -1471,11 +1474,17 @@
     "Ví dụ sửa ảnh:\n```image\nedit: yes\nmake the cat wear a red scarf, keep everything else unchanged\n```\n" +
     "Logo, icon, sơ đồ, biểu đồ thì vẽ bằng SVG thay vì dùng công cụ này.\n\n" +
     "Xuất file (trang tự tạo file thật và hiện nút Tải về), dùng khi người dùng muốn file PowerPoint, Excel, Word hoặc nói xuất file, tải về:\n" +
-    "- ```pptx\n{JSON}\n``` : file PowerPoint. JSON gồm title, file (tên file không dấu), theme {bg, text, accent, muted, font} (màu là 6 chữ số hex, ví dụ \"0F172A\"), " +
-    "slides là danh sách, mỗi slide là một trong các dạng: {\"layout\":\"title\",\"title\":…,\"subtitle\":…}; {\"title\":…,\"bullets\":[…]}; " +
-    "{\"title\":…,\"table\":[[hàng tiêu đề],[…]]}; {\"title\":…,\"chart\":{\"type\":\"bar|line|pie|doughnut|area\",\"title\":…,\"labels\":[…],\"series\":[{\"name\":…,\"values\":[…]}]},\"bullets\":[…]}; " +
-    "{\"title\":…,\"left\":[…],\"right\":[…]} (hai cột). Slide nào cũng có thể thêm \"notes\" (ghi chú cho người thuyết trình). Ý bắt đầu bằng \"- \" trong bullets là ý phụ. " +
-    "Mỗi slide 3–6 ý ngắn; bài có slide tiêu đề, mục lục, nội dung, slide kết.\n" +
+    "- ```pptx\n{JSON}\n``` : bài trình chiếu. Trang tự dựng slide có thiết kế và hiệu ứng (chữ hiện dần, chuyển slide, số liệu đếm tăng, biểu đồ tự vẽ), " +
+    "người dùng trình chiếu ngay trong chat và tải được file PowerPoint lẫn HTML. JSON gồm title, file (tên file không dấu), " +
+    "theme (một bộ màu: midnight, ocean, sunset, forest, minimal, corporate, neon, warm), transition (fade, push, wipe, cover) và slides là danh sách các dạng:\n" +
+    "  {\"layout\":\"title\",\"kicker\":…,\"title\":…,\"subtitle\":…} slide mở đầu; {\"layout\":\"section\",\"title\":…,\"subtitle\":…} mở một phần mới;\n" +
+    "  {\"title\":…,\"bullets\":[…]} (ý phụ bắt đầu bằng \"- \"); {\"title\":…,\"leftTitle\":…,\"left\":[…],\"rightTitle\":…,\"right\":[…]} hai cột; {\"title\":…,\"table\":[[hàng tiêu đề],[…]]};\n" +
+    "  {\"title\":…,\"chart\":{\"type\":\"bar|line|area|pie|doughnut\",\"title\":…,\"labels\":[…],\"series\":[{\"name\":…,\"values\":[số…]}]},\"bullets\":[…]};\n" +
+    "  {\"title\":…,\"stats\":[{\"value\":\"95%\",\"label\":…}]} 2–4 số liệu nổi bật; {\"title\":…,\"cards\":[{\"icon\":\"🤖\",\"title\":…,\"text\":…}]} 2–4 thẻ;\n" +
+    "  {\"title\":…,\"timeline\":[{\"time\":…,\"text\":…}]} 3–6 mốc; {\"layout\":\"quote\",\"quote\":…,\"author\":…}; {\"layout\":\"end\",\"title\":…,\"subtitle\":…} slide kết.\n" +
+    "  Slide nào cũng thêm được \"notes\" (lời người thuyết trình nói); chữ trong **…** được tô màu nhấn.\n" +
+    "  Viết gọn để slide thoáng: tiêu đề tối đa 10 từ; mỗi ý tối đa 12 từ; text của card tối đa 15 từ; label của stats tối đa 8 từ; " +
+    "text của mỗi mốc timeline tối đa 10 từ; quote tối đa 30 từ. Chi tiết dài đưa vào notes.\n" +
     "- ```xlsx\n{JSON}\n``` : file Excel. JSON gồm file và sheets là danh sách {\"name\":…,\"rows\":[[tiêu đề cột…],[…]],\"widths\":[độ rộng cột]}. " +
     "Ô bắt đầu bằng = là công thức Excel (ví dụ \"=SUM(B2:B10)\", \"=IF(C2>=5,\\\"Đạt\\\",\\\"Chưa đạt\\\")\"); số viết dạng số, không có dấu nghìn hay đơn vị trong ô.\n" +
     "- ```docx\nnội dung Markdown\n``` : file Word, từ nội dung Markdown (tiêu đề #, ##, đoạn văn, danh sách, bảng).\n" +
@@ -1547,12 +1556,22 @@
     {
       test: /slide|thuyết trình|trình chiếu|bài giảng|powerpoint|pptx?|presentation|deck/i,
       prompt:
-        "Kỹ năng làm slide: nếu người dùng muốn file PowerPoint (nhắc tới pptx, PowerPoint, xuất file, tải về) thì viết một khối ```pptx theo phần Xuất file; " +
-        "còn không thì viết MỘT file HTML trong khối ```html. Mỗi slide là một <section> 16:9 phủ kín màn hình, " +
-        "mỗi lúc chỉ hiện một slide; chuyển slide bằng phím ←/→, Space, PageUp/PageDown, và bấm chuột/chạm (nửa trái lùi, nửa phải tiến); " +
-        "có số trang ở góc và thanh tiến độ. Có slide tiêu đề, các slide nội dung, slide kết. Mỗi slide một ý chính: " +
-        "tiêu đề ngắn, tối đa 3–5 gạch đầu dòng, chữ to (dùng clamp/vw để co theo màn hình), màu và font đồng bộ, " +
-        "hiệu ứng chuyển nhẹ. Minh hoạ bằng SVG hoặc biểu đồ CSS ngay trong file, không dùng ảnh ngoài.",
+        "Kỹ năng làm bài trình chiếu (slide):\n" +
+        "- Mặc định viết MỘT khối ```pptx theo phần Xuất file: trang tự dựng slide có thiết kế và hiệu ứng, người dùng trình chiếu ngay và tải được PowerPoint, HTML. " +
+        "Chỉ tự viết code HTML khi người dùng muốn code HTML riêng.\n" +
+        "- Nội dung trước, thiết kế sau: chủ đề có số liệu, mốc thời gian, sự kiện, thành tựu thì tra cứu trước (search, research, news, papers) để thông tin đúng và mới; " +
+        "thêm một slide \"Nguồn tham khảo\" ở cuối khi có tra cứu.\n" +
+        "- Mạch kể chuyện: slide tiêu đề có câu mở gây tò mò → mục lục (bài dài) → từng phần mở bằng slide section → ví dụ, số liệu, so sánh → tóm tắt → slide kết " +
+        "(cảm ơn, câu hỏi, lời kêu gọi). Khoảng 8–14 slide nếu người dùng không nói rõ.\n" +
+        "- Slide nguồn tham khảo dùng dạng bullets (không dùng section). Mỗi slide đúng một ý. Tiêu đề là câu khẳng định ngắn nói lên ý chính (ví dụ \"AI đã có trong điện thoại của bạn\" thay vì \"Ứng dụng\"). " +
+        "Tối đa 5 ý, mỗi ý dưới 12 từ; chi tiết để trong notes. Dùng **…** để nhấn 1–2 từ khoá quan trọng.\n" +
+        "- Đa dạng bố cục cho cuốn hút: không để quá 2 slide gạch đầu dòng liền nhau; số liệu dùng stats hoặc chart; lịch sử, quy trình dùng timeline; " +
+        "các khái niệm song song dùng cards (chọn emoji hợp nghĩa); so sánh dùng hai cột hoặc table; câu nói hay dùng quote.\n" +
+        "- Chọn theme hợp chủ đề và người xem: công nghệ midnight hoặc neon; giáo dục, khoa học ocean hoặc forest; kinh doanh corporate; " +
+        "nghệ thuật, đời sống sunset hoặc warm; trang trọng minimal.\n" +
+        "- notes cho mọi slide: 2–4 câu người thuyết trình nói, bổ sung ví dụ và chi tiết không ghi trên slide.\n" +
+        "- Sau khối, nói ngắn gọn bài gồm những phần nào và mẹo trình bày.",
+      remind: "viết một khối ```pptx (JSON hợp lệ): tra cứu số liệu trước khi cần, tiêu đề slide là câu khẳng định ngắn, đa dạng bố cục (section, stats, cards, timeline, chart, quote), có notes",
     },
     {
       // Chỉ bật khi người dùng muốn vẽ/tạo hình (hỏi về ảnh gửi kèm như "ảnh này là gì" không tính).
@@ -1599,8 +1618,7 @@
         "Bảng điểm, bảng lương, ngân sách, thời khoá biểu, hoá đơn, theo dõi chi tiêu: luôn có dòng tổng và cột tự tính.\n" +
         "- Word (khối ```docx): viết như văn bản hoàn chỉnh: tiêu đề, các mục ##, đoạn văn, danh sách, bảng. Văn bản hành chính Việt Nam thì có quốc hiệu, tiêu ngữ, " +
         "địa danh và ngày tháng, tên văn bản, nội dung, nơi nhận, chức vụ và chữ ký.\n" +
-        "- PowerPoint (khối ```pptx): một chủ đề màu thống nhất hợp nội dung, slide tiêu đề, mục lục, các slide nội dung, slide kết; số liệu thì dùng bảng hoặc biểu đồ; " +
-        "mỗi slide có notes cho người thuyết trình.\n" +
+        "- PowerPoint, bài trình chiếu (khối ```pptx): làm theo kỹ năng làm slide.\n" +
         "- Sau khối file, nói ngắn gọn file gồm những gì.",
       remind: "xuất file bằng khối ```xlsx, ```docx hoặc ```pptx đúng định dạng ở phần Xuất file (JSON hợp lệ với xlsx và pptx)",
     },
@@ -3230,7 +3248,10 @@
     }
     return `<div class="file-card" data-file="${kind}"><div class="file-head"><span class="file-badge ${kind}">${ext.toUpperCase()}</span>` +
       `<span class="file-name"><b>${esc(String(name))}</b><small>${label} · ${summary}</small></span>` +
-      `<button type="button" class="btn primary" data-file-dl>${ICON_DOWN}Tải về</button></div>` +
+      (kind === "pptx"
+        ? `<span class="file-btns"><button type="button" class="btn primary" data-file-show>${ICON_PLAY}Trình chiếu</button>` +
+          `<button type="button" class="btn" data-file-dl>${ICON_DOWN}PowerPoint</button><button type="button" class="btn" data-file-html>${ICON_DOWN}HTML</button></span>`
+        : `<button type="button" class="btn primary" data-file-dl>${ICON_DOWN}Tải về</button>`) + `</div>` +
       `<details><summary>Xem nội dung</summary>${preview}</details><pre class="file-src" hidden>${esc(code)}</pre></div>`;
   }
   const saveBlob = (blob, name) => {
@@ -3238,57 +3259,372 @@
     a.href = URL.createObjectURL(blob); a.download = name; a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
   };
+  // ---------- Bộ khung trình chiếu ----------
+  // Mô hình chỉ viết nội dung (JSON); thiết kế, hiệu ứng và file do khung này lo, nên slide luôn đẹp và đồng bộ.
+  // Một nội dung cho ra: trình chiếu HTML có hiệu ứng (xem ngay trong chat, tải về), và file PowerPoint có hiệu ứng chuyển slide.
+  const DECK_THEMES = {
+    midnight: { bg: "0F172A", text: "F1F5F9", muted: "94A3B8", accent: "38BDF8", accent2: "A78BFA", surface: "1E293B" },
+    ocean: { bg: "F0F9FF", text: "0C4A6E", muted: "475569", accent: "0284C7", accent2: "14B8A6", surface: "FFFFFF" },
+    sunset: { bg: "FFF7ED", text: "431407", muted: "78716C", accent: "EA580C", accent2: "DB2777", surface: "FFFFFF" },
+    forest: { bg: "F0FDF4", text: "14532D", muted: "4B5563", accent: "16A34A", accent2: "CA8A04", surface: "FFFFFF" },
+    minimal: { bg: "FFFFFF", text: "111827", muted: "6B7280", accent: "111827", accent2: "6366F1", surface: "F3F4F6" },
+    corporate: { bg: "FFFFFF", text: "1E293B", muted: "64748B", accent: "1D4ED8", accent2: "0EA5E9", surface: "F1F5F9" },
+    neon: { bg: "09090B", text: "FAFAFA", muted: "A1A1AA", accent: "22D3EE", accent2: "F472B6", surface: "18181B" },
+    warm: { bg: "FFFBEB", text: "451A03", muted: "78716C", accent: "B45309", accent2: "DC2626", surface: "FFFFFF" },
+  };
+  function deckTheme(spec) {
+    const t = spec.theme, o = t && typeof t === "object" ? t : {};
+    const base = DECK_THEMES[typeof t === "string" ? t.toLowerCase() : o.preset] || DECK_THEMES.midnight;
+    const hex = (c, d) => (/^#?[0-9a-f]{6}$/i.test(String(c || "")) ? String(c).replace("#", "").toUpperCase() : d);
+    const th = {};
+    for (const k of Object.keys(base)) th[k] = hex(o[k], base[k]);
+    th.font = typeof o.font === "string" ? o.font : "Arial";
+    return th;
+  }
+  // Kiểu của một slide: theo layout ghi rõ, không thì đoán theo nội dung có trong slide.
+  const slideKind = (sl, idx) => (["title", "section", "quote", "end"].includes(sl.layout) ? sl.layout
+    : sl.stats ? "stats" : sl.cards ? "cards" : sl.timeline ? "timeline" : sl.chart ? "chart" : sl.table ? "table"
+    : sl.left || sl.right ? "two" : sl.quote ? "quote" : idx === 0 && !sl.bullets ? "title" : "bullets");
+  const deckList = (v) => (Array.isArray(v) ? v : v == null ? [] : [v]);
+  const deckPlain = (t) => String(t ?? "").replace(/\*\*(.+?)\*\*/g, "$1");
+  const deckFmt = (t) => esc(String(t ?? "")).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
+  const DECK_PALETTE = (th) => [th.accent, th.accent2, "F59E0B", "10B981", "EF4444", "8B5CF6", "EC4899"];
+
+  // Biểu đồ SVG cho bản HTML (cột, đường, vùng, tròn, vành khuyên), có hiệu ứng vẽ dần.
+  function deckChartSvg(chart, th) {
+    const labels = deckList(chart.labels).map(String), series = deckList(chart.series).slice(0, 4);
+    const colors = DECK_PALETTE(th).map((c) => "#" + c), type = String(chart.type || "bar");
+    const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+    const fmtN = (v) => num(v).toLocaleString("vi-VN", { maximumFractionDigits: 2 });
+    if (/pie|doughnut/.test(type)) {
+      const vals = deckList(series[0]?.values).map(num), total = vals.reduce((a, b) => a + b, 0) || 1;
+      const ring = type === "doughnut", r = ring ? 120 : 80, sw = ring ? 56 : 160;
+      let acc = 0;
+      const arcs = vals.map((v, i) => {
+        const pct = (v / total) * 100, seg = `<circle class="arc" r="${r}" cx="200" cy="200" fill="none" stroke="${colors[i % colors.length]}" stroke-width="${sw}" pathLength="100" ` +
+          `stroke-dasharray="${pct} ${100 - pct}" stroke-dashoffset="${-acc}" style="--d:${i * 120}ms" transform="rotate(-90 200 200)"/>`;
+        acc += pct;
+        return seg;
+      }).join("");
+      const legend = labels.map((l, i) => `<g transform="translate(430 ${90 + i * 46})"><rect width="22" height="22" rx="6" fill="${colors[i % colors.length]}"/>` +
+        `<text x="34" y="17" class="lg">${esc(l)} · ${Math.round((num(vals[i]) / total) * 100)}%</text></g>`).join("");
+      return `<svg viewBox="0 0 820 400" class="chart">${arcs}${legend}</svg>`;
+    }
+    const all = series.flatMap((s) => deckList(s.values).map(num)), max = Math.max(1, ...all), n = Math.max(1, labels.length);
+    const X0 = 70, Y0 = 340, W = 720, H = 290, step = W / n;
+    let g = "";
+    for (let k = 0; k <= 4; k++) {
+      const y = Y0 - (H * k) / 4;
+      g += `<line x1="${X0}" x2="${X0 + W}" y1="${y}" y2="${y}" class="grid"/><text x="${X0 - 10}" y="${y + 6}" class="ax" text-anchor="end">${fmtN((max * k) / 4)}</text>`;
+    }
+    labels.forEach((l, i) => { g += `<text x="${X0 + step * (i + 0.5)}" y="${Y0 + 30}" class="ax" text-anchor="middle">${esc(l)}</text>`; });
+    if (/line|area/.test(type)) {
+      series.forEach((s, si) => {
+        const pts = deckList(s.values).map((v, i) => [X0 + step * (i + 0.5), Y0 - (num(v) / max) * H]);
+        if (!pts.length) return;
+        const line = pts.map((p) => p.join(",")).join(" ");
+        if (type === "area") g += `<polygon class="area" points="${X0 + step / 2},${Y0} ${line} ${pts.at(-1)[0]},${Y0}" fill="${colors[si]}" style="--d:${si * 200}ms"/>`;
+        g += `<polyline class="draw" points="${line}" fill="none" stroke="${colors[si]}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" pathLength="1" style="--d:${si * 200}ms"/>`;
+        g += pts.map((p, i) => `<circle class="dot" cx="${p[0]}" cy="${p[1]}" r="8" fill="${colors[si]}" style="--d:${600 + i * 90}ms"/>`).join("");
+      });
+    } else {
+      const bw = (step * 0.7) / Math.max(1, series.length);
+      series.forEach((s, si) => deckList(s.values).forEach((v, i) => {
+        const h = (num(v) / max) * H, x = X0 + step * i + step * 0.15 + bw * si;
+        g += `<rect class="bar" x="${x}" y="${Y0 - h}" width="${bw - 6}" height="${h}" rx="6" fill="${colors[si]}" style="--d:${i * 90 + si * 60}ms"/>` +
+          `<text x="${x + (bw - 6) / 2}" y="${Y0 - h - 10}" class="val" text-anchor="middle" style="--d:${500 + i * 90}ms">${fmtN(v)}</text>`;
+      }));
+    }
+    const legend = series.length > 1 ? series.map((s, i) => `<g transform="translate(${X0 + i * 190} 12)"><rect width="18" height="18" rx="5" fill="${colors[i]}"/>` +
+      `<text x="26" y="15" class="lg">${esc(String(s.name || ""))}</text></g>`).join("") : "";
+    return `<svg viewBox="0 0 820 390" class="chart">${legend}${g}</svg>`;
+  }
+
+  // Bài trình chiếu HTML đứng riêng: chữ hiện dần, chuyển slide mượt, số đếm tăng dần, biểu đồ tự vẽ;
+  // phím ← → (hoặc bấm, vuốt) để chuyển, F toàn màn hình, N xem ghi chú.
+  function deckHtml(spec) {
+    const th = deckTheme(spec), slides = deckList(spec.slides).filter(Boolean), N = slides.length;
+    const c = (k) => "#" + th[k];
+    let section = 0;
+    const a = (i) => `data-a style="--i:${i}"`;
+    const ul = (list, from = 0) => `<ul>${deckList(list).map((x, i) => {
+      const t = String(x ?? ""), sub = /^\s*-\s+/.test(t);
+      return `<li class="${sub ? "sub" : ""}" ${a(from + i)}>${deckFmt(t.replace(/^\s*-\s+/, ""))}</li>`;
+    }).join("")}</ul>`;
+    // Số liệu nổi bật: tách phần số để đếm tăng dần (1,2 tỷ; 95%; $4.5B…).
+    const statValue = (v) => {
+      const m = String(v ?? "").match(/^([^\d-]*)(-?[\d.,]+)(.*)$/);
+      if (!m) return deckFmt(v);
+      let s = m[2];
+      s = s.includes(",") && !s.includes(".") ? s.replace(",", ".") : s.includes(",") ? s.replace(/\./g, "").replace(",", ".") : /^\d{1,3}(\.\d{3})+$/.test(s) ? s.replace(/\./g, "") : s;
+      const n = Number(s);
+      if (!Number.isFinite(n) || (/^(19|20)\d\d$/.test(m[2]) && !m[1] && !m[3])) return deckFmt(v);
+      const dec = (s.split(".")[1] || "").length;
+      // Phần chữ trước và sau con số (đơn vị như %, nghìn tỷ, triệu) in nhỏ hơn để con số nổi bật và không xuống dòng.
+      const unit = (t) => (t.trim() ? `<span class="unit">${esc(t)}</span>` : "");
+      return `${unit(m[1])}<span data-count="${n}" data-dec="${dec}">${esc(m[2])}</span>${unit(m[3])}`;
+    };
+    // Tiêu đề lớn dài thì giảm cỡ chữ.
+    const tsize = (t) => { const n = deckPlain(t).length; return n > 60 ? "t3" : n > 38 ? "t2" : ""; };
+    // Cỡ chữ số liệu theo độ dài, để con số và đơn vị nằm trên một dòng.
+    const statSize = (v) => {
+      const t = String(v ?? ""), len = t.replace(/^[^\d-]*(-?[\d.,]+).*$/, "$1").length + t.replace(/[\d.,-]/g, "").length * 0.45;
+      return !/\d/.test(t) ? (t.length > 8 ? " long" : "") : len > 7 ? " l3" : len > 5 ? " l2" : "";
+    };
+    const body = slides.map((sl, idx) => {
+      const kind = slideKind(sl, idx);
+      const h2 = `<h2 ${a(0)}>${deckFmt(sl.title)}</h2>`;
+      let inner = "";
+      if (kind === "title" || kind === "end") {
+        inner = `<div class="blob b1"></div><div class="blob b2"></div><div class="center${kind === "end" ? " mid" : ""}">` +
+          (sl.kicker ? `<div class="kicker" ${a(0)}>${deckFmt(sl.kicker)}</div>` : "") +
+          `<h1 class="${tsize(sl.title || spec.title)}" ${a(1)}>${deckFmt(sl.title || spec.title)}</h1>` + (sl.subtitle ? `<p class="sub" ${a(2)}>${deckFmt(sl.subtitle)}</p>` : "") +
+          `<div class="rule" ${a(3)}></div></div>`;
+      } else if (kind === "section") {
+        section++;
+        inner = `<div class="blob b1"></div><div class="center"><div class="secnum" ${a(0)}>${esc(String(sl.number ?? String(section).padStart(2, "0")))}</div>` +
+          `<h1 class="${tsize(sl.title)}" ${a(1)}>${deckFmt(sl.title)}</h1>` + (sl.subtitle ? `<p class="sub" ${a(2)}>${deckFmt(sl.subtitle)}</p>` : "") + `</div>`;
+      } else if (kind === "quote") {
+        inner = `<div class="blob b2"></div><div class="center"><div class="qmark" ${a(0)}>“</div><blockquote ${a(1)}>${deckFmt(sl.quote || sl.title)}</blockquote>` +
+          (sl.author ? `<div class="author" ${a(2)}>— ${deckFmt(sl.author)}</div>` : "") + `</div>`;
+      } else if (kind === "two") {
+        const col = (t, list, i) => `<div class="col">${t ? `<h3 ${a(i)}>${deckFmt(t)}</h3>` : ""}${ul(list, i + 1)}</div>`;
+        inner = h2 + `<div class="two">${col(sl.leftTitle, sl.left, 1)}${col(sl.rightTitle, sl.right, 1)}</div>`;
+      } else if (kind === "table") {
+        const rows = deckList(sl.table).map(deckList);
+        inner = h2 + `<table>${rows.map((r, i) => `<tr ${a(i + 1)}>${r.map((x) => `<${i ? "td" : "th"}>${deckFmt(x)}</${i ? "td" : "th"}>`).join("")}</tr>`).join("")}</table>`;
+      } else if (kind === "chart") {
+        inner = h2 + `<div class="chartwrap${sl.bullets ? " with" : ""}"><div ${a(1)}>${sl.chart.title ? `<h3>${deckFmt(sl.chart.title)}</h3>` : ""}${deckChartSvg(sl.chart, th)}</div>` +
+          (sl.bullets ? ul(sl.bullets, 2) : "") + `</div>`;
+      } else if (kind === "stats") {
+        inner = h2 + `<div class="grid">${deckList(sl.stats).slice(0, 4).map((x, i) =>
+          `<div class="stat" ${a(i + 1)}><div class="big${statSize(x?.value)}">${statValue(x?.value)}</div><div class="lab">${deckFmt(x?.label)}</div></div>`).join("")}</div>`;
+      } else if (kind === "cards") {
+        inner = h2 + `<div class="grid${deckList(sl.cards).length > 3 ? " g4" : ""}">${deckList(sl.cards).slice(0, 4).map((x, i) =>
+          `<div class="card" ${a(i + 1)}>${x?.icon ? `<div class="icon">${esc(String(x.icon))}</div>` : ""}<h3>${deckFmt(x?.title)}</h3><p>${deckFmt(x?.text)}</p></div>`).join("")}</div>`;
+      } else if (kind === "timeline") {
+        const items = deckList(sl.timeline).slice(0, 6);
+        inner = h2 + `<div class="tl"><div class="tline" ${a(1)}></div>${items.map((x, i) =>
+          `<div class="tit" ${a(i + 2)}><div class="tdot"></div><div class="ttime">${deckFmt(x?.time)}</div><div class="ttext">${deckFmt(x?.text)}</div></div>`).join("")}</div>`;
+      } else inner = h2 + ul(sl.bullets, 1);
+      const foot = ["title", "end", "section"].includes(kind) ? "" : `<div class="foot">${deckFmt(spec.title)}</div>`;
+      return `<section class="slide k-${kind}"><div class="inner">${inner}</div>${foot}<div class="num">${idx + 1} / ${N}</div>` +
+        (sl.notes ? `<aside class="notes">${deckFmt(sl.notes)}</aside>` : "") + `</section>`;
+    }).join("\n");
+    const css = `:root{--bg:${c("bg")};--text:${c("text")};--muted:${c("muted")};--ac:${c("accent")};--ac2:${c("accent2")};--sf:${c("surface")}}
+*{box-sizing:border-box}html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",sans-serif}
+.deck{position:fixed;inset:0;display:grid;place-items:center}
+.slide{position:absolute;width:min(100vw,177.78vh);height:min(56.25vw,100vh);font-size:min(2.0833vw,3.7037vh);background:var(--bg);color:var(--text);
+padding:4.2em 6em 3.6em;overflow:hidden;opacity:0;visibility:hidden;transform:translateX(3%) scale(.985);transition:opacity .6s ease,transform .7s cubic-bezier(.2,.7,.2,1),visibility .6s}
+.slide.active{opacity:1;visibility:visible;transform:none}.slide.past{transform:translateX(-3%) scale(.985)}
+.slide::before{content:"";position:absolute;inset:auto -10% -40% auto;width:45%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--ac) 16%,transparent),transparent 70%);pointer-events:none}
+[data-a]{opacity:0;transform:translateY(1.2em)}
+.slide.active [data-a]{animation:up .75s cubic-bezier(.2,.7,.2,1) forwards;animation-delay:calc(var(--i,0)*110ms + 150ms)}
+@keyframes up{to{opacity:1;transform:none}}
+h1{font-size:3.8em;line-height:1.08;margin:0;letter-spacing:-.02em;font-weight:800}h1.t2{font-size:3em}h1.t3{font-size:2.4em}
+.inner{height:100%;font-size:calc(1em * var(--fit,1))}
+h2{font-size:2.3em;line-height:1.15;margin:0 0 .75em;letter-spacing:-.01em;font-weight:800;position:relative}
+h2::after{content:"";display:block;width:2.2em;height:.16em;border-radius:1em;background:linear-gradient(90deg,var(--ac),var(--ac2));margin-top:.45em}
+h3{font-size:1.35em;margin:0 0 .5em;color:var(--ac)}
+ul{margin:0;padding:0;list-style:none}li{font-size:1.4em;line-height:1.4;margin:0 0 .7em;padding-left:1.3em;position:relative}
+li::before{content:"";position:absolute;left:0;top:.5em;width:.5em;height:.5em;border-radius:.15em;background:var(--ac)}
+li.sub{font-size:1.15em;margin-left:1.5em;color:var(--muted)}li.sub::before{background:var(--muted);border-radius:50%;width:.4em;height:.4em}
+b{color:var(--ac)}
+.center{position:relative;height:100%;display:flex;flex-direction:column;justify-content:center;max-width:80%}.center.mid{align-items:center;text-align:center;max-width:none}
+.kicker{font-size:1.1em;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--ac);margin-bottom:1em}
+.sub{font-size:1.6em;color:var(--muted);margin:.8em 0 0;line-height:1.4}
+.rule{width:5em;height:.3em;border-radius:1em;background:linear-gradient(90deg,var(--ac),var(--ac2));margin-top:1.8em}
+.blob{position:absolute;border-radius:50%;filter:blur(2em);opacity:.55;animation:float 9s ease-in-out infinite alternate}
+.b1{width:28em;height:28em;right:-6em;top:-8em;background:radial-gradient(circle,var(--ac),transparent 65%)}
+.b2{width:22em;height:22em;left:-6em;bottom:-9em;background:radial-gradient(circle,var(--ac2),transparent 65%);animation-delay:-4s}
+@keyframes float{to{transform:translate(-2em,2em) scale(1.08)}}
+.k-section{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff}.k-section .sub{color:rgba(255,255,255,.85)}.k-section b{color:#fff}
+.secnum{font-size:7em;font-weight:800;line-height:1;opacity:.35;margin-bottom:.1em}
+.qmark{font-size:9em;line-height:.6;color:var(--ac);font-family:Georgia,serif}
+blockquote{font-size:2.4em;line-height:1.3;margin:.2em 0 .6em;font-style:italic;font-weight:600}.author{font-size:1.3em;color:var(--ac);font-weight:700}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:3em}
+.grid{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:1.6em;margin-top:1em}
+.stat,.card{background:var(--sf);border-radius:1.2em;padding:1.6em 1.4em;box-shadow:0 .6em 2em rgba(0,0,0,.12);border:1px solid color-mix(in srgb,var(--text) 8%,transparent)}
+.stat{text-align:center}.big{white-space:nowrap;font-size:3.6em;font-weight:800;line-height:1.1;background:linear-gradient(90deg,var(--ac),var(--ac2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.big.long{font-size:2em;line-height:1.2;white-space:normal}.big.l2{font-size:2.8em}.big.l3{font-size:2.2em}.unit{font-size:.45em;font-weight:700;margin:0 .12em;letter-spacing:0}.lab{font-size:1.15em;color:var(--muted);margin-top:.5em;line-height:1.35}
+.icon{font-size:2.6em;margin-bottom:.3em}
+.grid.g4{grid-auto-flow:row;grid-template-columns:1fr 1fr;gap:1em 1.4em}.g4 .card{display:grid;grid-template-columns:auto 1fr;column-gap:.9em;align-items:start;padding:1em 1.2em}
+.g4 .icon{grid-row:span 2;font-size:2.2em;margin:0}.g4 .card h3{margin:0 0 .2em}.card h3{color:var(--text);font-size:1.4em}.card p{margin:0;font-size:1.1em;line-height:1.45;color:var(--muted)}
+table{width:100%;border-collapse:separate;border-spacing:0;font-size:1.2em;border-radius:.8em;overflow:hidden}
+th{background:var(--ac);color:#fff;text-align:left;padding:.65em 1em}td{padding:.6em 1em;border-bottom:1px solid color-mix(in srgb,var(--text) 10%,transparent)}
+tr:nth-child(odd) td{background:color-mix(in srgb,var(--sf) 70%,transparent)}
+.chartwrap.with{display:grid;grid-template-columns:1.7fr 1fr;gap:2em;align-items:center}.chart{display:block;width:100%;height:auto;max-height:12em;margin:0 auto}
+.chart .grid{stroke:color-mix(in srgb,var(--text) 12%,transparent)}.chart .ax,.chart .lg,.chart .val{fill:var(--muted);font-size:17px;font-family:inherit}.chart .lg{fill:var(--text);font-size:19px}.chart .val{fill:var(--text);font-weight:700}
+.slide.active .bar{transform-box:fill-box;transform-origin:bottom;animation:grow .9s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--d) + 300ms)}@keyframes grow{from{transform:scaleY(0)}}
+.slide.active .draw{stroke-dasharray:1;stroke-dashoffset:1;animation:draw 1.4s ease forwards;animation-delay:calc(var(--d) + 300ms)}@keyframes draw{to{stroke-dashoffset:0}}
+.slide.active .area{opacity:0;animation:fade .9s ease forwards;animation-delay:calc(var(--d) + 900ms)}.area{fill-opacity:.15}
+.slide.active .dot,.slide.active .val,.slide.active .arc{opacity:0;animation:fade .5s ease forwards;animation-delay:calc(var(--d) + 300ms)}@keyframes fade{to{opacity:1}}
+.tl{position:relative;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:1em;margin-top:3em}
+.tline{position:absolute;left:0;right:0;top:3.1em;height:.25em;border-radius:1em;background:linear-gradient(90deg,var(--ac),var(--ac2))}
+.tit{text-align:center;position:relative}.ttime{font-weight:800;color:var(--ac);font-size:1.4em;height:1.6em}
+.tdot{position:absolute;left:50%;top:2.75em;width:1em;height:1em;border-radius:50%;background:var(--bg);border:.25em solid var(--ac);transform:translateX(-50%)}
+.ttext{margin-top:2.6em;font-size:1.1em;line-height:1.4}
+.foot{position:absolute;left:6em;bottom:2em;font-size:.85em;color:var(--muted)}.num{position:absolute;right:3em;bottom:2em;font-size:.9em;color:var(--muted)}
+.k-section .num{color:rgba(255,255,255,.8)}
+.notes{display:none;position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.82);color:#fff;font-size:1em;line-height:1.5;padding:1em 6em}body.notes .notes{display:block}
+.progress{position:fixed;left:0;bottom:0;height:4px;background:linear-gradient(90deg,var(--ac),var(--ac2));transition:width .5s ease;z-index:9}
+.hint{position:fixed;left:50%;top:14px;transform:translateX(-50%);background:rgba(0,0,0,.65);color:#fff;font:13px system-ui;padding:6px 12px;border-radius:999px;opacity:.9;transition:opacity .8s;z-index:9}
+@media (prefers-reduced-motion:reduce){*,*::before{animation:none!important;transition:none!important}[data-a]{opacity:1;transform:none}.chart *{opacity:1!important}.chart .draw{stroke-dashoffset:0!important}}`;
+    const js = `const S=[...document.querySelectorAll(".slide")],P=document.querySelector(".progress");let cur=-1;
+function count(s){s.querySelectorAll("[data-count]").forEach(e=>{const n=+e.dataset.count,d=+e.dataset.dec,t0=performance.now();
+const f=t=>{const k=Math.min(1,(t-t0)/1400),v=n*(1-Math.pow(1-k,3));e.textContent=v.toLocaleString("vi-VN",{minimumFractionDigits:d,maximumFractionDigits:d});if(k<1)requestAnimationFrame(f)};requestAnimationFrame(f)})}
+function go(n){n=Math.max(0,Math.min(S.length-1,n));if(n===cur)return;S.forEach((s,k)=>{s.classList.toggle("active",k===n);s.classList.toggle("past",k<n)});cur=n;P.style.width=(n+1)/S.length*100+"%";count(S[n]);try{history.replaceState(null,"","#"+(n+1))}catch(e){}}
+addEventListener("keydown",e=>{const k=e.key;if(["ArrowRight","PageDown"," ","Enter"].includes(k)){e.preventDefault();go(cur+1)}else if(["ArrowLeft","PageUp","Backspace"].includes(k)){e.preventDefault();go(cur-1)}
+else if(k==="Home")go(0);else if(k==="End")go(S.length-1);else if(k==="f"||k==="F"){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen().catch(()=>{})}
+else if(k==="n"||k==="N")document.body.classList.toggle("notes")});
+addEventListener("click",e=>{if(e.target.closest("a,button"))return;go(e.clientX>innerWidth/3?cur+1:cur-1)});
+let x0=null;addEventListener("touchstart",e=>{x0=e.touches[0].clientX},{passive:true});addEventListener("touchend",e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0;if(Math.abs(dx)>40)go(dx<0?cur+1:cur-1);x0=null});
+function fit(){S.forEach(s=>{const n=s.querySelector(".inner");if(!n)return;let f=1;n.style.setProperty("--fit",1);while(f>.55&&(n.scrollHeight>n.clientHeight+2||n.scrollWidth>n.clientWidth+2)){f-=.05;n.style.setProperty("--fit",f.toFixed(2))}})}
+fit();addEventListener("resize",fit);if(document.fonts)document.fonts.ready.then(fit);
+go((parseInt(location.hash.slice(1))||1)-1);setTimeout(()=>{const h=document.querySelector(".hint");if(h)h.style.opacity=0},3500);`;
+    // Tách chữ thẻ đóng để trình duyệt và Live Server không hiểu nhầm là kết thúc script của trang chat.
+    const end = (t) => "</" + t + ">";
+    return `<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">` +
+      `<title>${esc(String(spec.title || "Bài trình chiếu"))}</title><link rel="preconnect" href="https://fonts.googleapis.com">` +
+      `<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&display=swap" rel="stylesheet"><style>${css}${end("style")}` +
+      `</head><body><div class="deck">${body}</div><div class="progress"></div><div class="hint">← → hoặc bấm để chuyển · F toàn màn hình · N ghi chú</div>` +
+      `<script>${js}${end("script")}${end("bo" + "dy")}${end("html")}`;
+  }
   async function buildPptx(spec) {
     await loadScript(PPTX_LIB);
     const pptx = new PptxGenJS();
     pptx.layout = "LAYOUT_WIDE"; // 13.33 x 7.5 inch
-    const hex = (c, d) => (/^#?[0-9a-f]{6}$/i.test(String(c || "")) ? String(c).replace("#", "") : d);
-    const th = spec.theme || {};
-    const bg = hex(th.bg, "FFFFFF"), text = hex(th.text, "1F2937"), accent = hex(th.accent, "2563EB"), muted = hex(th.muted, "6B7280");
-    const font = typeof th.font === "string" ? th.font : "Arial";
-    const palette = [accent, "F59E0B", "10B981", "EF4444", "8B5CF6", "06B6D4", "EC4899"];
-    const items = (list) => (Array.isArray(list) ? list : [list]).filter((x) => x != null).map((x) => {
+    const th = deckTheme(spec), font = th.font, palette = DECK_PALETTE(th);
+    const slides = deckList(spec.slides).filter(Boolean);
+    const items = (list) => deckList(list).map((x) => {
       const t = String(x), sub = /^\s*-\s+/.test(t);
-      return { text: t.replace(/^\s*-\s+/, ""), options: { bullet: sub ? { indent: 18 } : true, indentLevel: sub ? 1 : 0, fontSize: sub ? 18 : 22, breakLine: true } };
+      return { text: deckPlain(t.replace(/^\s*-\s+/, "")), options: { bullet: sub ? { indent: 18 } : { indent: 22 }, indentLevel: sub ? 1 : 0,
+        fontSize: sub ? 18 : 22, color: sub ? th.muted : th.text, breakLine: true } };
     });
-    const box = (s, list, opt) => s.addText(items(list), { color: text, fontFace: font, valign: "top", paraSpaceAfter: 8, ...opt });
-    pptx.title = String(spec.title || "Bài thuyết trình");
-    (spec.slides || []).forEach((sl, idx) => {
-      sl = sl || {};
-      const s = pptx.addSlide();
-      s.background = { color: bg };
-      const isTitle = sl.layout === "title" || (idx === 0 && !sl.bullets && !sl.table && !sl.chart && !sl.left);
-      if (isTitle) {
-        s.addShape(pptx.ShapeType.rect, { x: 0, y: 6.9, w: 13.33, h: 0.6, fill: { color: accent }, line: { color: accent } });
-        s.addText(String(sl.title || spec.title || ""), { x: 0.8, y: 2.1, w: 11.7, h: 1.7, fontSize: 44, bold: true, color: text, fontFace: font, align: "center", valign: "middle" });
-        if (sl.subtitle) s.addText(String(sl.subtitle), { x: 0.8, y: 3.9, w: 11.7, h: 1, fontSize: 22, color: muted, fontFace: font, align: "center" });
+    const card = (s, o) => s.addShape(pptx.ShapeType.roundRect, { rectRadius: 0.15, fill: { color: th.surface }, line: { color: th.surface }, ...o });
+    pptx.title = deckPlain(spec.title || "Bài thuyết trình");
+    let section = 0;
+    slides.forEach((sl, idx) => {
+      const kind = slideKind(sl, idx), s = pptx.addSlide();
+      const T = (text, o) => s.addText(deckPlain(text), { fontFace: font, color: th.text, ...o });
+      s.background = { color: kind === "section" ? th.accent : th.bg };
+      const blobs = () => {
+        s.addShape(pptx.ShapeType.ellipse, { x: 9.6, y: -2.2, w: 6, h: 6, fill: { color: th.accent, transparency: 82 }, line: { color: th.accent, transparency: 100 } });
+        s.addShape(pptx.ShapeType.ellipse, { x: -2, y: 5, w: 5, h: 5, fill: { color: th.accent2, transparency: 85 }, line: { color: th.accent2, transparency: 100 } });
+      };
+      if (kind === "title" || kind === "end") {
+        blobs();
+        const mid = kind === "end", align = mid ? "center" : "left", x = mid ? 0.9 : 1.0, w = mid ? 11.5 : 10.5;
+        if (sl.kicker) T(sl.kicker, { x, y: 1.9, w, h: 0.5, fontSize: 16, bold: true, color: th.accent, charSpacing: 4, align });
+        const tl = deckPlain(sl.title || spec.title).length;
+        T(sl.title || spec.title, { x, y: 2.4, w, h: 1.8, fontSize: tl > 60 ? 32 : tl > 38 ? 38 : 46, bold: true, align, valign: "middle", fit: "shrink" });
+        if (sl.subtitle) T(sl.subtitle, { x, y: 4.25, w, h: 0.9, fontSize: 22, color: th.muted, align });
+        s.addShape(pptx.ShapeType.roundRect, { x: mid ? 5.9 : x, y: 5.35, w: 1.6, h: 0.1, rectRadius: 0.05, fill: { color: th.accent }, line: { color: th.accent } });
+      } else if (kind === "section") {
+        section++;
+        T(String(sl.number ?? String(section).padStart(2, "0")), { x: 1.0, y: 1.4, w: 6, h: 1.8, fontSize: 110, bold: true, color: th.bg, transparency: 55 });
+        T(sl.title, { x: 1.0, y: 3.2, w: 11, h: 1.3, fontSize: deckPlain(sl.title).length > 38 ? 32 : 42, bold: true, color: th.bg, fit: "shrink" });
+        if (sl.subtitle) T(sl.subtitle, { x: 1.0, y: 4.5, w: 11, h: 0.8, fontSize: 20, color: th.bg });
+      } else if (kind === "quote") {
+        blobs();
+        T("“", { x: 0.9, y: 0.6, w: 2, h: 2, fontSize: 150, color: th.accent, fontFace: "Georgia" });
+        T(sl.quote || sl.title, { x: 1.6, y: 2.0, w: 10.2, h: 3, fontSize: deckPlain(sl.quote || sl.title).length > 120 ? 24 : 32, italic: true, bold: true, valign: "middle", fit: "shrink" });
+        if (sl.author) T("— " + deckPlain(sl.author), { x: 1.6, y: 5.1, w: 10, h: 0.6, fontSize: 20, bold: true, color: th.accent });
       } else {
-        s.addText(String(sl.title || ""), { x: 0.6, y: 0.35, w: 12.1, h: 0.9, fontSize: 30, bold: true, color: text, fontFace: font, valign: "middle" });
-        s.addShape(pptx.ShapeType.rect, { x: 0.6, y: 1.25, w: 1.2, h: 0.07, fill: { color: accent }, line: { color: accent } });
-        const top = 1.6, h = 5.2;
-        if (sl.left || sl.right) {
-          box(s, sl.left || [], { x: 0.6, y: top, w: 5.9, h });
-          box(s, sl.right || [], { x: 6.8, y: top, w: 5.9, h });
-        } else if (Array.isArray(sl.table) && sl.table.length) {
-          const rows = sl.table.map((r, ri) => (Array.isArray(r) ? r : [r]).map((c) => ({ text: String(c ?? ""),
-            options: ri === 0 ? { bold: true, color: "FFFFFF", fill: { color: accent } } : {} })));
-          s.addTable(rows, { x: 0.6, y: top, w: 12.1, fontSize: 14, fontFace: font, color: text, border: { type: "solid", pt: 0.5, color: "BFBFBF" }, valign: "middle" });
-        } else if (sl.chart && Array.isArray(sl.chart.series)) {
+        T(sl.title, { x: 0.7, y: 0.4, w: 11.9, h: 0.9, fontSize: deckPlain(sl.title).length > 45 ? 24 : 30, bold: true, valign: "middle", fit: "shrink" });
+        s.addShape(pptx.ShapeType.roundRect, { x: 0.7, y: 1.3, w: 1.1, h: 0.08, rectRadius: 0.04, fill: { color: th.accent }, line: { color: th.accent } });
+        const top = 1.7, h = 5.0;
+        // Danh sách dài thì chữ nhỏ hơn (PowerPoint không tự co chữ khi mở file).
+        const list = (l, o) => {
+          const chars = deckList(l).join(" ").length, k = chars > 320 ? 0.72 : chars > 220 ? 0.84 : 1;
+          const its = items(l).map((x) => ({ ...x, options: { ...x.options, fontSize: Math.round(x.options.fontSize * k) } }));
+          s.addText(its, { fontFace: font, valign: "top", paraSpaceAfter: 10, fit: "shrink", ...o });
+        };
+        if (kind === "two") {
+          [[sl.leftTitle, sl.left, 0.7], [sl.rightTitle, sl.right, 6.9]].forEach(([t, l, x]) => {
+            if (t) T(t, { x, y: top, w: 5.7, h: 0.6, fontSize: 22, bold: true, color: th.accent });
+            list(l, { x, y: t ? top + 0.7 : top, w: 5.7, h: t ? h - 0.7 : h });
+          });
+        } else if (kind === "table") {
+          const rows = deckList(sl.table).map((r, ri) => deckList(r).map((c) => ({ text: deckPlain(c),
+            options: ri === 0 ? { bold: true, color: "FFFFFF", fill: { color: th.accent } } : ri % 2 ? { fill: { color: th.surface } } : {} })));
+          s.addTable(rows, { x: 0.7, y: top, w: 11.9, fontSize: 15, fontFace: font, color: th.text, border: { type: "solid", pt: 0.5, color: "CBD5E1" }, valign: "middle", rowH: 0.5 });
+        } else if (kind === "chart") {
           const types = { bar: "bar", line: "line", pie: "pie", doughnut: "doughnut", area: "area" };
-          const type = pptx.ChartType[types[sl.chart.type] || "bar"];
-          const data = sl.chart.series.map((se) => ({ name: String(se.name || ""), labels: (sl.chart.labels || []).map(String), values: (se.values || []).map(Number) }));
-          const round = /pie|doughnut/.test(sl.chart.type || "");
-          s.addChart(type, data, { x: 0.6, y: top, w: sl.bullets ? 7.6 : 12.1, h: 5, chartColors: palette, showLegend: data.length > 1 || round, legendPos: "b",
-            showTitle: !!sl.chart.title, title: String(sl.chart.title || ""), titleColor: text, legendColor: text, catAxisLabelColor: text, valAxisLabelColor: text,
-            showPercent: round, dataLabelColor: text });
-          if (sl.bullets) box(s, sl.bullets, { x: 8.5, y: top, w: 4.2, h });
-        } else if (sl.bullets) box(s, sl.bullets, { x: 0.6, y: top, w: 12.1, h });
-        if (sl.text) s.addText(String(sl.text), { x: 0.6, y: top, w: 12.1, h, fontSize: 20, color: text, fontFace: font, valign: "top" });
-        s.addText(String(idx + 1), { x: 12.2, y: 6.95, w: 0.7, h: 0.35, fontSize: 11, color: muted, align: "right" });
+          const ct = String(sl.chart.type || "bar"), round = /pie|doughnut/.test(ct);
+          const data = deckList(sl.chart.series).map((se) => ({ name: deckPlain(se?.name), labels: deckList(sl.chart.labels).map(String), values: deckList(se?.values).map(Number) }));
+          s.addChart(pptx.ChartType[types[ct] || "bar"], data, { x: 0.7, y: top, w: sl.bullets ? 7.6 : 11.9, h: 5, chartColors: palette, showLegend: data.length > 1 || round,
+            legendPos: "b", showTitle: !!sl.chart.title, title: deckPlain(sl.chart.title), titleColor: th.text, legendColor: th.text, catAxisLabelColor: th.muted,
+            valAxisLabelColor: th.muted, showPercent: round, showValue: !round && data.length === 1, dataLabelColor: th.text, valGridLine: { color: "E2E8F0", size: 0.5 } });
+          if (sl.bullets) list(sl.bullets, { x: 8.6, y: top, w: 4.0, h });
+        } else if (kind === "stats" || kind === "cards") {
+          const arr = deckList(kind === "stats" ? sl.stats : sl.cards).slice(0, 4), n = Math.max(1, arr.length), gap = 0.35, w = (11.9 - gap * (n - 1)) / n;
+          arr.forEach((x, i) => {
+            const bx = 0.7 + i * (w + gap);
+            card(s, { x: bx, y: top + 0.3, w, h: kind === "stats" ? 3.2 : 4.3 });
+            if (kind === "stats") {
+              // Con số to, đơn vị nhỏ (giống bản HTML); chữ quá dài thì tự thu nhỏ cho vừa khung.
+              const m = String(x?.value ?? "").match(/^([^\d-]*)(-?[\d.,]+)(.*)$/);
+              const runs = m ? [[m[1], 22], [m[2], 48], [m[3], 22]].filter(([t]) => t.trim()).map(([t, size]) => ({ text: t, options: { fontSize: size } }))
+                : [{ text: deckPlain(x?.value), options: { fontSize: 30 } }];
+              s.addText(runs, { x: bx, y: top + 0.7, w, h: 1.4, bold: true, color: th.accent, fontFace: font, align: "center", valign: "middle", fit: "shrink" });
+              T(x?.label, { x: bx + 0.2, y: top + 2.1, w: w - 0.4, h: 1.2, fontSize: deckPlain(x?.label).length > 40 ? 13 : 16, color: th.muted, align: "center", valign: "top", fit: "shrink" });
+            } else {
+              if (x?.icon) T(x.icon, { x: bx + 0.3, y: top + 0.5, w: 1.2, h: 0.9, fontSize: 34 });
+              const many = n > 3;
+              T(x?.title, { x: bx + 0.3, y: top + 1.5, w: w - 0.6, h: 0.7, fontSize: many ? 17 : 20, bold: true, valign: "top", fit: "shrink" });
+              T(x?.text, { x: bx + 0.3, y: top + 2.2, w: w - 0.6, h: 2.2, fontSize: many || deckPlain(x?.text).length > 80 ? 13 : 15, color: th.muted, valign: "top", fit: "shrink" });
+            }
+          });
+        } else if (kind === "timeline") {
+          const arr = deckList(sl.timeline).slice(0, 6), n = Math.max(1, arr.length), w = 11.9 / n, y = top + 1.5;
+          s.addShape(pptx.ShapeType.rect, { x: 0.7, y, w: 11.9, h: 0.06, fill: { color: th.accent }, line: { color: th.accent } });
+          arr.forEach((x, i) => {
+            const cx = 0.7 + w * (i + 0.5);
+            s.addShape(pptx.ShapeType.ellipse, { x: cx - 0.17, y: y - 0.14, w: 0.34, h: 0.34, fill: { color: th.bg }, line: { color: th.accent, width: 3 } });
+            T(x?.time, { x: cx - w / 2, y: y - 0.85, w, h: 0.55, fontSize: 18, bold: true, color: th.accent, align: "center" });
+            T(x?.text, { x: cx - w / 2 + 0.1, y: y + 0.4, w: w - 0.2, h: 2.4, fontSize: n > 4 || deckPlain(x?.text).length > 50 ? 12 : 14, align: "center", valign: "top", fit: "shrink" });
+          });
+        } else list(sl.bullets, { x: 0.7, y: top, w: 11.9, h });
+        T(spec.title, { x: 0.7, y: 6.95, w: 8, h: 0.35, fontSize: 10, color: th.muted });
+        T(`${idx + 1} / ${slides.length}`, { x: 11.4, y: 6.95, w: 1.2, h: 0.35, fontSize: 10, color: th.muted, align: "right" });
       }
-      if (sl.notes) s.addNotes(String(sl.notes));
+      if (sl.notes) s.addNotes(deckPlain(sl.notes));
     });
-    saveBlob(await pptx.write({ outputType: "blob" }), fileName(spec.file || spec.title || "bai-thuyet-trinh") + ".pptx");
+    let blob = await pptx.write({ outputType: "blob" });
+    // Hiệu ứng chuyển slide: thư viện chưa hỗ trợ nên chèn thẳng vào XML của từng slide.
+    const tr = { fade: "<p:fade/>", push: '<p:push dir="u"/>', wipe: '<p:wipe dir="r"/>', cover: '<p:cover dir="l"/>', none: "" }[spec.transition || "fade"] ?? "<p:fade/>";
+    if (tr) {
+      try {
+        if (!window.JSZip) await loadScript(CDN + "jszip/3.10.1/jszip.min.js");
+        const zip = await JSZip.loadAsync(blob);
+        for (const name of Object.keys(zip.files).filter((n) => /^ppt\/slides\/slide\d+\.xml$/.test(n))) {
+          let xml = await zip.file(name).async("string");
+          if (xml.includes("<p:transition")) continue;
+          const t = `<p:transition spd="med">${tr}</p:transition>`;
+          xml = xml.includes("</p:clrMapOvr>") ? xml.replace("</p:clrMapOvr>", "</p:clrMapOvr>" + t) : xml.replace("</p:cSld>", "</p:cSld>" + t);
+          zip.file(name, xml);
+        }
+        blob = await zip.generateAsync({ type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.presentationml.presentation" });
+      } catch (e) { console.warn("Không thêm được hiệu ứng chuyển slide:", e); }
+    }
+    saveBlob(blob, fileName(spec.file || spec.title || "bai-thuyet-trinh") + ".pptx");
+  }
+  // Mở hoặc đóng phần trình chiếu ngay dưới thẻ file.
+  function showDeck(card, btn) {
+    const next = card.nextElementSibling;
+    if (next?.classList.contains("deck-preview")) { next.remove(); btn.innerHTML = `${ICON_PLAY}Trình chiếu`; return; }
+    const spec = parseLoose(card.querySelector(".file-src").textContent);
+    const box = document.createElement("div");
+    box.className = "preview deck-preview";
+    box.innerHTML = `<div class="preview-bar"><span>Trình chiếu · bấm vào slide rồi dùng ← → để chuyển</span><button type="button" data-full>${ICON_FULL}Toàn màn hình</button></div>`;
+    const frame = document.createElement("iframe");
+    frame.sandbox = "allow-scripts";
+    frame.allow = "fullscreen";
+    frame.srcdoc = deckHtml(spec);
+    box.append(frame);
+    card.after(box);
+    btn.innerHTML = `${ICON_PLAY}Đóng trình chiếu`;
   }
   async function buildXlsx(spec) {
     await loadScript(CDN + "xlsx/0.18.5/xlsx.full.min.js");
@@ -3530,6 +3866,14 @@
     if (imgBtn) { imageAction(imgBtn); return; }
     const fileBtn = e.target.closest("[data-file-dl]");
     if (fileBtn) { downloadFile(fileBtn.closest(".file-card"), fileBtn); return; }
+    const showBtn = e.target.closest("[data-file-show]");
+    if (showBtn) { showDeck(showBtn.closest(".file-card"), showBtn); return; }
+    const htmlBtn = e.target.closest("[data-file-html]");
+    if (htmlBtn) {
+      const card = htmlBtn.closest(".file-card"), spec = parseLoose(card.querySelector(".file-src").textContent);
+      saveBlob(new Blob([deckHtml(spec)], { type: "text/html" }), fileName(spec.file || spec.title || "bai-trinh-chieu") + ".html");
+      return;
+    }
     const prevBtn = e.target.closest("[data-preview], [data-download], [data-full]");
     if (prevBtn) { codePreview(prevBtn); return; }
     const copyBtn = e.target.closest("[data-copy]");
