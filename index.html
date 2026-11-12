@@ -1498,6 +1498,7 @@
         reply.council = [modelTitle("shared", cloudModel()), ...models.map((m) => modelTitle("shared", m))];
       }
       await answerWithTools(history, reply, node);
+      await ensureAnswer(history, reply, node);
       const draft = splitThink(reply.content).answer.trim();
       // Mô hình GLM với câu khó (toán, logic, lập trình thi đấu) mà không bật Nghĩ kỹ: tự chấm lại và sửa câu trả lời một lượt.
       if (!settings.deep && draft && /^glm/.test(cloudModel()) && activeSkills(chat).some((k) => k.hard)) {
@@ -1552,6 +1553,23 @@
     }
   }
 
+  // Mô hình suy nghĩ xong rồi kết thúc mà không viết phần trả lời (đôi khi nó viết luôn câu trả lời trong phần suy nghĩ):
+  // gửi lại phần suy nghĩ và yêu cầu viết ngay câu trả lời cuối, tắt suy nghĩ dài.
+  async function ensureAnswer(messages, reply, node) {
+    const { think, answer } = splitThink((reply.reasoning ? `<think>${reply.reasoning}</think>` : "") + reply.content);
+    if (answer.trim() || !think.trim()) return;
+    const secs = reply.thinkSecs;
+    Object.assign(reply, { fast: true, notice: "Đang viết câu trả lời…" });
+    paintAssistant(node, reply, true);
+    try {
+      await answerWithTools([...messages,
+        { role: "assistant", content: "(Phần suy nghĩ của tôi)\n" + think.trim().slice(-8000) },
+        { role: "user", content: "Bạn mới suy nghĩ mà chưa viết câu trả lời. Dựa trên phần suy nghĩ trên, hãy viết ngay câu trả lời cuối cùng hoàn chỉnh cho câu hỏi ban đầu, cùng ngôn ngữ với câu hỏi." },
+      ], reply, node);
+    } finally { delete reply.fast; delete reply.notice; }
+    if (secs) reply.thinkSecs = secs;
+  }
+
   // Bước chấm lại (tự kiểm tra hoặc giám khảo của Nghĩ kỹ). Với bài dài (nhiều code), mô hình có thể dùng hết giới hạn độ dài
   // cho phần suy nghĩ mà chưa viết được câu trả lời: khi đó cho viết lại ngay, tắt suy nghĩ dài. Vẫn không được thì dùng
   // lời giải nháp đầu tiên và ghi chú, không báo lỗi.
@@ -1581,7 +1599,8 @@
     const r = { role: "assistant", content: "", reasoning: "", forceModel: model, stop: new AbortController() };
     controller.signal.addEventListener("abort", () => r.stop.abort(), { once: true });
     stops.push(r.stop);
-    try { await answerWithTools(msgs, r, document.createElement("div")); } catch (e) { if (!r.stop.signal.aborted) throw e; }
+    const box = document.createElement("div");
+    try { await answerWithTools(msgs, r, box); await ensureAnswer(msgs, r, box); } catch (e) { if (!r.stop.signal.aborted) throw e; }
     // Hết giờ mà đã viết được phần đáng kể thì vẫn đưa cho giám khảo, ghi rõ là chưa viết xong.
     const answer = splitThink(r.content).answer.replace(/```output[\s\S]*?```/g, "").trim();
     const cut = r.stop.signal.aborted;
