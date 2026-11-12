@@ -46,30 +46,28 @@ Mở https://phuchello2811-web.github.io/GLM/ (hoặc mở `index.html` bằng *
 
 Trang dùng **GLM miễn phí** qua máy chủ chung (dựng theo [worker/README.md](worker/README.md)). Ai mở link cũng chat được ngay, không cần key hay tài khoản. Bấm nút tên mô hình trong khung chat (hoặc ở đầu trang) để chọn:
 
-- **GLM-5.3 Flash**: thông minh nhất, suy luận, toán và code giỏi nhất, đọc được ảnh. Mặc định. Cần thêm key NVIDIA vào máy chủ theo [worker/README.md](worker/README.md).
+Nhóm **Mô hình mạnh** (miễn phí trên NVIDIA, cần thêm key NVIDIA vào máy chủ theo [worker/README.md](worker/README.md)):
+
+- **Nemotron 3 Ultra**: thông minh nhất, trả lời nhanh, suy luận, toán và code rất tốt. Mặc định.
+- **Nemotron 3.5 Super VL**: đọc ảnh giỏi, suy nghĩ kỹ. Câu hỏi có ảnh tự gửi tới mô hình này.
+- **Mistral Large 4**: viết văn hay, dịch và dùng nhiều ngôn ngữ giỏi.
+- **Nemotron 3.5 Lightning**: giải thích dễ hiểu bằng ví dụ đời thường.
+- **Laguna XS**: chuyên viết code, trả lời rất nhanh.
+- **Step 5**: suy luận nhiều bước rất kỹ, trả lời chậm hơn.
+
+Nhóm **GLM** (Z.ai):
+
 - **GLM-4.7 Flash**: suy luận tốt, viết code giỏi, trả lời ổn định.
 - **GLM-4.5 Flash**: trả lời nhanh nhất, hợp câu hỏi ngắn và trò chuyện.
 - **GLM-4.6V Flash**: chuyên đọc ảnh (ảnh chụp, tài liệu, biểu đồ).
 
-Nhóm **Mô hình khác** (cũng cần key NVIDIA):
-
-- **Nemotron 3 Ultra**: mô hình lớn nhất của NVIDIA, suy luận sâu, viết code tốt.
-- **Nemotron 3.5 Super VL**: đọc được ảnh, vừa nhanh vừa thông minh.
-- **Nemotron 3.5 Lightning**: trả lời rất nhanh, hợp hỏi đáp ngắn.
-- **Mistral Large 4**: viết văn hay, dịch và dùng nhiều ngôn ngữ giỏi.
-- **DeepSeek V4.1 Flash**: suy luận và toán rất tốt, trả lời gọn gàng.
-- **MiniMax M3.1 Flash**: nhanh, viết code và tóm tắt văn bản dài tốt.
-- **Step 5**: suy luận nhiều bước và giải toán tốt.
-
-Mô hình nào NVIDIA báo không còn cho dùng miễn phí thì tự ẩn khỏi menu.
-
-Khi mở menu, mỗi mô hình có nhãn **Sẵn sàng** hoặc **Đang quá tải**. Bản miễn phí của NVIDIA hay quá tải: mô hình nào không trả lời trong 25 giây thì máy chủ trả lời bằng GLM-4.7 Flash, ghi lý do dưới câu trả lời, và tạm bỏ qua mô hình đó 5 phút.
+Danh sách trên đã được kiểm tra trả lời được ngày 12/11/2026. GLM-5.3 Flash, DeepSeek V4.1 Flash và MiniMax M3.1 Flash cũng có trên NVIDIA nhưng bản miễn phí đang quá tải nên chưa có trong menu. Khi mở menu, mỗi mô hình mạnh có nhãn **Sẵn sàng** hoặc **Đang quá tải**. Mô hình nào không trả lời trong 25 giây thì máy chủ trả lời bằng GLM-4.7 Flash, ghi lý do dưới câu trả lời, và tạm bỏ qua mô hình đó 5 phút.
 
 Mô hình nào quá tải hoặc trả lời quá chậm thì trang tự chuyển sang mô hình GLM khác. Trang chỉ dùng mô hình miễn phí, không có chỗ nhập API key. Trang không dùng mô hình tải về máy; muốn chạy offline thì dùng `./chat.sh` hoặc `./server.sh` ở trên.
 
 Giao diện có lịch sử chat (lưu trong trình duyệt), hiện quá trình suy nghĩ của mô hình, nút dừng và tạo lại câu trả lời, chế độ sáng/tối. Vào **Cài đặt** để đổi lời nhắc hệ thống hoặc nhiệt độ.
 
-Bật nút **Nghĩ kỹ** trong khung chat để mô hình giải hai lần độc lập, rồi so sánh hai lời giải như một giám khảo (tự chạy code, tra cứu để kiểm chỗ khác nhau) và viết câu trả lời cuối. Cách này chính xác hơn hẳn với toán, logic và code, nhưng chậm gấp 3–4 lần. Hai lời giải nháp vẫn xem được bên trên câu trả lời.
+Bật nút **Nghĩ kỹ** trong khung chat để giải hai lần độc lập bằng **hai mô hình khác nhau** (ví dụ Nemotron 3 Ultra và Mistral Large 4, suy nghĩ ở mức cao nhất), rồi so sánh hai lời giải như một giám khảo (tự chạy code, tra cứu để kiểm chỗ khác nhau) và viết câu trả lời cuối. Cách này chính xác hơn hẳn với toán, logic và code, nhưng chậm gấp 3–4 lần. Hai lời giải nháp vẫn xem được bên trên câu trả lời.
 
 Khi cần tính toán, mô hình tự viết code JavaScript hoặc Python. Trang chạy code đó ngay trong trình duyệt (cách ly, không truy cập mạng; Python chạy bằng [Pyodide](https://pyodide.org), có sẵn numpy, pandas, sympy) rồi đưa kết quả cho mô hình, nên phép tính luôn chính xác. Khi bạn nhờ viết code, mô hình chạy thử với vài ví dụ, tự sửa nếu lỗi, rồi mới đưa code cuối cùng. Code trong câu trả lời được tô màu cho dễ đọc. Khi cần thông tin thực tế, mô hình tự tra cứu rồi trả lời kèm nguồn. Câu hỏi có chữ như "hiện nay", "mới nhất", "hôm nay", "giá"… thì bắt buộc phải tra, vì kiến thức có sẵn của mô hình đã cũ. Các nguồn (đều miễn phí, không cần key):
 

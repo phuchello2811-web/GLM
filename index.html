@@ -646,24 +646,26 @@
       name: "GLM miễn phí",
       url: SHARED_URL,
       // Phải khớp FREE_MODELS trong worker/worker.js.
-      models: ["glm-5.3-flash", "glm-4.7-flash", "glm-4.5-flash", "glm-4.6v-flash",
-        "nemotron-3-ultra", "nemotron-3.5-super-vl", "nemotron-3.5-lightning", "mistral-large-4", "deepseek-v4.1-flash", "minimax-m3.1-flash", "step-5"],
+      // Chỉ giữ mô hình đã kiểm tra là trả lời được (12/11/2026). GLM-5.3 Flash, DeepSeek V4.1 Flash, MiniMax M3.1 Flash
+      // vẫn có trong worker/worker.js nhưng bản miễn phí của NVIDIA đang quá tải, nên chưa đưa vào menu.
+      models: ["nemotron-3-ultra", "nemotron-3.5-super-vl", "mistral-large-4", "nemotron-3.5-lightning", "laguna-xs", "step-5",
+        "glm-4.7-flash", "glm-4.5-flash", "glm-4.6v-flash"],
       // Chạy trên NVIDIA (phải khớp NVIDIA_MODELS trong worker/worker.js); máy chủ tự dùng GLM của Z.ai khi chúng bận.
-      nvidia: ["glm-5.3-flash", "nemotron-3-ultra", "nemotron-3.5-super-vl", "nemotron-3.5-lightning", "mistral-large-4", "deepseek-v4.1-flash", "minimax-m3.1-flash", "step-5"],
-      // Mô hình đọc được ảnh: câu hỏi có ảnh luôn gửi tới đây.
+      nvidia: ["nemotron-3-ultra", "nemotron-3.5-super-vl", "mistral-large-4", "nemotron-3.5-lightning", "laguna-xs", "step-5"],
+      // Mô hình đọc được ảnh: câu hỏi có ảnh gửi tới mô hình đang chọn nếu nó đọc được ảnh, không thì tới visionNvidia,
+      // máy chủ lỗi thì tới vision (GLM-4.6V Flash của Z.ai).
+      visionNvidia: "nemotron-3.5-super-vl",
       vision: "glm-4.6v-flash",
       titles: {
-        "glm-5.3-flash": ["GLM-5.3 Flash", "Thông minh nhất: suy luận, toán và code giỏi nhất, đọc được ảnh"],
         "glm-4.7-flash": ["GLM-4.7 Flash", "Suy luận tốt, viết code giỏi, trả lời ổn định"],
         "glm-4.5-flash": ["GLM-4.5 Flash", "Trả lời nhanh nhất, hợp câu hỏi ngắn và trò chuyện"],
         "glm-4.6v-flash": ["GLM-4.6V Flash", "Chuyên đọc ảnh: ảnh chụp, tài liệu, biểu đồ"],
-        "nemotron-3-ultra": ["Nemotron 3 Ultra", "Mô hình lớn nhất của NVIDIA: suy luận sâu, viết code tốt"],
-        "nemotron-3.5-super-vl": ["Nemotron 3.5 Super VL", "Đọc được ảnh, vừa nhanh vừa thông minh"],
-        "nemotron-3.5-lightning": ["Nemotron 3.5 Lightning", "Trả lời rất nhanh, hợp hỏi đáp ngắn"],
-        "mistral-large-4": ["Mistral Large 4", "Viết văn hay, dịch và dùng nhiều ngôn ngữ giỏi"],
-        "deepseek-v4.1-flash": ["DeepSeek V4.1 Flash", "Suy luận và toán rất tốt, trả lời gọn gàng"],
-        "minimax-m3.1-flash": ["MiniMax M3.1 Flash", "Nhanh, viết code và tóm tắt văn bản dài tốt"],
-        "step-5": ["Step 5", "Suy luận nhiều bước và giải toán tốt"],
+        "nemotron-3-ultra": ["Nemotron 3 Ultra", "Thông minh nhất, trả lời nhanh: suy luận, toán và code rất tốt"],
+        "nemotron-3.5-super-vl": ["Nemotron 3.5 Super VL", "Đọc ảnh giỏi, suy nghĩ kỹ, chỉ ra được bẫy trong đề"],
+        "mistral-large-4": ["Mistral Large 4", "Viết văn hay, dịch và dùng nhiều ngôn ngữ giỏi, trình bày đẹp"],
+        "nemotron-3.5-lightning": ["Nemotron 3.5 Lightning", "Giải thích dễ hiểu bằng ví dụ đời thường"],
+        "laguna-xs": ["Laguna XS", "Chuyên viết code, trả lời rất nhanh và gọn"],
+        "step-5": ["Step 5", "Suy luận nhiều bước rất kỹ, trả lời chậm hơn"],
       },
       modelHelp: "Dùng chung máy chủ của trang, không cần key hay tài khoản. Tối đa 20 câu hỏi mỗi phút. Mô hình đang quá tải hoặc chưa bật thì tự chuyển sang mô hình khác.",
       extra: { thinking: { type: "enabled" } },
@@ -676,8 +678,8 @@
   if (!PROVIDERS[settings.provider]) settings.provider = "shared";
   for (const id in settings.models) if (!PROVIDERS[id]?.models.includes(settings.models[id])) delete settings.models[id];
   store.set("glm.settings", settings);
-  // GLM-5.3 Flash là mô hình mạnh nhất: đặt làm mặc định một lần cho cả máy đã chọn mô hình cũ.
-  if (!settings.glm53) { settings.models.shared = "glm-5.3-flash"; settings.glm53 = true; store.set("glm.settings", settings); }
+  // Nemotron 3 Ultra là mô hình mạnh nhất đang trả lời được: đặt làm mặc định một lần cho cả máy đã chọn mô hình cũ.
+  if (!settings.nemotron) { settings.models.shared = "nemotron-3-ultra"; settings.nemotron = true; store.set("glm.settings", settings); }
   const cloudModel = () => settings.models[settings.provider] || PROVIDERS[settings.provider].models[0];
 
   const modelTitle = (id, m) => PROVIDERS[id].titles[m][0];
@@ -708,7 +710,7 @@
     for (const id of Object.keys(PROVIDERS)) {
       let group = "";
       for (const m of PROVIDERS[id].models) {
-        const g = m.startsWith("glm") ? "GLM" : "Mô hình khác";
+        const g = m.startsWith("glm") ? "GLM" : "Mô hình mạnh";
         if (g !== group) { html += `<div class="group">${g}</div>`; group = g; }
         const [title, desc] = PROVIDERS[id].titles[m];
         html += `<button role="menuitemradio" data-key="${id}:${m}" aria-checked="${`${id}:${m}` === currentChoice()}"><span><b>${title}<em class="st" data-st="${m}"></em></b><small>${desc}</small></span>${TICK}</button>`;
@@ -763,11 +765,12 @@
   }
   // Mô hình cho lần giải thứ hai của chế độ Nghĩ kỹ: mô hình mạnh khác mô hình đang chọn và đang sẵn sàng,
   // theo thứ tự ưu tiên; không có thì dùng GLM của Z.ai.
-  const SECOND_ORDER = ["glm-5.3-flash", "nemotron-3-ultra", "deepseek-v4.1-flash", "mistral-large-4", "step-5", "minimax-m3.1-flash", "nemotron-3.5-super-vl"];
+  const SECOND_ORDER = ["nemotron-3-ultra", "mistral-large-4", "nemotron-3.5-super-vl", "nemotron-3.5-lightning", "laguna-xs"];
   async function secondModel() {
     const cur = cloudModel();
     await Promise.race([loadModelStatus(), new Promise((ok) => setTimeout(ok, 4000))]);
-    const ready = SECOND_ORDER.find((m) => m !== cur && modelStatus?.models?.[m]?.ok);
+    // Chưa có kết quả kiểm tra thì cứ thử theo thứ tự; chỉ bỏ mô hình đã biết là đang lỗi (máy chủ vẫn tự chuyển sang GLM nếu lỗi).
+    const ready = SECOND_ORDER.find((m) => m !== cur && modelStatus?.models?.[m]?.ok !== false);
     return ready || (cur !== "glm-4.7-flash" ? "glm-4.7-flash" : "glm-4.5-flash");
   }
   $("modelChip").onclick = (e) => { e.stopPropagation(); toggleModelMenu(e.currentTarget); };
@@ -2042,7 +2045,7 @@
     // nên trang chỉ thử thêm các mô hình của Z.ai.
     const onNvidia = (m) => PROVIDERS.shared.nvidia.includes(m);
     const chosen = passModel || cloudModel();
-    const order = vision ? [["shared", onNvidia(chosen) ? chosen : PROVIDERS.shared.vision]] : [[settings.provider, chosen]];
+    const order = vision ? [["shared", PROVIDERS.shared.visionNvidia]] : [[settings.provider, chosen]];
     if (!vision) for (const id of Object.keys(PROVIDERS)) for (const m of PROVIDERS[id].models) if ((id !== order[0][0] || m !== order[0][1]) && !onNvidia(m)) order.push([id, m]);
     const retries = vision ? 4 : 1;
     let res = null, used, model;
