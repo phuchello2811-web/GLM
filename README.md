@@ -44,39 +44,39 @@ Mở http://127.0.0.1:8080. Server cũng có API tương thích OpenAI tại `ht
 
 Mở https://phuchello2811-web.github.io/GLM/ (hoặc mở `index.html` bằng **Go Live** trong VS Code). Muốn dùng như ứng dụng riêng, bấm **Cài thành ứng dụng** ở góc dưới thanh bên.
 
-Trang chat có tên **Khuê AI**. Khuê dùng máy chủ chung, dựng theo [worker/README.md](worker/README.md). Ai mở link cũng chat được ngay, không cần key hay tài khoản.
+Trang chat có tên **Astra AI**. Astra dùng máy chủ chung, dựng theo [worker/README.md](worker/README.md). Ai mở link cũng chat được ngay, không cần key hay tài khoản.
 
-Các mô hình của Khuê được đặt tên theo các vì sao, vì chúng cùng dùng cách suy nghĩ, kỹ năng, công cụ và quy trình kiểm tra chéo riêng của Khuê. Khi được hỏi, Khuê tự giới thiệu là Khuê và tên mô hình đang chạy. Bấm nút tên mô hình trong khung chat để chọn:
+Các mô hình của Astra được đặt tên theo họ: cùng gốc thì cùng tên, giữ nguyên số phiên bản, vì chúng cùng dùng cách suy nghĩ, kỹ năng, công cụ và quy trình kiểm tra chéo riêng của Astra. Khi được hỏi, Astra tự giới thiệu là Astra và tên mô hình đang chạy. Bấm nút tên mô hình trong khung chat để chọn:
 
 Nhóm **Mạnh nhất** (chạy trên NVIDIA, cần thêm key NVIDIA vào máy chủ theo [worker/README.md](worker/README.md)):
 
-| Tên trong Khuê | Mô hình gốc | Điểm mạnh |
+| Tên trong Astra | Mô hình gốc | Điểm mạnh |
 | --- | --- | --- |
-| **Bắc Đẩu** (mặc định) | Nemotron 3 Ultra | thông minh nhất, trả lời nhanh, suy luận, toán và code rất tốt |
-| **Thiên Nhãn** | Nemotron 3.5 Super VL | đọc ảnh giỏi, suy nghĩ kỹ; câu hỏi có ảnh tự gửi tới mô hình này |
-| **Văn Khúc** | Mistral Large 4 | viết văn hay, dịch và dùng nhiều ngôn ngữ giỏi |
-| **Sao Mai** | Nemotron 3.5 Lightning | giải thích dễ hiểu bằng ví dụ đời thường |
-| **Lưu Tinh** | Laguna XS | chuyên viết code, trả lời rất nhanh |
-| **Thiên Hà** | Step 5 | suy luận nhiều bước rất kỹ, trả lời chậm hơn |
+| **Titan 3 Ultra** (mặc định) | Nemotron 3 Ultra | thông minh nhất, trả lời nhanh, suy luận, toán và code rất tốt |
+| **Titan 3.5 Vision** | Nemotron 3.5 Super VL | đọc ảnh giỏi, suy nghĩ kỹ; câu hỏi có ảnh tự gửi tới mô hình này |
+| **Lyra 4** | Mistral Large 4 | viết văn hay, dịch và dùng nhiều ngôn ngữ giỏi |
+| **Titan 3.5 Lightning** | Nemotron 3.5 Lightning | giải thích dễ hiểu bằng ví dụ đời thường |
+| **Forge XS** | Laguna XS | chuyên viết code, trả lời rất nhanh |
+| **Atlas 5** | Step 5 | suy luận nhiều bước rất kỹ, trả lời chậm hơn |
 
 Nhóm **Nhanh và ổn định** (chạy trên Z.ai):
 
-| Tên trong Khuê | Mô hình gốc | Điểm mạnh |
+| Tên trong Astra | Mô hình gốc | Điểm mạnh |
 | --- | --- | --- |
-| **Sao Mộc** | GLM-4.7 Flash | ổn định, suy luận và viết code tốt |
-| **Sao Thuỷ** | GLM-4.5 Flash | nhanh nhất, hợp câu hỏi ngắn và trò chuyện |
-| **Nguyệt Quang** | GLM-4.6V Flash | đọc ảnh: ảnh chụp, tài liệu, biểu đồ |
+| **Nova 4.7** | GLM-4.7 Flash | ổn định, suy luận và viết code tốt |
+| **Nova 4.5** | GLM-4.5 Flash | nhanh nhất, hợp câu hỏi ngắn và trò chuyện |
+| **Nova 4.6 Vision** | GLM-4.6V Flash | đọc ảnh: ảnh chụp, tài liệu, biểu đồ |
 
 Ba mô hình nhóm Nhanh và ổn định có thêm lời dặn riêng cho những lỗi chúng hay mắc. Khi suy nghĩ, chúng đi theo khung Đề → Bẫy → Cách 1 → Cách 2 → Đối chiếu → Kết luận. Chúng phải thử phản bác đáp án đầu tiên, tính bằng code thay vì tính nhẩm, và không chen chữ Hán. Ở mức Cân bằng, chúng còn tự chấm lại rồi sửa câu trả lời một lượt với các câu toán, logic, lập trình và câu cần lập luận. Mọi mô hình đều học thêm cách chọn chiến lược theo loại câu hỏi và tự soát trước khi gửi.
 
 **Bốn chế độ** (nút cạnh tên mô hình, hoặc bấm thẻ ở màn hình chào; mỗi chế độ có sẵn vài câu hỏi mẫu):
 
-- **Tự động**: tự nhận ra bạn đang hỏi gì và dùng đúng kỹ năng.
-- **An Nhiên** (vấn đề đời sống): sức khoẻ, tiền bạc, giấy tờ thủ tục, nấu ăn, học hành, công việc, chuyện gia đình và tâm lý. Khuê nói chuyện như một người bạn thực tế: hiểu đúng hoàn cảnh, đưa các bước làm được ngay kèm con số cụ thể, và tra cứu những thông tin hay thay đổi.
-- **Kiến Tạo** (làm website): luôn bật kỹ năng làm web, phát triển ứng dụng web lớn, dự án nhiều file, kiến thức web và vẽ SVG.
-- **Đấu Trường** (lập trình thi đấu): luôn bật kỹ năng IOI, lập trình và toán. Lời giải được kiểm tra bằng cpp-run, đối chiếu với lời giải trâu trước khi nộp.
+- **Auto**: tự nhận ra bạn đang hỏi gì và dùng đúng kỹ năng.
+- **Life** (vấn đề đời sống): sức khoẻ, tiền bạc, giấy tờ thủ tục, nấu ăn, học hành, công việc, chuyện gia đình và tâm lý. Astra nói chuyện như một người bạn thực tế: hiểu đúng hoàn cảnh, đưa các bước làm được ngay kèm con số cụ thể, và tra cứu những thông tin hay thay đổi.
+- **Studio** (làm website): luôn bật kỹ năng làm web, phát triển ứng dụng web lớn, dự án nhiều file, kiến thức web và vẽ SVG.
+- **Arena** (lập trình thi đấu): luôn bật kỹ năng IOI, lập trình và toán. Lời giải được kiểm tra bằng cpp-run, đối chiếu với lời giải trâu trước khi nộp.
 
-Danh sách trên đã được kiểm tra trả lời được ngày 12/11/2026. GLM-5.3 Flash, DeepSeek V4.1 Flash và MiniMax M3.1 Flash cũng có trên NVIDIA nhưng bản miễn phí đang quá tải nên chưa có trong menu. Khi mở menu, mỗi mô hình mạnh có nhãn **Sẵn sàng** hoặc **Đang quá tải**. Mô hình nào không trả lời trong 25 giây thì máy chủ trả lời bằng Sao Mộc, ghi lý do dưới câu trả lời, và tạm bỏ qua mô hình đó 5 phút.
+Danh sách trên đã được kiểm tra trả lời được ngày 12/11/2026. GLM-5.3 Flash, DeepSeek V4.1 Flash và MiniMax M3.1 Flash cũng có trên NVIDIA nhưng bản miễn phí đang quá tải nên chưa có trong menu. Khi mở menu, mỗi mô hình mạnh có nhãn **Sẵn sàng** hoặc **Đang quá tải**. Mô hình nào không trả lời trong 25 giây thì máy chủ trả lời bằng Nova 4.7, ghi lý do dưới câu trả lời, và tạm bỏ qua mô hình đó 5 phút.
 
 Mô hình nào quá tải hoặc trả lời quá chậm thì trang tự chuyển sang mô hình GLM khác. Trang chỉ dùng mô hình miễn phí, không có chỗ nhập API key. Trang không dùng mô hình tải về máy; muốn chạy offline thì dùng `./chat.sh` hoặc `./server.sh` ở trên.
 
@@ -117,8 +117,8 @@ Các trang đã tra hiện thành danh sách **Nguồn** dưới câu trả lờ
 
 **Kho kiến thức, đồng bộ:**
 
-- **Kho kiến thức:** **Cài đặt → Kho kiến thức → Thêm tài liệu** (PDF, Word, Excel, văn bản). Mỗi câu hỏi, Khuê tự tìm đoạn liên quan trong kho và ghi rõ tài liệu đã dùng. Tài liệu chỉ lưu trong trình duyệt.
-- **Học từ câu trả lời được thích:** khi bạn hỏi câu giống câu cũ, các câu trả lời bạn đã bấm thích được dùng làm mẫu, để Khuê trả lời đúng văn phong bạn muốn.
+- **Kho kiến thức:** **Cài đặt → Kho kiến thức → Thêm tài liệu** (PDF, Word, Excel, văn bản). Mỗi câu hỏi, Astra tự tìm đoạn liên quan trong kho và ghi rõ tài liệu đã dùng. Tài liệu chỉ lưu trong trình duyệt.
+- **Học từ câu trả lời được thích:** khi bạn hỏi câu giống câu cũ, các câu trả lời bạn đã bấm thích được dùng làm mẫu, để Astra trả lời đúng văn phong bạn muốn.
 - **Tạo và sửa ảnh:** nhờ "vẽ…" hoặc "tạo bức tranh…", GLM tự viết mô tả chi tiết và chọn khổ ảnh (vuông, ngang 16:9, dọc 9:16…). Có thể xin **nhiều phiên bản cùng lúc** (2–4 ảnh hiện thành lưới), **ảnh cỡ lớn**, và **phong cách có sẵn** (ảnh thật, anime, Ghibli, màu nước, sơn dầu, 3D, pixel art, phác thảo chì, điện ảnh, cyberpunk, poster). Dưới mỗi ảnh ghi số seed để vẽ lại đúng ảnh đó. Trên mỗi ảnh có nút **Tải về**, **Vẽ lại** (cùng mô tả, ảnh khác) và **Sửa** (gõ thay đổi, ví dụ "đổi nền thành bãi biển"). Ảnh do FLUX.2 trên Cloudflare vẽ; sửa ảnh cần bật Workers AI theo [worker/README.md](worker/README.md).
 - **Xuất file PowerPoint, Excel, Word:** nhờ "làm file PowerPoint…", "tạo file Excel…" hoặc "xuất file Word…". Câu trả lời hiện một thẻ file có nút **Tải về**, file được tạo ngay trong trình duyệt: PowerPoint xem mục Làm slide; Excel có nhiều trang tính và công thức (tự tính khi mở); Word có tiêu đề, danh sách và bảng.
 - **Đồng bộ giữa các máy:** **Cài đặt → Đồng bộ giữa các máy**. Cần bật trên Cloudflare theo [worker/README.md](worker/README.md).
@@ -142,8 +142,8 @@ Các trang đã tra hiện thành danh sách **Nguồn** dưới câu trả lờ
 GLM được dạy thêm vài kỹ năng, tự bật khi câu hỏi đúng chủ đề:
 
 - **Làm trang web:** viết trọn một file HTML có thiết kế chuyên nghiệp (khoảng cách, cỡ chữ, màu theo hệ thống; đủ trạng thái đang tải, trống, lỗi), chế độ tối, chạy tốt trên điện thoại, dùng được bằng bàn phím, biểu tượng SVG (Lucide), ảnh minh hoạ do AI vẽ thay cho khung trống, và tính năng chạy thật (thêm, sửa, xoá, tìm, lọc, lưu lại). Sau khi viết, trang **tự chạy thử** trang web trong khung điện thoại: bắt lỗi JavaScript, bấm thử mọi nút, kiểm tra tràn ngang; có lỗi thì tự sửa (tối đa 2 lượt) và ghi rõ kết quả. Bấm **Xem trước** để dùng ngay, đổi khổ Điện thoại, Máy tính bảng, Máy tính, hoặc **Tải về** để lấy file.
-- **Ứng dụng web lớn:** Khuê được dạy kiến trúc phía trình duyệt (store chứa state, lớp dữ liệu có phiên bản, định tuyến theo hash, gán sự kiện theo kiểu uỷ quyền). Khuê cũng học các tính năng nền tảng mà sản phẩm thật luôn có (tìm kiếm, lọc, sắp xếp, phân trang, hoàn tác, xuất và nhập dữ liệu, phím tắt) và form chuyên nghiệp. Với từng loại sản phẩm (bán hàng, dashboard, đặt lịch, blog, quiz, Kanban, mạng xã hội, đăng nhập), Khuê biết danh sách tính năng tối thiểu. Ngoài ra còn hiệu năng, PWA, SEO, cách làm máy chủ Node.js, và tự đi qua từng luồng như người dùng thật trước khi nộp.
-- **Kỹ sư phần mềm:** Khuê học thêm thiết kế (tách lớp, SOLID, mẫu thiết kế), xử lý lỗi, kiểm thử, bất đồng bộ, hiệu năng, cơ sở dữ liệu, thiết kế API, bảo mật OWASP, cách viết đúng chuẩn từng ngôn ngữ (Python, JS/TS, Java, C++, Go, Rust, SQL), Git, CI và Docker.
+- **Ứng dụng web lớn:** Astra được dạy kiến trúc phía trình duyệt (store chứa state, lớp dữ liệu có phiên bản, định tuyến theo hash, gán sự kiện theo kiểu uỷ quyền). Astra cũng học các tính năng nền tảng mà sản phẩm thật luôn có (tìm kiếm, lọc, sắp xếp, phân trang, hoàn tác, xuất và nhập dữ liệu, phím tắt) và form chuyên nghiệp. Với từng loại sản phẩm (bán hàng, dashboard, đặt lịch, blog, quiz, Kanban, mạng xã hội, đăng nhập), Astra biết danh sách tính năng tối thiểu. Ngoài ra còn hiệu năng, PWA, SEO, cách làm máy chủ Node.js, và tự đi qua từng luồng như người dùng thật trước khi nộp.
+- **Kỹ sư phần mềm:** Astra học thêm thiết kế (tách lớp, SOLID, mẫu thiết kế), xử lý lỗi, kiểm thử, bất đồng bộ, hiệu năng, cơ sở dữ liệu, thiết kế API, bảo mật OWASP, cách viết đúng chuẩn từng ngôn ngữ (Python, JS/TS, Java, C++, Go, Rust, SQL), Git, CI và Docker.
 - **Dự án web nhiều file:** website nhiều trang hoặc khi bạn muốn tách file, mô hình viết đủ cấu trúc thư mục (`index.html`, các trang con, `css/`, `js/`, `data/*.json`, `README.md`), mỗi file một khối code có tên file, các trang dùng chung header, footer và menu. Dưới câu trả lời hiện **thẻ dự án** có cây thư mục và hai nút: **Chạy thử** chạy cả dự án ngay trong chat (bấm link giữa các trang vẫn chuyển được, fetch đọc được file JSON trong dự án, chọn trang, đổi khổ thiết bị) và **Tải .zip** để lấy cả thư mục. Khi nhờ sửa, mô hình chỉ viết lại các file thay đổi, trang tự ghép với các file cũ trong đoạn chat. Mọi trang cũng được tự chạy thử, kiểm tra link tới file không có và tự sửa lỗi. Trong khung chạy thử, `localStorage` dùng bộ nhớ tạm, giữ được dữ liệu khi chuyển giữa các trang (ví dụ giỏ hàng). Dự án React, Vite, Node.js có đủ `package.json` và lệnh chạy (nút Chạy thử chỉ chạy được trang tĩnh).
 - **Làm slide:** nhờ "làm bài thuyết trình về…". GLM tra cứu số liệu trước, rồi viết nội dung theo mạch kể chuyện; trang tự dựng slide bằng bộ khung có sẵn nên luôn đẹp và đồng bộ: 8 bộ màu (midnight, ocean, sunset, forest, minimal, corporate, neon, warm), nhiều kiểu slide (tiêu đề, chia phần, gạch đầu dòng, hai cột, bảng, biểu đồ cột/đường/tròn, số liệu nổi bật, thẻ có biểu tượng, dòng thời gian, trích dẫn, slide kết), chữ tự co cho vừa slide. Bấm **Trình chiếu** để xem ngay trong chat với hiệu ứng (chữ hiện dần, chuyển slide, số liệu đếm tăng, biểu đồ tự vẽ; phím ← →, F toàn màn hình, N xem ghi chú), hoặc tải **PowerPoint** (có hiệu ứng chuyển slide và ghi chú người thuyết trình) hay **HTML**.
 - **Vẽ hình:** logo, icon, biểu đồ được vẽ bằng SVG và hiện ảnh ngay trong chat.
