@@ -52,7 +52,8 @@ Nhóm **Mạnh nhất** (chạy trên NVIDIA, cần thêm key NVIDIA vào máy c
 
 | Tên trong Astra | Mô hình gốc | Điểm mạnh |
 | --- | --- | --- |
-| **Titan 3 Ultra** (mặc định) | Nemotron 3 Ultra | thông minh nhất, trả lời nhanh, suy luận, toán và code rất tốt |
+| **Titan 4 Mega** (mặc định) | GLM-5.3 Flash | mạnh nhất: suy luận, toán, code và đọc ảnh, trả lời nhanh |
+| **Titan 3 Ultra** | Nemotron 3 Ultra | rất thông minh, suy luận, toán và code rất tốt |
 | **Titan 3.5 Vision** | Nemotron 3.5 Super VL | đọc ảnh giỏi, suy nghĩ kỹ; câu hỏi có ảnh tự gửi tới mô hình này |
 | **Lyra 4** | Mistral Large 4 | viết văn hay, dịch và dùng nhiều ngôn ngữ giỏi |
 | **Titan 3.5 Lightning** | Nemotron 3.5 Lightning | giải thích dễ hiểu bằng ví dụ đời thường |
@@ -67,7 +68,7 @@ Nhóm **Nhanh và ổn định** (chạy trên Z.ai):
 | **Nova 4.5** | GLM-4.5 Flash | nhanh nhất, hợp câu hỏi ngắn và trò chuyện |
 | **Nova 4.6 Vision** | GLM-4.6V Flash | đọc ảnh: ảnh chụp, tài liệu, biểu đồ |
 
-Mỗi mô hình có **lời dặn điểm mạnh riêng** để phát huy sở trường và tránh lỗi hay mắc: Titan 3 Ultra lập luận chặt và luôn tự kiểm chứng; Titan 3.5 Vision và Nova 4.6 Vision đọc ảnh theo quy trình (nhìn tổng thể, quét từng vùng, chép nguyên văn chữ và số, đọc trục biểu đồ, nói rõ chỗ không đọc được); Lyra 4 viết tiếng Việt tự nhiên, dịch giữ nghĩa và giọng văn gốc; Titan 3.5 Lightning giải thích theo lớp bằng ví dụ đời thường; Forge XS viết code gọn kiểu production; Atlas 5 lập kế hoạch, ghi kết quả trung gian và kiểm tra từng chặng. Lời dặn gắn theo mô hình thật sự trả lời, kể cả khi máy chủ tự đổi mô hình lúc quá tải hoặc nhiều mô hình cùng giải ở mức Tối đa, Ultra.
+Mỗi mô hình có **lời dặn điểm mạnh riêng** để phát huy sở trường và tránh lỗi hay mắc: Titan 4 Mega và Titan 3 Ultra lập luận chặt và luôn tự kiểm chứng; Titan 3.5 Vision và Nova 4.6 Vision đọc ảnh theo quy trình (nhìn tổng thể, quét từng vùng, chép nguyên văn chữ và số, đọc trục biểu đồ, nói rõ chỗ không đọc được); Lyra 4 viết tiếng Việt tự nhiên, dịch giữ nghĩa và giọng văn gốc; Titan 3.5 Lightning giải thích theo lớp bằng ví dụ đời thường; Forge XS viết code gọn kiểu production; Atlas 5 lập kế hoạch, ghi kết quả trung gian và kiểm tra từng chặng. Lời dặn gắn theo mô hình thật sự trả lời, kể cả khi máy chủ tự đổi mô hình lúc quá tải hoặc nhiều mô hình cùng giải ở mức Tối đa, Ultra.
 
 Mọi mô hình cũng được dạy **thói quen của người giỏi** cho câu khó: nhận diện dạng bài, ước lượng đáp số trước khi tính, tự đoán 2 chỗ dễ sai nhất rồi kiểm tra riêng, tránh các lỗi tư duy hay gặp (bám ý đầu tiên, nhầm điều kiện cần và đủ, coi tương quan là nhân quả…), đổi góc nhìn khi bế tắc, lập danh sách yêu cầu cho việc dài và nói rõ mức chắc chắn.
 
@@ -80,7 +81,7 @@ Ba mô hình nhóm Nhanh và ổn định có thêm lời dặn riêng cho nhữ
 - **Studio** (làm website): luôn bật kỹ năng làm web, phát triển ứng dụng web lớn, dự án nhiều file, kiến thức web và vẽ SVG.
 - **Arena** (lập trình thi đấu): luôn bật kỹ năng IOI, lập trình và toán. Lời giải được kiểm tra bằng cpp-run, đối chiếu với lời giải trâu trước khi nộp.
 
-Danh sách trên đã được kiểm tra trả lời được ngày 12/11/2026. GLM-5.3 Flash, DeepSeek V4.1 Flash và MiniMax M3.1 Flash cũng có trên NVIDIA nhưng bản miễn phí đang quá tải nên chưa có trong menu. Khi mở menu, mỗi mô hình mạnh có nhãn **Sẵn sàng** hoặc **Đang quá tải**. Mô hình nào không trả lời trong 25 giây thì máy chủ trả lời bằng Nova 4.7, ghi lý do dưới câu trả lời, và tạm bỏ qua mô hình đó 5 phút.
+Danh sách trên đã được kiểm tra trả lời được ngày 13/11/2026. Titan 4 Mega được chọn làm mặc định sau bài kiểm tra 5 câu toán khó (không dùng công cụ): đúng 5/5, trung bình khoảng 27 giây mỗi câu, so với Titan 3 Ultra đúng 4/5 và chậm hơn. DeepSeek V4.1 Flash và MiniMax M3.1 Flash cũng có trên NVIDIA nhưng bản miễn phí đang quá tải; Kimi K2.6 đã bị NVIDIA gỡ khỏi bản miễn phí, nên chưa có trong menu. Khi mở menu, mỗi mô hình mạnh có nhãn **Sẵn sàng** hoặc **Đang quá tải**. Mô hình nào không trả lời trong 25 giây thì máy chủ trả lời bằng Nova 4.7, ghi lý do dưới câu trả lời, và tạm bỏ qua mô hình đó 5 phút.
 
 Mô hình nào quá tải hoặc trả lời quá chậm thì trang tự chuyển sang mô hình GLM khác. Trang chỉ dùng mô hình miễn phí, không có chỗ nhập API key. Trang không dùng mô hình tải về máy; muốn chạy offline thì dùng `./chat.sh` hoặc `./server.sh` ở trên.
 
