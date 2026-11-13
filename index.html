@@ -2800,7 +2800,14 @@
     const stopOn = allowTool ? (text) => RUN_BLOCK.test(text.slice(start)) : null;
     const base = baseFiles(reply);
     const rewritten = new Set();
-    let stuck = 0, lastFiles = "", lastKind = "";
+    let stuck = 0, lastFiles = "", lastKind = "", weak = 0, switched = false;
+    const forced = reply.forceModel;
+    // Mô hình dự phòng cho phần viết tiếp, ở máy chủ khác (NVIDIA hay Z.ai), khi máy chủ đang dùng cứ ngắt luồng sớm.
+    const spare = () => {
+      const cur = reply.forceModel || cloudModel();
+      return PROVIDERS.shared.nvidia.includes(cur) ? "glm-4.7-flash" : "nemotron-3-ultra";
+    };
+    try {
     for (let k = 0; k < CONTINUE_LIMIT; k++) {
       const sofar = reply.content.slice(start);
       if (!sofar.trim() || (stopOn && RUN_BLOCK.test(sofar))) return;
@@ -2858,14 +2865,29 @@
       paintAssistant(node, reply, true);
       const before = reply.content.length;
       let failed = false;
+      // Viết tiếp không cần suy nghĩ dài (nhanh hơn nhiều, và mô hình không chèn phần suy nghĩ vào giữa code).
+      const wasFast = reply.fast, thought = reply.reasoning;
+      reply.fast = true;
       try {
         await runPass([...messages, { role: "assistant", content: ctx }, { role: "user", content: prompt }], reply, node, stopOn);
       } catch (e) {
         if (e.name !== "TypeError") throw e;
         failed = true; // mất kết nối hoặc mô hình ngừng gửi: giữ phần đã viết được, thử lại
+      } finally {
+        reply.fast = wasFast;
+        reply.reasoning = thought; // phần suy nghĩ (nếu có) của lượt viết tiếp không thuộc câu trả lời
       }
       delete reply.notice;
-      let add = reply.content.slice(before);
+      let add = reply.content.slice(before).replace(/^\s*<think>[\s\S]*?<\/think>\s*/, "");
+      // Luồng bị ngắt sớm (không có lý do kết thúc) mà chỉ thêm được rất ít: máy chủ đang quá tải hoặc giới hạn lượt gọi.
+      // Chờ lâu dần rồi thử lại; lần thứ hai thì chuyển phần viết tiếp sang mô hình ở máy chủ khác.
+      if ((failed || !reply.lastFinish) && add.trim().length < 600) {
+        weak++;
+        if (weak >= 2 && !switched) { reply.forceModel = spare(); switched = true; }
+        await new Promise((ok) => setTimeout(ok, Math.min(15000, 5000 * weak)));
+      } else if (add.trim().length >= 600) weak = 0;
+      // Nhiều lần liên tiếp chỉ thêm được rất ít: coi như bị kẹt (để chuyển sang viết lại trọn file hoặc dừng).
+      const tiny = weak >= 4;
       reply.content = reply.content.slice(0, before);
       if (inside && !rewrite) {
         // Mô hình đóng khối ngay: nó cho rằng code đã xong (thường do đếm ngoặc nhầm), nên tin theo.
@@ -2876,7 +2898,7 @@
           continue;
         }
         const merged = joinCode(reply.content, add, start + blockStart);
-        const grew = merged.length > reply.content.length + 2;
+        const grew = merged.length > reply.content.length + 2 && !tiny;
         reply.content = merged;
         if (!grew || !add.trim()) {
           stuck++;
@@ -2903,6 +2925,10 @@
         if (merged.length > reply.content.length + 2) stuck = 0; else if (++stuck >= 2) { reply.content = merged; return; }
         reply.content = merged;
       }
+    }
+    } finally {
+      // Trả lại mô hình ban đầu sau khi viết tiếp bằng mô hình dự phòng.
+      if (forced) reply.forceModel = forced; else delete reply.forceModel;
     }
   }
   // Câu trả lời đang có khối code mang đường dẫn file (đang làm dự án nhiều file).
@@ -3471,9 +3497,9 @@
     };
     try {
       const stream = apiDeltas(messages, reply, node, pass.signal);
-      reply.truncated = false;
+      reply.truncated = false; reply.lastFinish = null;
       for await (const { think, text, tps, finish } of stream) {
-        if (finish) reply.truncated = finish === "length";
+        if (finish) { reply.truncated = finish === "length"; reply.lastFinish = finish; }
         if (think) reply.reasoning += think;
         if (text) { reply.content += text; delete reply.notice; }
         if (think || text) {
