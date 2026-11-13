@@ -638,7 +638,7 @@
       </button>
       <button class="deep chip" id="modelChip" type="button" aria-haspopup="menu" aria-expanded="false" title="Chọn mô hình">
         <span class="chip-ic" id="chipIcon"></span>
-        <span id="chipTitle">Titan 3 Ultra</span>
+        <span id="chipTitle">Titan 4 Mega</span>
         <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
       </button>
       <button class="deep chip" id="deep" type="button" aria-haspopup="menu" aria-expanded="false" title="Chọn mức suy nghĩ">
@@ -793,19 +793,22 @@
       name: "Astra",
       url: SHARED_URL,
       // Phải khớp FREE_MODELS trong worker/worker.js.
-      // Chỉ giữ mô hình đã kiểm tra là trả lời được (12/11/2026). GLM-5.3 Flash, DeepSeek V4.1 Flash, MiniMax M3.1 Flash
-      // vẫn có trong worker/worker.js nhưng bản miễn phí của NVIDIA đang quá tải, nên chưa đưa vào menu.
-      models: ["nemotron-3-ultra", "nemotron-3.5-super-vl", "mistral-large-4", "nemotron-3.5-lightning", "laguna-xs", "step-5",
+      // Chỉ giữ mô hình đã kiểm tra là trả lời được (13/11/2026). DeepSeek V4.1 Flash, MiniMax M3.1 Flash vẫn có trong
+      // worker/worker.js nhưng bản miễn phí của NVIDIA đang quá tải; Kimi K2.6 đã bị NVIDIA gỡ (404), nên chưa đưa vào menu.
+      models: ["glm-5.3-flash", "nemotron-3-ultra", "nemotron-3.5-super-vl", "mistral-large-4", "nemotron-3.5-lightning", "laguna-xs", "step-5",
         "glm-4.7-flash", "glm-4.5-flash", "glm-4.6v-flash"],
       // Chạy trên NVIDIA (phải khớp NVIDIA_MODELS trong worker/worker.js); máy chủ tự dùng GLM của Z.ai khi chúng bận.
-      nvidia: ["nemotron-3-ultra", "nemotron-3.5-super-vl", "mistral-large-4", "nemotron-3.5-lightning", "laguna-xs", "step-5"],
+      nvidia: ["glm-5.3-flash", "nemotron-3-ultra", "nemotron-3.5-super-vl", "mistral-large-4", "nemotron-3.5-lightning", "laguna-xs", "step-5"],
       // Mô hình đọc được ảnh: câu hỏi có ảnh gửi tới mô hình đang chọn nếu nó đọc được ảnh, không thì tới visionNvidia,
       // máy chủ lỗi thì tới vision (GLM-4.6V Flash của Z.ai).
       visionNvidia: "nemotron-3.5-super-vl",
+      // Mô hình NVIDIA tự đọc được ảnh: đang chọn mô hình này thì câu hỏi có ảnh gửi thẳng tới nó.
+      visionModels: ["glm-5.3-flash", "nemotron-3.5-super-vl"],
       vision: "glm-4.6v-flash",
       // Tên riêng của Astra cho từng mô hình (theo họ mô hình, giữ số phiên bản), vì cách suy nghĩ, kỹ năng và quy trình kiểm tra là của Astra.
       titles: {
-        "nemotron-3-ultra": ["Titan 3 Ultra", "Thông minh nhất: suy luận, toán và code rất tốt, trả lời nhanh"],
+        "glm-5.3-flash": ["Titan 4 Mega", "Mạnh nhất: suy luận, toán, code và đọc ảnh, trả lời nhanh"],
+        "nemotron-3-ultra": ["Titan 3 Ultra", "Rất thông minh: suy luận, toán và code rất tốt"],
         "nemotron-3.5-super-vl": ["Titan 3.5 Vision", "Đọc ảnh giỏi, suy nghĩ kỹ, bắt được bẫy trong đề"],
         "mistral-large-4": ["Lyra 4", "Viết văn hay, dịch và dùng nhiều ngôn ngữ giỏi, trình bày đẹp"],
         "nemotron-3.5-lightning": ["Titan 3.5 Lightning", "Giải thích dễ hiểu bằng ví dụ đời thường"],
@@ -817,6 +820,7 @@
       },
       // Biểu tượng và màu của từng mô hình trong menu.
       looks: {
+        "glm-5.3-flash": ["#6d28d9", "#2563eb", "M3 18h18M4 7l4 4.5L12 4l4 7.5L20 7l-1.5 11h-13Z"],
         "nemotron-3-ultra": ["#6d28d9", "#2563eb", "M6 3h12l4 6-10 12L2 9l4-6ZM2 9h20M12 21 8 9l2-6M12 21l4-12-2-6"],
         "nemotron-3.5-super-vl": ["#0891b2", "#22c55e", "M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12ZM12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z"],
         "mistral-large-4": ["#db2777", "#f97316", "M12 19l7-7 3 3-7 7-3-3ZM18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5ZM2 2l7.6 7.6M11 13a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"],
@@ -843,14 +847,16 @@
   store.set("glm.settings", settings);
   // Nemotron 3 Ultra là mô hình mạnh nhất đang trả lời được: đặt làm mặc định một lần cho cả máy đã chọn mô hình cũ.
   if (!settings.nemotron) { settings.models.shared = "nemotron-3-ultra"; settings.nemotron = true; store.set("glm.settings", settings); }
+  // Titan 4 Mega (GLM-5.3 Flash) thắng Titan 3 Ultra trong bài kiểm tra 13/11/2026 (5/5 so với 4/5, nhanh hơn): đặt làm mặc định một lần.
+  if (!settings.mega) { settings.models.shared = "glm-5.3-flash"; settings.mega = true; store.set("glm.settings", settings); }
   const cloudModel = () => settings.models[settings.provider] || PROVIDERS[settings.provider].models[0];
 
   const modelTitle = (id, m) => PROVIDERS[id].titles[m]?.[0] || m;
   // Ghi chú của máy chủ dùng tên gốc của mô hình: đổi sang tên của Astra.
-  const ORIGINAL_NAMES = { "Nemotron 3 Ultra": "nemotron-3-ultra", "Nemotron 3.5 Super VL": "nemotron-3.5-super-vl", "Nemotron 3.5 Lightning": "nemotron-3.5-lightning",
+  const ORIGINAL_NAMES = { "GLM-5.3 Flash": "glm-5.3-flash", "Nemotron 3 Ultra": "nemotron-3-ultra", "Nemotron 3.5 Super VL": "nemotron-3.5-super-vl", "Nemotron 3.5 Lightning": "nemotron-3.5-lightning",
     "Mistral Large 4": "mistral-large-4", "Laguna XS": "laguna-xs", "Step 5": "step-5", "GLM-4.7 Flash": "glm-4.7-flash", "GLM-4.5 Flash": "glm-4.5-flash", "GLM-4.6V Flash": "glm-4.6v-flash" };
   const brandNote = (t) => Object.entries(ORIGINAL_NAMES).reduce((a, [o, id]) => a.split(o).join(modelTitle("shared", id)), String(t || ""))
-    .replace(/GLM-5\.3 Flash|GLM của Z\.ai|Z\.ai|NVIDIA_API_KEY|NVIDIA/g, (w) => (w === "NVIDIA_API_KEY" ? "khoá máy chủ" : "máy chủ dự phòng"));
+    .replace(/GLM của Z\.ai|Z\.ai|NVIDIA_API_KEY|NVIDIA/g, (w) => (w === "NVIDIA_API_KEY" ? "khoá máy chủ" : "máy chủ dự phòng"));
   // Biểu tượng của một mô hình (ô màu có hình vẽ).
   const modelIcon = (m) => {
     const [a, b, d] = PROVIDERS.shared.looks[m] || ["#64748b", "#94a3b8", "M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"];
@@ -1746,8 +1752,14 @@
     "(4) biểu đồ, bảng: đọc tiêu đề, trục, đơn vị, chú thích rồi mới đọc số liệu; (5) đề toán, code trong ảnh: chép lại đề rồi giải như bình thường, có kiểm chứng; " +
     "(6) chỗ mờ, bị che, không chắc thì nói rõ là không đọc được hoặc đang đoán, không bịa chi tiết không có trong ảnh.";
   const MODEL_PROFILES = {
+    "glm-5.3-flash":
+      "Sở trường của bạn (Titan 4 Mega, mô hình mạnh nhất của Astra): suy luận sâu mà vẫn nhanh, toán, lập trình, đọc ảnh. Hãy phát huy:\n" +
+      "- Câu khó: suy nghĩ đủ sâu theo khung ở trên, tự kiểm chứng bằng cách độc lập; câu dễ thì trả lời ngay, không nghĩ dài thừa.\n" +
+      "- Toán, chứng minh, code khó: lập luận chặt, nêu điều kiện áp dụng, chọn thuật toán tối ưu, chạy thử trước khi đưa.\n" +
+      "- Ảnh: " + VISION_PROMPT + "\n" +
+      "- Bạn mạnh nên dễ tự tin quá: luôn thử phản bác đáp án của chính mình trước khi kết luận.",
     "nemotron-3-ultra":
-      "Sở trường của bạn (Titan 3 Ultra, mô hình mạnh nhất): suy luận sâu, toán, lập trình khó và kiến trúc phần mềm. Hãy phát huy:\n" +
+      "Sở trường của bạn (Titan 3 Ultra, một trong hai mô hình mạnh nhất): suy luận sâu, toán, lập trình khó và kiến trúc phần mềm. Hãy phát huy:\n" +
       "- Toán và chứng minh: lập luận chặt từng bước, nêu rõ định lý đã dùng và điều kiện áp dụng; không bỏ qua trường hợp đặc biệt.\n" +
       "- Code khó: chọn thuật toán và cấu trúc dữ liệu tối ưu, nêu độ phức tạp, bao quát trường hợp biên, chạy thử trước khi đưa.\n" +
       "- Câu hỏi nhiều tầng: tách thành các phần, giải từng phần rồi ráp lại và kiểm tra tính nhất quán toàn cục.\n" +
@@ -2223,7 +2235,7 @@
 
   function systemPrompt(chat) {
     const today = new Date().toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "numeric", year: "numeric" });
-    const [mName, mDesc] = PROVIDERS.shared.titles[cloudModel()] || ["Titan 3 Ultra", ""];
+    const [mName, mDesc] = PROVIDERS.shared.titles[cloudModel()] || ["Titan 4 Mega", ""];
     const identity = `Bạn là Astra, trợ lý AI tiếng Việt, đang chạy mô hình ${mName} (${mDesc.toLowerCase()}). Khi được hỏi bạn là ai hay là mô hình gì, ` +
       `hãy nói bạn là Astra, mô hình ${mName}. Nếu được hỏi về công nghệ bên dưới thì nói Astra được xây dựng trên các mô hình ngôn ngữ mở, ` +
       "cộng với cách suy nghĩ, kỹ năng, công cụ (chạy code, tra cứu, vẽ ảnh, xuất file) và quy trình kiểm tra chéo riêng của Astra.";
@@ -3717,7 +3729,7 @@
     // nên trang chỉ thử thêm các mô hình của Z.ai.
     const onNvidia = (m) => PROVIDERS.shared.nvidia.includes(m);
     const chosen = reply.forceModel || cloudModel(); // forceModel: mô hình riêng của một lời giải trong chế độ Nghĩ kỹ
-    const order = vision ? [["shared", PROVIDERS.shared.visionNvidia]] : [[settings.provider, chosen]];
+    const order = vision ? [["shared", PROVIDERS.shared.visionModels.includes(chosen) ? chosen : PROVIDERS.shared.visionNvidia]] : [[settings.provider, chosen]];
     if (!vision) for (const id of Object.keys(PROVIDERS)) for (const m of PROVIDERS[id].models) if ((id !== order[0][0] || m !== order[0][1]) && !onNvidia(m)) order.push([id, m]);
     const retries = vision ? 4 : 1;
     let res = null, used, model;
