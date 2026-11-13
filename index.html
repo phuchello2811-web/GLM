@@ -248,7 +248,10 @@
   .preview-bar button { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); }
   .preview-bar button:hover { color: var(--text); }
   .preview-bar svg { width: 14px; height: 14px; }
-  .preview iframe { display: block; width: 100%; height: 460px; border: 0; background: #fff; resize: vertical; }
+  .preview iframe { display: block; width: 100%; max-width: 100%; height: 460px; border: 0; background: #fff; resize: vertical; margin: 0 auto; transition: width .2s ease; }
+  .preview .sizes { display: inline-flex; gap: 2px; background: var(--hover); border-radius: 8px; padding: 2px; }
+  .preview .sizes button { padding: 2px 8px; border-radius: 6px; }
+  .preview .sizes button.on { background: var(--bg); color: var(--text); }
   .codeblock { margin: 0 0 12px; border-radius: 12px; overflow: hidden; background: var(--code-bg); border: 1px solid var(--border); }
   .codeblock .code-head {
     display: flex; justify-content: space-between; align-items: center; padding: 6px 12px;
@@ -1236,6 +1239,8 @@
     }
     if (m.kb?.length) html += `<div class="memo">${ICON_BOOK}Dùng kho kiến thức: ${esc(m.kb.join(", "))}</div>`;
     if (m.remembered) html += m.remembered.map((t) => `<div class="memo">${ICON_CHECK}Đã ghi nhớ: ${esc(t)}</div>`).join("");
+    if (m.webCheck) html += `<div class="memo">${ICON_CHECK}${esc(m.webCheck)}</div>`;
+    if (m.cutWarning && !streaming) html += `<div class="error">Code ở cuối có vẻ chưa viết xong. <button type="button" class="btn" data-act="continue">Viết tiếp</button></div>`;
     if (m.error) html += `<div class="error">${esc(m.error)}</div>`;
     else if (m.truncated && !streaming) html += `<div class="error">Câu trả lời quá dài nên vẫn chưa viết hết sau ${CONTINUE_LIMIT} lần viết tiếp. Bấm Tạo lại hoặc nhắn "viết tiếp".</div>`;
     if (!streaming) {
@@ -1480,9 +1485,11 @@
     "  {\"layout\":\"title\",\"kicker\":…,\"title\":…,\"subtitle\":…} slide mở đầu; {\"layout\":\"section\",\"title\":…,\"subtitle\":…} mở một phần mới;\n" +
     "  {\"title\":…,\"bullets\":[…]} (ý phụ bắt đầu bằng \"- \"); {\"title\":…,\"leftTitle\":…,\"left\":[…],\"rightTitle\":…,\"right\":[…]} hai cột; {\"title\":…,\"table\":[[hàng tiêu đề],[…]]};\n" +
     "  {\"title\":…,\"chart\":{\"type\":\"bar|line|area|pie|doughnut\",\"title\":…,\"labels\":[…],\"series\":[{\"name\":…,\"values\":[số…]}]},\"bullets\":[…]};\n" +
-    "  {\"title\":…,\"stats\":[{\"value\":\"95%\",\"label\":…}]} 2–4 số liệu nổi bật; {\"title\":…,\"cards\":[{\"icon\":\"🤖\",\"title\":…,\"text\":…}]} 2–4 thẻ;\n" +
-    "  {\"title\":…,\"timeline\":[{\"time\":…,\"text\":…}]} 3–6 mốc; {\"layout\":\"quote\",\"quote\":…,\"author\":…}; {\"layout\":\"end\",\"title\":…,\"subtitle\":…} slide kết.\n" +
+    "  {\"title\":…,\"stats\":[{\"icon\":…,\"value\":\"95%\",\"label\":…}]} 2–4 số liệu nổi bật; {\"title\":…,\"cards\":[{\"icon\":\"rocket\",\"title\":…,\"text\":…}]} 2–4 thẻ;\n" +
+    "  {\"title\":…,\"timeline\":[{\"icon\":…,\"time\":…,\"text\":…}]} 3–6 mốc; {\"layout\":\"quote\",\"quote\":…,\"author\":…}; {\"layout\":\"end\",\"title\":…,\"subtitle\":…} slide kết.\n" +
     "  Slide nào cũng thêm được \"notes\" (lời người thuyết trình nói); chữ trong **…** được tô màu nhấn.\n" +
+    "  icon là tên biểu tượng SVG Lucide (tiếng Anh, chữ thường, nối bằng gạch ngang), được tô theo màu của theme. Dùng cho cards (nên có ở mọi thẻ), " +
+    "stats, mốc timeline, và slide title hoặc section (một biểu tượng lớn trang trí). Tên hay dùng: rocket, sparkles, zap, lightbulb, brain, bot, cpu, code, terminal, database, server, wifi, smartphone, laptop, monitor, globe, map-pin, house, building, factory, landmark, school, graduation-cap, book-open, pencil, calculator, flask-conical, microscope, atom, dna, stethoscope, pill, activity, heart, user, users, handshake, briefcase, dollar-sign, wallet, piggy-bank, shopping-cart, store, chart-line, chart-bar, chart-pie, trending-up, trending-down, target, trophy, award, flag, star, clock, calendar, hourglass, shield-check, lock, key, triangle-alert, circle-check, circle-x, info, circle-help, search, settings, wrench, hammer, puzzle, layers, palette, camera, image, music, video, newspaper, megaphone, message-circle, mail, phone, leaf, sprout, trees, recycle, sun, moon, cloud, cloud-rain, wind, snowflake, droplet, waves, flame, thermometer, mountain, fish, apple, utensils, coffee, gift, car, bus, bike, plane, ship, train-front, battery-charging, plug, scale, gavel. Dùng emoji chỉ khi không có biểu tượng hợp.\n" +
     "  Viết gọn để slide thoáng: tiêu đề tối đa 10 từ; mỗi ý tối đa 12 từ; text của card tối đa 15 từ; label của stats tối đa 8 từ; " +
     "text của mỗi mốc timeline tối đa 10 từ; quote tối đa 30 từ. Chi tiết dài đưa vào notes.\n" +
     "- ```xlsx\n{JSON}\n``` : file Excel. JSON gồm file và sheets là danh sách {\"name\":…,\"rows\":[[tiêu đề cột…],[…]],\"widths\":[độ rộng cột]}. " +
@@ -1542,12 +1549,36 @@
         "hiển thị dữ liệu người dùng bằng textContent thay vì innerHTML.\n" +
         "- Game và hoạt hình: canvas với requestAnimationFrame và delta time, điều khiển bằng cả bàn phím lẫn cảm ứng, có màn bắt đầu, tạm dừng, " +
         "điểm và kỷ lục (localStorage), nút chơi lại; canvas tự co theo màn hình và devicePixelRatio cho nét.\n" +
-        "- Nội dung thật, cụ thể, bằng ngôn ngữ của người dùng (không dùng lorem ipsum); minh hoạ bằng SVG nội tuyến, gradient hoặc emoji thay vì ảnh ngoài.\n" +
-        "- Logic phức tạp (tính toán, xử lý dữ liệu, luật chơi) thì viết thành hàm thuần và chạy thử bằng js-run trước khi đưa vào trang.\n" +
+        "- Nội dung thật, cụ thể, bằng ngôn ngữ của người dùng (không dùng lorem ipsum). Không để khung ảnh trống hay khối màu thay ảnh. " +
+        "Cần ảnh minh hoạ (món ăn, sản phẩm, phòng ốc, phong cảnh, nhân vật) thì dùng ảnh do AI vẽ qua đường dẫn " +
+        "https://image.pollinations.ai/prompt/{mô tả tiếng Anh đã mã hoá URL}?width=800&height=600&nologo=true&seed={số khác nhau cho mỗi ảnh}, " +
+        "mô tả cụ thể đúng nội dung (ví dụ \"vietnamese salt coffee in glass cup, wooden table, soft daylight, food photography\"); " +
+        "thẻ <img> có alt, loading=\"lazy\", width và height, object-fit: cover, nền gradient phía sau để chờ ảnh tải, và onerror ẩn ảnh lỗi. " +
+        "Biểu tượng, hình trang trí, sơ đồ thì vẽ bằng SVG nội tuyến.\n" +
+        "- Biểu tượng dùng SVG, không dùng emoji làm biểu tượng giao diện: viết SVG nội tuyến kiểu Lucide (viewBox=\"0 0 24 24\", fill=\"none\", stroke=\"currentColor\", " +
+        "stroke-width=\"2\", stroke-linecap=\"round\", stroke-linejoin=\"round\"; cỡ bằng CSS width/height 1em đến 1.5em; màu theo color của chữ), " +
+        "hoặc khi cần nhiều biểu tượng thì nạp Lucide: <script src=\"https://cdn.jsdelivr.net/npm/lucide@0.460.0/dist/umd/lucide.min.js\"><\/script>, " + // <\/ để trình duyệt không hiểu nhầm là kết thúc script của trang
+        "viết <i data-lucide=\"rocket\"></i> rồi gọi lucide.createIcons() sau khi trang tải (và sau mỗi lần vẽ lại HTML). " +
+        "Nút chỉ có biểu tượng phải có aria-label; biểu tượng trang trí thêm aria-hidden=\"true\".\n" +
+        "- Logic phức tạp (tính toán, xử lý dữ liệu, luật chơi) thì viết thành hàm thuần và chạy thử bằng js-run trước khi đưa vào trang. " +
+        "js-run không có trang web (không có document, window, localStorage), nên chỉ chạy hàm thuần, tối đa một hai lần; trang đơn giản thì không cần chạy. " +
+        "Sau đó viết ngay file HTML hoàn chỉnh, không chạy cả trang trong js-run.\n" +
         "- Ứng dụng lớn: giữ dữ liệu trong một object state, một hàm render() vẽ lại giao diện từ state, mỗi thao tác chỉ đổi state rồi gọi render(); " +
         "chia code thành các hàm nhỏ theo chức năng. Thành phần hay dùng tự viết gọn: hộp thoại (<dialog>), thông báo nhỏ (toast), tab, menu thả xuống, " +
         "bảng có sắp xếp và tìm kiếm. Biểu đồ dùng Chart.js qua CDN với phiên bản cụ thể.\n" +
         "- Người dùng gửi ảnh chụp giao diện hoặc bản thiết kế thì dựng lại sát bố cục, màu sắc, cỡ chữ và khoảng cách trong ảnh.\n" +
+        "- Giao diện chuyên nghiệp: khoảng cách theo bội số 4px (4, 8, 12, 16, 24, 32, 48, 64); thang cỡ chữ rõ ràng (12–14 chú thích, 16 nội dung, 20–24 tiêu đề nhỏ, " +
+        "32–56 tiêu đề lớn, line-height 1.5 cho nội dung); màu theo tỉ lệ 60-30-10 (nền, bề mặt, màu nhấn), chữ tương phản ít nhất 4.5:1; bo góc, bóng đổ, độ dày viền thống nhất; " +
+        "căn thẳng hàng theo lưới, độ rộng dòng chữ 60–75 ký tự, khoảng trắng rộng rãi giữa các phần.\n" +
+        "- Mỗi thành phần đủ trạng thái: mặc định, rê chuột, focus (viền rõ), đang bấm, vô hiệu, đang tải (skeleton hoặc spinner), trống (có hình minh hoạ và hướng dẫn bước tiếp theo), " +
+        "lỗi (nói rõ lỗi và cách khắc phục), thành công (thông báo nhỏ dạng toast tự ẩn).\n" +
+        "- Mẫu bố cục hay dùng: thanh điều hướng dính trên cùng, trên điện thoại thu thành nút menu; hero có tiêu đề mạnh và nút kêu gọi hành động; lưới tính năng có biểu tượng; " +
+        "bảng giá; đánh giá khách hàng; câu hỏi thường gặp dạng accordion; form liên hệ; chân trang. Ứng dụng và dashboard: thanh bên, thẻ số liệu, bảng có tìm kiếm và sắp xếp, biểu đồ.\n" +
+        "- Chuyển động tinh tế: phần tử hiện dần khi cuộn tới (IntersectionObserver), nút có phản hồi khi bấm, hộp thoại mở mượt; không lạm dụng.\n" +
+        "- Tính năng phải chạy thật và đầy đủ theo yêu cầu: thêm, sửa, xoá, tìm kiếm, lọc, sắp xếp, lưu lại sau khi tải lại trang; xuất và nhập dữ liệu (JSON hoặc CSV) khi hợp lý; " +
+        "hỏi xác nhận trước khi xoá, có hoàn tác khi có thể; phím tắt cho thao tác chính; form kiểm tra dữ liệu và báo lỗi ngay cạnh ô nhập. " +
+        "Không có chức năng giả, chỗ TODO, dữ liệu cứng không sửa được hay nút bấm không làm gì.\n" +
+        "- Trang sẽ được tự động chạy thử trong khung điện thoại 390px và bấm thử mọi nút: phải không có lỗi JavaScript, không lỗi khi bấm bất kỳ nút nào, không tràn ngang.\n" +
         "- Trước khi nộp, tự soát: thẻ đóng đủ, JS không lỗi cú pháp, mọi nút và liên kết đều hoạt động, đẹp trên điện thoại, chế độ tối vẫn đọc rõ.\n" +
         "- Người dùng bấm Xem trước để chạy thử ngay, nên khi sửa luôn đưa lại TRỌN file, không chỉ đoạn thay đổi. " +
         "Sau khối code, nói ngắn gọn các tính năng chính và cách mở rộng.",
@@ -1565,8 +1596,10 @@
         "(cảm ơn, câu hỏi, lời kêu gọi). Khoảng 8–14 slide nếu người dùng không nói rõ.\n" +
         "- Slide nguồn tham khảo dùng dạng bullets (không dùng section). Mỗi slide đúng một ý. Tiêu đề là câu khẳng định ngắn nói lên ý chính (ví dụ \"AI đã có trong điện thoại của bạn\" thay vì \"Ứng dụng\"). " +
         "Tối đa 5 ý, mỗi ý dưới 12 từ; chi tiết để trong notes. Dùng **…** để nhấn 1–2 từ khoá quan trọng.\n" +
+        "- Biểu tượng: mỗi thẻ cards có icon Lucide hợp nghĩa (ví dụ năng lượng sun hoặc zap, sức khoẻ heart hoặc stethoscope, học tập graduation-cap), " +
+        "slide title và section có icon lớn tượng trưng cho chủ đề; giữ một phong cách biểu tượng, không trộn emoji với SVG trong cùng bài.\n" +
         "- Đa dạng bố cục cho cuốn hút: không để quá 2 slide gạch đầu dòng liền nhau; số liệu dùng stats hoặc chart; lịch sử, quy trình dùng timeline; " +
-        "các khái niệm song song dùng cards (chọn emoji hợp nghĩa); so sánh dùng hai cột hoặc table; câu nói hay dùng quote.\n" +
+        "các khái niệm song song dùng cards (mỗi thẻ một icon Lucide hợp nghĩa); so sánh dùng hai cột hoặc table; câu nói hay dùng quote.\n" +
         "- Chọn theme hợp chủ đề và người xem: công nghệ midnight hoặc neon; giáo dục, khoa học ocean hoặc forest; kinh doanh corporate; " +
         "nghệ thuật, đời sống sunset hoặc warm; trang trọng minimal.\n" +
         "- notes cho mọi slide: 2–4 câu người thuyết trình nói, bổ sung ví dụ và chi tiết không ghi trên slide.\n" +
@@ -1656,6 +1689,40 @@
       remind: "chạy thử code bằng py-run, js-run hoặc cpp-run với ví dụ và trường hợp biên trước khi đưa code cuối",
     },
     {
+      test: /react|vue|angular|svelte|next\.?js|nuxt|tailwind|bootstrap|frontend|front-end|backend|back-end|fullstack|full-stack|\bdom\b|\bcss\b|responsive|\bseo\b|\bpwa\b|rest ?api|graphql|node\.?js|express|nestjs|database|cơ sở dữ liệu|\bsql\b|mongodb|firebase|supabase|\bcors\b|\bjwt\b|đăng nhập|xác thực|deploy|triển khai|hosting|tên miền|domain|website|trang web/i,
+      prompt:
+        "Kiến thức phát triển web:\n" +
+        "- HTML: thẻ ngữ nghĩa, form có label, kiểu input đúng (email, tel, number, date), thuộc tính required, pattern, autocomplete; meta description và Open Graph cho chia sẻ.\n" +
+        "- CSS hiện đại: biến CSS, clamp() cho cỡ chữ, grid (grid-template-areas, auto-fit minmax) và flex, container queries, :has(), :focus-visible, " +
+        "aspect-ratio, chế độ tối bằng prefers-color-scheme, animation bằng transform và opacity (mượt, không làm giật trang).\n" +
+        "- JavaScript: module ES, async/await kèm try/catch, fetch có AbortController và báo lỗi mạng, gán sự kiện theo kiểu uỷ quyền (event delegation), " +
+        "debounce cho ô tìm kiếm, IntersectionObserver cho hiệu ứng khi cuộn và tải lười, requestAnimationFrame cho chuyển động, localStorage bọc try/catch.\n" +
+        "- Hiệu năng: ảnh loading=\"lazy\" có width/height, script defer, tránh đọc và ghi bố cục xen kẽ trong vòng lặp, chia nhỏ việc nặng.\n" +
+        "- Bảo mật: chống XSS (textContent, không chèn HTML từ người dùng), không để key hay mật khẩu ở phía trình duyệt, mật khẩu băm bằng bcrypt hoặc argon2 ở máy chủ, " +
+        "truy vấn SQL dùng tham số, hiểu CORS và cookie HttpOnly, SameSite, kiểm tra dữ liệu ở cả hai phía.\n" +
+        "- Framework: React (component, props, useState, useEffect có dọn dẹp, key ổn định khi render danh sách, tách custom hook), Vue 3 (Composition API), " +
+        "Tailwind; thử nhanh trong một file HTML thì nạp qua CDN với phiên bản cụ thể.\n" +
+        "- Backend và dữ liệu: REST (động từ HTTP, mã trạng thái, phân trang, kiểm tra đầu vào), Node.js với Express hoặc Fastify, xác thực bằng session hoặc JWT, " +
+        "SQL (khoá chính, khoá ngoại, chỉ mục, JOIN, giao dịch), hoặc dịch vụ có sẵn như Supabase, Firebase.\n" +
+        "- Triển khai: trang tĩnh lên GitHub Pages, Netlify, Vercel hoặc Cloudflare Pages; API nhỏ lên Cloudflare Workers hoặc Vercel Functions; " +
+        "biến môi trường cho bí mật; HTTPS; kiểm tra bằng Lighthouse.\n" +
+        "- Trả lời câu hỏi dev: nêu cách làm chuẩn hiện nay kèm ví dụ code chạy được, chỉ ra cạm bẫy thường gặp và cách kiểm tra.",
+    },
+    {
+      test: /tại sao|vì sao|giải thích|phân tích|đánh giá|so sánh|có nên|nên chọn|lựa chọn|quyết định|lập luận|suy luận|nguyên nhân|hệ quả|dự đoán|dự báo|chiến lược|ưu (và|,)? ?nhược|ưu điểm|rủi ro|tranh luận|phản biện|xác suất|ước lượng|khả năng (cao|thấp)|đúng hay sai|why|should i|pros and cons|trade-?off/i,
+      prompt:
+        "Kỹ năng tư duy và suy luận nâng cao:\n" +
+        "- Tách bạch: điều đã biết chắc (có nguồn), điều suy ra, giả định, và ý kiến. Định nghĩa rõ các khái niệm mơ hồ trước khi lập luận.\n" +
+        "- Chia vấn đề thành các phần không chồng lấn và đủ hết các khả năng (MECE); đi từ nguyên lý gốc khi lối mòn dễ dẫn tới sai.\n" +
+        "- Nhân quả: phân biệt tương quan với nhân quả, xét biến ẩn và chiều ngược lại, nghĩ tới hệ quả bậc hai (rồi sao nữa?).\n" +
+        "- Xác suất: bắt đầu từ tỉ lệ nền, cập nhật theo bằng chứng (Bayes), cẩn thận ngụy biện con bạc và thiên lệch kẻ sống sót; ước lượng Fermi để kiểm tra độ lớn hợp lý.\n" +
+        "- Quyết định: nêu các phương án (kể cả không làm gì), tiêu chí và trọng số, bảng so sánh, rủi ro và cách giảm rủi ro; thử tưởng tượng thất bại trước (pre-mortem); " +
+        "đưa ra khuyến nghị rõ ràng kèm điều kiện để đổi ý.\n" +
+        "- Phản biện chính mình: dựng phiên bản mạnh nhất của quan điểm trái chiều (steelman), tìm bằng chứng có thể bác bỏ kết luận; tránh các ngụy biện " +
+        "(công kích cá nhân, người rơm, ngụy biện dốc trượt, lựa chọn sai lầm chỉ có hai đường, dựa vào số đông hay quyền uy, suy rộng vội vàng, lập luận vòng tròn).\n" +
+        "- Kết luận: trả lời thẳng câu hỏi trước, rồi các lý do chính theo thứ tự quan trọng, nêu mức độ chắc chắn và điều gì sẽ làm thay đổi kết luận.",
+    },
+    {
       test: /ioi|icpc|olympic|hsg|học sinh giỏi|codeforces|atcoder|leetcode|vnoi|thi đấu|competitive|thuật toán|algorithm|độ phức tạp|c\+\+|cpp|subtask|testcase|quy hoạch động|đồ thị/i,
       prompt:
         "Kỹ năng lập trình thi đấu (IOI, ICPC, Codeforces, VNOI, HSG Tin):\n" +
@@ -1666,8 +1733,22 @@
         "đồ thị (BFS, DFS, Dijkstra, DSU, cây khung, topo, LCA), chặt nhị phân theo đáp án, hai con trỏ, tổng tiền tố, " +
         "Fenwick/segment tree (lazy), xâu (KMP, Z, hash), số học (modulo, nghịch đảo, sàng, tổ hợp), hình học. " +
         "Giải thích ngắn vì sao thuật toán đúng; nếu chỉ đạt một phần subtask thì nói rõ.\n" +
+        "   Danh mục theo dạng bài: mảng và đoạn (tổng tiền tố, mảng hiệu, hai con trỏ, cửa sổ trượt, ngăn xếp/hàng đợi đơn điệu, sparse table cho RMQ); " +
+        "tìm kiếm (chặt nhị phân trên đáp án, tam phân, meet-in-the-middle); tham lam (chứng minh bằng đổi chỗ, sắp xếp theo khoá phù hợp, hàng đợi ưu tiên); " +
+        "quy hoạch động (cái túi, LIS O(n log n), DP đoạn, DP bitmask, DP chữ số, DP trên cây và rerooting, DP trên DAG, tối ưu bằng chia để trị, Knuth, convex hull trick, đếm theo modulo); " +
+        "đồ thị (BFS, BFS 0-1, Dijkstra, Bellman-Ford, Floyd, sắp xếp topo, thành phần liên thông mạnh Tarjan/Kosaraju, cầu và khớp, cây khung Kruskal/Prim, DSU, " +
+        "LCA bằng nâng nhị phân, Euler tour, HLD, centroid decomposition, luồng cực đại Dinic, cặp ghép hai phía); " +
+        "cấu trúc dữ liệu (Fenwick, segment tree có lazy, segment tree động/persistent, cây cân bằng hoặc ordered_set của pb_ds, sqrt decomposition, thuật toán Mo); " +
+        "xâu (KMP, Z, hash hai modulo, trie, Aho-Corasick, mảng hậu tố, Manacher); toán (lũy thừa nhanh, nghịch đảo modulo, sàng nguyên tố, giai thừa và tổ hợp modulo, " +
+        "Euclid mở rộng, định lý số dư Trung Hoa, hàm phi Euler, nhân ma trận, bao hàm loại trừ, kỳ vọng tuyến tính, FFT/NTT); " +
+        "hình học (tích có hướng, kiểm tra hướng, bao lồi, tính bằng số nguyên để tránh sai số).\n" +
+        "   Bài IOI có subtask: làm subtask dễ trước để chắc điểm (vét cạn, trường hợp đặc biệt như đường thẳng, cây sao, giá trị nhỏ), " +
+        "rồi tìm ý tưởng cho subtask lớn dần; nói rõ lời giải đạt những subtask nào.\n" +
         "4) Viết lời giải C++17 (trừ khi người dùng muốn ngôn ngữ khác): ios::sync_with_stdio(false); cin.tie(nullptr); " +
         "dùng long long khi có thể tràn số, lấy modulo đúng chỗ, mảng đủ kích thước, khởi tạo lại dữ liệu giữa các test.\n" +
+        "   Lỗi hay gặp cần soát: tràn số khi nhân (ép long long trước khi nhân), modulo số âm ((a % m + m) % m), lệch chỉ số 0 và 1, " +
+        "đệ quy quá sâu với n lớn (dùng DFS bằng ngăn xếp), vòng lặp đọc nhiều test quên reset, so sánh số thực bằng ==, dùng endl trong vòng lặp lớn (chậm), " +
+        "map hoặc unordered_map khi mảng đủ dùng, sort với hàm so sánh không phải thứ tự chặt.\n" +
         "5) Kiểm tra bằng cpp-run (chạy C++ thật): viết MỘT chương trình gồm hàm solve (đúng lời giải sẽ nộp), hàm brute (vét cạn, chắc chắn đúng) " +
         "và main tự chạy các ví dụ trong đề rồi sinh vài trăm test ngẫu nhiên nhỏ (mt19937 với seed cố định, kể cả test biên như n = 1), " +
         "so sánh solve với brute, in OK hoặc test sai đầu tiên kèm hai kết quả. Sai thì tìm lỗi, sửa rồi chạy lại tới khi OK. " +
@@ -1898,6 +1979,8 @@
           }
         }
       }
+      // Trang web hoàn chỉnh: tự chạy thử, có lỗi thì tự sửa (tối đa 2 lượt).
+      await autoFixWeb(history, reply, node);
     } catch (e) {
       if (e.name !== "AbortError") {
         reply.error = /Failed to fetch|NetworkError|Load failed/i.test(e.message)
@@ -1914,6 +1997,7 @@
       controller?.abort(); // dừng các lời giải của hội đồng còn đang chạy
       controller = null;
       delete reply.notice; delete reply.stage; delete reply.fallback; delete reply.judgeFailed;
+      reply.cutWarning = !reply.error && !!codeCut(splitThink(reply.content).answer.trim()) || undefined;
       saveRemembered(reply, chat.messages.at(-2)?.content || "");
       setBusy(false);
       chat.updated = Date.now();
@@ -1960,6 +2044,69 @@
     if (!reply.drafts.length) delete reply.drafts;
   }
 
+  // Tự chạy thử trang web trong một khung ẩn khổ điện thoại (390px): bắt lỗi JavaScript và lỗi tải tài nguyên, bấm thử mọi nút,
+  // kiểm tra trang có bị tràn ngang không. Khung có sandbox (không đọc được dữ liệu của trang chat).
+  function checkWebPage(code) {
+    return new Promise((resolve) => {
+      const id = Math.random().toString(36).slice(2), errors = [];
+      const probe = `<script>(()=>{const id=${JSON.stringify(id)},seen=new Set(),send=(m)=>{m=String(m).slice(0,300);if(seen.has(m)||seen.size>12)return;seen.add(m);parent.postMessage({chk:id,msg:m},"*")};` +
+        `addEventListener("error",e=>{if(e.target&&e.target!==window&&(e.target.src||e.target.href))send("Không tải được "+(e.target.src||e.target.href));else send((e.message||"Lỗi")+(e.lineno?" (dòng "+e.lineno+")":""))},true);` +
+        `addEventListener("unhandledrejection",e=>send("Promise bị lỗi: "+((e.reason&&e.reason.message)||e.reason)));` +
+        `const ce=console.error;console.error=(...a)=>{send("console.error: "+a.map(String).join(" "));ce.apply(console,a)};` +
+        `addEventListener("submit",e=>e.preventDefault(),true);` +
+        `addEventListener("load",()=>setTimeout(()=>{for(const b of [...document.querySelectorAll("button,[role=button],input[type=button],input[type=submit]")].slice(0,25)){try{b.click()}catch(x){send("Bấm nút lỗi: "+x.message)}}` +
+        `setTimeout(()=>{const w=document.documentElement.scrollWidth;parent.postMessage({chk:id,done:1,overflow:w>innerWidth+4?w:0},"*")},700)},600))})()<\/script>`;
+      const frame = document.createElement("iframe");
+      frame.sandbox = "allow-scripts allow-forms";
+      frame.setAttribute("aria-hidden", "true");
+      frame.style.cssText = "position:fixed;left:-10000px;top:0;width:390px;height:800px;border:0;visibility:hidden";
+      const finish = (overflow = 0) => { removeEventListener("message", onMsg); clearTimeout(timer); frame.remove(); resolve({ errors, overflow }); };
+      const onMsg = (e) => {
+        if (e.source !== frame.contentWindow || e.data?.chk !== id) return;
+        if (e.data.msg) errors.push(e.data.msg);
+        if (e.data.done) finish(e.data.overflow);
+      };
+      const timer = setTimeout(() => finish(0), 8000);
+      addEventListener("message", onMsg);
+      frame.srcdoc = /<head[^>]*>/i.test(code) ? code.replace(/<head[^>]*>/i, (h) => h + probe) : probe + code;
+      document.body.append(frame);
+    });
+  }
+  const WEB_FIX_PROMPT =
+    "Trang web trong câu trả lời vừa rồi được chạy thử tự động (khung điện thoại 390px, bấm thử mọi nút) và gặp lỗi:\n{E}\n\n" +
+    "Hãy tìm đúng nguyên nhân từng lỗi và sửa, giữ nguyên các phần đang đúng và đủ mọi tính năng. Viết lại TRỌN câu trả lời với file HTML hoàn chỉnh " +
+    "đã sửa trong một khối ```html (không chỉ đoạn sửa), kèm một dòng ngắn nói đã sửa gì.";
+  async function autoFixWeb(history, reply, node) {
+    for (let round = 0; round < 3; round++) {
+      const answer = splitThink(reply.content).answer;
+      const html = [...answer.matchAll(/```html[^\n]*\n([\s\S]*?)\n[ \t]*```/g)].map((m) => m[1]).filter((c) => /<(html|body)\b/i.test(c)).at(-1);
+      if (!html) return;
+      reply.notice = round ? "Đang chạy thử lại trang web đã sửa…" : "Đang chạy thử trang web…";
+      paintAssistant(node, reply, true);
+      const r = await checkWebPage(html);
+      delete reply.notice;
+      const problems = [...r.errors, ...(r.overflow ? [`Trên điện thoại (khung 390px) trang bị tràn ngang, rộng ${r.overflow}px: có phần tử rộng cố định hoặc thiếu max-width, flex-wrap.`] : [])];
+      if (!problems.length) {
+        reply.webCheck = round ? "Đã tự sửa lỗi và chạy thử lại trang web: không còn lỗi" : "Đã tự chạy thử trang web: không có lỗi JavaScript, các nút bấm được, không tràn ngang trên điện thoại";
+        return;
+      }
+      if (round === 2) { reply.webCheck = "Đã tự sửa 2 lần nhưng trang còn lỗi: " + problems.slice(0, 3).join("; "); return; }
+      const old = { content: reply.content, reasoning: reply.reasoning, thinkSecs: reply.thinkSecs, model: reply.drafter, label: round ? "Bản sửa lần 1 (vẫn còn lỗi)" : "Bản đầu (có lỗi khi chạy thử)" };
+      reply.drafts = [...(reply.drafts || []), old];
+      Object.assign(reply, { content: "", reasoning: "", thinkSecs: null, tps: null, review: true, via: undefined, notice: "Trang có lỗi khi chạy thử, đang tự sửa…" });
+      await answerWithTools([...history, { role: "assistant", content: answer.slice(0, 30000) },
+        { role: "user", content: WEB_FIX_PROMPT.replace("{E}", problems.map((x) => "- " + x).join("\n")) }], reply, node);
+      delete reply.notice;
+      if (!splitThink(reply.content).answer.includes("```html")) {
+        // Bản sửa không có trang web: giữ bản trước.
+        Object.assign(reply, { content: old.content, reasoning: old.reasoning, thinkSecs: old.thinkSecs });
+        reply.drafts.pop();
+        reply.webCheck = "Trang còn lỗi khi chạy thử: " + problems.slice(0, 3).join("; ");
+        return;
+      }
+    }
+  }
+
   // Một bước chạy ngầm của mức Kỹ/Tối đa (phân tích, lời giải, nhận xét): mô hình riêng, không hiện ra, có nút dừng riêng.
   async function silentRun(msgs, model, stops, fast = false) {
     // fast: không suy nghĩ dài (dùng cho bước chỉ cần liệt kê, như phân tích đề).
@@ -2001,6 +2148,23 @@
   const CONTINUE_LIMIT = 8; // số lần tự viết tiếp tối đa khi câu trả lời chạm giới hạn độ dài hoặc dừng giữa khối code
   // Còn khối code mở mà chưa đóng (số dòng bắt đầu bằng ``` là số lẻ).
   const unclosedFence = (text) => (text.match(/^\s*```/gm) || []).length % 2 === 1;
+  // Câu trả lời kết thúc bằng một khối code chưa viết xong. "open": khối chưa đóng. "closed": khối đã đóng nhưng code chưa trọn
+  // (trang HTML thiếu </html>, hoặc code thiếu dấu } đóng), tức mô hình hoặc luồng dừng giữa chừng. "": không thấy dấu hiệu bị cắt.
+  // Chỉ xét khối ở cuối câu trả lời (sau khối không còn chữ), nên câu trả lời có giải thích phía sau không bị coi là cắt.
+  const BRACE_LANGS = /^(c|cpp|c\+\+|cc|h|hpp|java|javascript|js|jsx|ts|tsx|typescript|css|scss|json|cs|csharp|go|golang|rust|rs|kotlin|kt|swift|php|dart|scala|js-run|cpp-run)$/;
+  function codeCut(text) {
+    if (unclosedFence(text)) return "open";
+    const m = text.match(/```([\w+#.-]*)[^\n]*\n([\s\S]*?)\n[ \t]*```[ \t]*$/);
+    if (!m) return "";
+    const lang = m[1].toLowerCase(), code = m[2];
+    if (lang === "html" && /<(html|body)\b/i.test(code) && !/<\/html>/i.test(code)) return "closed";
+    if (BRACE_LANGS.test(lang)) {
+      // Bỏ chuỗi và chú thích trước khi đếm ngoặc, để dấu { trong chuỗi không làm sai.
+      const bare = code.replace(/"(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|`(?:\\.|[^`\\])*`|\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, "");
+      if ((bare.match(/\{/g) || []).length > (bare.match(/\}/g) || []).length) return "closed";
+    }
+    return "";
+  }
   async function answerWithTools(messages, reply, node) {
     for (let round = 0; ; round++) {
       const start = reply.content.length;
@@ -2016,16 +2180,32 @@
           // Chạm giới hạn độ dài khi đang viết câu trả lời: tự yêu cầu viết tiếp đúng từ chỗ dừng và nối vào,
           // cho tới khi xong. (Chạm giới hạn khi mới suy nghĩ, chưa viết gì thì ensureAnswer xử lý.)
           // Cũng viết tiếp khi còn khối code mở mà chưa đóng: mô hình đôi khi dừng sớm hoặc luồng bị ngắt mà máy chủ vẫn báo đã xong.
-          for (let k = 0; (reply.truncated || unclosedFence(reply.content.slice(start))) && k < CONTINUE_LIMIT; k++) {
+          // Code bị cắt (codeCut) thì viết tiếp tối đa 4 lần; lần viết tiếp nào không thêm được gì thì dừng.
+          // Khối code đã bị đóng sai thì bỏ dấu đóng để phần viết tiếp nằm đúng trong khối.
+          for (let k = 0, cutTries = 0; k < CONTINUE_LIMIT; k++) {
             const sofar = reply.content.slice(start);
+            const cut = codeCut(sofar);
             if (!sofar.trim() || (allowTool && RUN_BLOCK.test(sofar))) break;
-            reply.notice = "Câu trả lời dài, đang viết tiếp…";
+            if (!reply.truncated && (!cut || cutTries++ >= 4)) break;
+            const inside = cut === "open" || cut === "closed";
+            if (cut === "closed") reply.content = reply.content.replace(/\n[ \t]*```[ \t]*$/, "\n");
+            const before = reply.content.length, so = reply.content.slice(start);
+            reply.notice = "Câu trả lời bị ngắt giữa chừng, đang viết tiếp…";
             paintAssistant(node, reply, true);
-            await runPass([...messages, { role: "assistant", content: sofar },
-              { role: "user", content: "Câu trả lời của bạn bị ngắt giữa chừng. Viết tiếp ĐÚNG từ chỗ dừng (kể cả đang giữa câu hay giữa khối code, nhớ đóng khối code), " +
-                "không lặp lại phần đã viết, không chào hay giải thích lại." }],
+            await runPass([...messages, { role: "assistant", content: so },
+              { role: "user", content: inside
+                ? "Code trong khối cuối cùng bị ngắt giữa chừng, chưa viết xong. Viết tiếp ĐÚNG từ dòng đang dở: chỉ phần còn thiếu, " +
+                  "không mở khối code mới, không lặp lại phần đã có, không chào hay giải thích. Viết xong code thì đóng khối bằng ``` rồi mới viết phần giải thích (nếu cần)."
+                : "Câu trả lời của bạn bị ngắt giữa chừng. Viết tiếp ĐÚNG từ chỗ dừng, không lặp lại phần đã viết, không chào hay giải thích lại." }],
               reply, node, allowTool ? (text) => RUN_BLOCK.test(text.slice(start)) : null);
             delete reply.notice;
+            // Dọn phần viết tiếp: bỏ dòng mở khối thừa và đoạn lặp lại phần cuối đã có.
+            let add = reply.content.slice(before);
+            if (inside) add = add.replace(/^\s*```[\w+#.-]*[^\n]*\n/, "");
+            const tail = reply.content.slice(Math.max(start, before - 400), before);
+            for (let n = Math.min(tail.length, add.length, 400); n >= 12; n--) if (tail.endsWith(add.slice(0, n))) { add = add.slice(n); break; }
+            reply.content = reply.content.slice(0, before) + add;
+            if (!add.trim()) break;
           }
           break;
         } catch (e) {
@@ -2367,7 +2547,14 @@
   }
 
   const TOOLS = {
-    "js-run": { notice: "Đang chạy code…", run: (c) => runJs(c) },
+    // js-run chạy trong Web Worker nên không có giao diện: báo rõ để mô hình khỏi chạy lại cả trang web nhiều lần.
+    "js-run": { notice: "Đang chạy code…", run: async (c) => {
+      const out = await runJs(c);
+      return /\b(document|window|localStorage|alert|navigator)\b.*(not defined|undefined)/i.test(out)
+        ? out + "\n(Lưu ý: js-run không có trang web: không có document, window, localStorage. Chỉ dùng để thử hàm logic thuần. " +
+          "Phần giao diện thì viết thẳng vào file HTML, không chạy lại trong js-run.)"
+        : out;
+    } },
     "py-run": { notice: "Đang chạy code…", run: (c) => runPy(c) },
     "cpp-run": { notice: "Đang biên dịch và chạy C++…", run: (c) => runCpp(c) },
     "python-run": { notice: "Đang chạy code…", run: (c) => runPy(c) },
@@ -3281,6 +3468,39 @@
     th.font = typeof o.font === "string" ? o.font : "Arial";
     return th;
   }
+  // Biểu tượng SVG Lucide (https://lucide.dev, giấy phép ISC): slide ghi tên (ví dụ "rocket"), trang tải SVG về một lần rồi tô theo màu bộ màu.
+  // Không phải tên Lucide (ví dụ emoji) thì hiện nguyên văn.
+  const LUCIDE = "https://cdn.jsdelivr.net/npm/lucide-static@0.460.0/icons/";
+  const iconCache = {};
+  const isIconName = (v) => /^[a-z0-9]+(-[a-z0-9]+)*$/.test(String(v || ""));
+  async function loadDeckIcons(spec) {
+    const names = new Set();
+    for (const sl of deckList(spec.slides)) {
+      if (isIconName(sl?.icon)) names.add(sl.icon);
+      for (const x of [...deckList(sl?.cards), ...deckList(sl?.stats), ...deckList(sl?.timeline)]) if (isIconName(x?.icon)) names.add(x.icon);
+    }
+    await Promise.all([...names].filter((n) => !(n in iconCache)).map(async (n) => {
+      try {
+        const r = await fetch(LUCIDE + n + ".svg");
+        iconCache[n] = r.ok ? (await r.text()).replace(/<!--[\s\S]*?-->/g, "").replace(/\s+/g, " ").replace(/ class="[^"]*"/, "").trim() : "";
+      } catch { iconCache[n] = ""; }
+    }));
+  }
+  const deckIcon = (v) => (isIconName(v) ? (iconCache[v] || "").replace("<svg", '<svg class="ic" aria-hidden="true"') : v ? `<span class="emoji">${esc(String(v))}</span>` : "");
+  // Biểu tượng thành ảnh PNG (cho file PowerPoint), tô một màu.
+  async function iconPng(name, color, size = 192) {
+    const svg = iconCache[name];
+    if (!svg) return null;
+    const url = URL.createObjectURL(new Blob([svg.replace(/currentColor/g, "#" + color).replace(/width="24"/, `width="${size}"`).replace(/height="24"/, `height="${size}"`)], { type: "image/svg+xml" }));
+    try {
+      const img = new Image();
+      await new Promise((ok, no) => { img.onload = ok; img.onerror = no; img.src = url; });
+      const c = document.createElement("canvas");
+      c.width = c.height = size;
+      c.getContext("2d").drawImage(img, 0, 0, size, size);
+      return c.toDataURL("image/png");
+    } catch { return null; } finally { URL.revokeObjectURL(url); }
+  }
   // Kiểu của một slide: theo layout ghi rõ, không thì đoán theo nội dung có trong slide.
   const slideKind = (sl, idx) => (["title", "section", "quote", "end"].includes(sl.layout) ? sl.layout
     : sl.stats ? "stats" : sl.cards ? "cards" : sl.timeline ? "timeline" : sl.chart ? "chart" : sl.table ? "table"
@@ -3379,11 +3599,12 @@
         inner = `<div class="blob b1"></div><div class="blob b2"></div><div class="center${kind === "end" ? " mid" : ""}">` +
           (sl.kicker ? `<div class="kicker" ${a(0)}>${deckFmt(sl.kicker)}</div>` : "") +
           `<h1 class="${tsize(sl.title || spec.title)}" ${a(1)}>${deckFmt(sl.title || spec.title)}</h1>` + (sl.subtitle ? `<p class="sub" ${a(2)}>${deckFmt(sl.subtitle)}</p>` : "") +
-          `<div class="rule" ${a(3)}></div></div>`;
+          `<div class="rule" ${a(3)}></div></div>` + (isIconName(sl.icon) ? `<div class="hero-ic" ${a(2)}>${deckIcon(sl.icon)}</div>` : "");
       } else if (kind === "section") {
         section++;
         inner = `<div class="blob b1"></div><div class="center"><div class="secnum" ${a(0)}>${esc(String(sl.number ?? String(section).padStart(2, "0")))}</div>` +
-          `<h1 class="${tsize(sl.title)}" ${a(1)}>${deckFmt(sl.title)}</h1>` + (sl.subtitle ? `<p class="sub" ${a(2)}>${deckFmt(sl.subtitle)}</p>` : "") + `</div>`;
+          `<h1 class="${tsize(sl.title)}" ${a(1)}>${deckFmt(sl.title)}</h1>` + (sl.subtitle ? `<p class="sub" ${a(2)}>${deckFmt(sl.subtitle)}</p>` : "") + `</div>` +
+          (isIconName(sl.icon) ? `<div class="hero-ic" ${a(2)}>${deckIcon(sl.icon)}</div>` : "");
       } else if (kind === "quote") {
         inner = `<div class="blob b2"></div><div class="center"><div class="qmark" ${a(0)}>“</div><blockquote ${a(1)}>${deckFmt(sl.quote || sl.title)}</blockquote>` +
           (sl.author ? `<div class="author" ${a(2)}>— ${deckFmt(sl.author)}</div>` : "") + `</div>`;
@@ -3398,14 +3619,14 @@
           (sl.bullets ? ul(sl.bullets, 2) : "") + `</div>`;
       } else if (kind === "stats") {
         inner = h2 + `<div class="grid">${deckList(sl.stats).slice(0, 4).map((x, i) =>
-          `<div class="stat" ${a(i + 1)}><div class="big${statSize(x?.value)}">${statValue(x?.value)}</div><div class="lab">${deckFmt(x?.label)}</div></div>`).join("")}</div>`;
+          `<div class="stat" ${a(i + 1)}>${x?.icon ? `<div class="sic">${deckIcon(x.icon)}</div>` : ""}<div class="big${statSize(x?.value)}">${statValue(x?.value)}</div><div class="lab">${deckFmt(x?.label)}</div></div>`).join("")}</div>`;
       } else if (kind === "cards") {
         inner = h2 + `<div class="grid${deckList(sl.cards).length > 3 ? " g4" : ""}">${deckList(sl.cards).slice(0, 4).map((x, i) =>
-          `<div class="card" ${a(i + 1)}>${x?.icon ? `<div class="icon">${esc(String(x.icon))}</div>` : ""}<h3>${deckFmt(x?.title)}</h3><p>${deckFmt(x?.text)}</p></div>`).join("")}</div>`;
+          `<div class="card" ${a(i + 1)}>${x?.icon ? `<div class="icon">${deckIcon(x.icon)}</div>` : ""}<h3>${deckFmt(x?.title)}</h3><p>${deckFmt(x?.text)}</p></div>`).join("")}</div>`;
       } else if (kind === "timeline") {
         const items = deckList(sl.timeline).slice(0, 6);
         inner = h2 + `<div class="tl"><div class="tline" ${a(1)}></div>${items.map((x, i) =>
-          `<div class="tit" ${a(i + 2)}><div class="tdot"></div><div class="ttime">${deckFmt(x?.time)}</div><div class="ttext">${deckFmt(x?.text)}</div></div>`).join("")}</div>`;
+          `<div class="tit" ${a(i + 2)}><div class="tdot">${isIconName(x?.icon) ? deckIcon(x.icon) : ""}</div><div class="ttime">${deckFmt(x?.time)}</div><div class="ttext">${deckFmt(x?.text)}</div></div>`).join("")}</div>`;
       } else inner = h2 + ul(sl.bullets, 1);
       const foot = ["title", "end", "section"].includes(kind) ? "" : `<div class="foot">${deckFmt(spec.title)}</div>`;
       return `<section class="slide k-${kind}"><div class="inner">${inner}</div>${foot}<div class="num">${idx + 1} / ${N}</div>` +
@@ -3448,8 +3669,16 @@ blockquote{font-size:2.4em;line-height:1.3;margin:.2em 0 .6em;font-style:italic;
 .stat{text-align:center}.big{white-space:nowrap;font-size:3.6em;font-weight:800;line-height:1.1;background:linear-gradient(90deg,var(--ac),var(--ac2));-webkit-background-clip:text;background-clip:text;color:transparent}
 .big.long{font-size:2em;line-height:1.2;white-space:normal}.big.l2{font-size:2.8em}.big.l3{font-size:2.2em}.unit{font-size:.45em;font-weight:700;margin:0 .12em;letter-spacing:0}.lab{font-size:1.15em;color:var(--muted);margin-top:.5em;line-height:1.35}
 .icon{font-size:2.6em;margin-bottom:.3em}
+.ic{width:1em;height:1em;display:block;stroke-width:1.75}
+.card .icon:has(.ic){font-size:1.6em;width:2em;height:2em;display:grid;place-items:center;border-radius:.55em;margin-bottom:.55em;
+background:color-mix(in srgb,var(--ac) 14%,transparent);color:var(--ac)}.card .icon .ic{width:1.15em;height:1.15em}
+.sic{font-size:1.9em;color:var(--ac2);display:flex;justify-content:center;margin-bottom:.15em}
+.hero-ic{position:absolute;right:7%;top:50%;transform:translateY(-50%);font-size:13em;color:var(--ac);opacity:.9}.hero-ic .ic{stroke-width:1.2}
+.slide.active .hero-ic{animation:up .9s cubic-bezier(.2,.7,.2,1) forwards,bob 6s ease-in-out 1s infinite alternate}@keyframes bob{to{translate:0 -.06em}}
+.k-section .hero-ic{color:#fff;opacity:.28}
+.tdot:has(.ic){width:2.1em;height:2.1em;top:2.2em;border-width:.18em;display:grid;place-items:center;color:var(--ac);font-size:1em}.tdot .ic{width:1.1em;height:1.1em}
 .grid.g4{grid-auto-flow:row;grid-template-columns:1fr 1fr;gap:1em 1.4em}.g4 .card{display:grid;grid-template-columns:auto 1fr;column-gap:.9em;align-items:start;padding:1em 1.2em}
-.g4 .icon{grid-row:span 2;font-size:2.2em;margin:0}.g4 .card h3{margin:0 0 .2em}.card h3{color:var(--text);font-size:1.4em}.card p{margin:0;font-size:1.1em;line-height:1.45;color:var(--muted)}
+.g4 .icon{grid-row:span 2;font-size:2.2em;margin:0}.g4 .icon:has(.ic){font-size:1.3em}.g4 .card h3{margin:0 0 .2em}.card h3{color:var(--text);font-size:1.4em}.card p{margin:0;font-size:1.1em;line-height:1.45;color:var(--muted)}
 table{width:100%;border-collapse:separate;border-spacing:0;font-size:1.2em;border-radius:.8em;overflow:hidden}
 th{background:var(--ac);color:#fff;text-align:left;padding:.65em 1em}td{padding:.6em 1em;border-bottom:1px solid color-mix(in srgb,var(--text) 10%,transparent)}
 tr:nth-child(odd) td{background:color-mix(in srgb,var(--sf) 70%,transparent)}
@@ -3495,6 +3724,13 @@ go((parseInt(location.hash.slice(1))||1)-1);setTimeout(()=>{const h=document.que
     const pptx = new PptxGenJS();
     pptx.layout = "LAYOUT_WIDE"; // 13.33 x 7.5 inch
     const th = deckTheme(spec), font = th.font, palette = DECK_PALETTE(th);
+    // Biểu tượng Lucide thành ảnh PNG tô màu nhấn (PowerPoint nào cũng hiện được).
+    await loadDeckIcons(spec);
+    const pngs = {};
+    const allIcons = deckList(spec.slides).flatMap((sl) => [sl?.icon, ...[...deckList(sl?.cards), ...deckList(sl?.stats), ...deckList(sl?.timeline)].map((x) => x?.icon)]);
+    await Promise.all([...new Set(allIcons.filter(isIconName))].map(async (n) => {
+      pngs[n] = { ac: await iconPng(n, th.accent), ac2: await iconPng(n, th.accent2), bg: await iconPng(n, th.bg) };
+    }));
     const slides = deckList(spec.slides).filter(Boolean);
     const items = (list) => deckList(list).map((x) => {
       const t = String(x), sub = /^\s*-\s+/.test(t);
@@ -3514,7 +3750,8 @@ go((parseInt(location.hash.slice(1))||1)-1);setTimeout(()=>{const h=document.que
       };
       if (kind === "title" || kind === "end") {
         blobs();
-        const mid = kind === "end", align = mid ? "center" : "left", x = mid ? 0.9 : 1.0, w = mid ? 11.5 : 10.5;
+        const mid = kind === "end", align = mid ? "center" : "left", x = mid ? 0.9 : 1.0, w = mid ? 11.5 : pngs[sl.icon]?.ac ? 8.4 : 10.5;
+        if (!mid && pngs[sl.icon]?.ac) s.addImage({ data: pngs[sl.icon].ac, x: 9.7, y: 2.0, w: 2.9, h: 2.9 });
         if (sl.kicker) T(sl.kicker, { x, y: 1.9, w, h: 0.5, fontSize: 16, bold: true, color: th.accent, charSpacing: 4, align });
         const tl = deckPlain(sl.title || spec.title).length;
         T(sl.title || spec.title, { x, y: 2.4, w, h: 1.8, fontSize: tl > 60 ? 32 : tl > 38 ? 38 : 46, bold: true, align, valign: "middle", fit: "shrink" });
@@ -3525,6 +3762,7 @@ go((parseInt(location.hash.slice(1))||1)-1);setTimeout(()=>{const h=document.que
         T(String(sl.number ?? String(section).padStart(2, "0")), { x: 1.0, y: 1.4, w: 6, h: 1.8, fontSize: 110, bold: true, color: th.bg, transparency: 55 });
         T(sl.title, { x: 1.0, y: 3.2, w: 11, h: 1.3, fontSize: deckPlain(sl.title).length > 38 ? 32 : 42, bold: true, color: th.bg, fit: "shrink" });
         if (sl.subtitle) T(sl.subtitle, { x: 1.0, y: 4.5, w: 11, h: 0.8, fontSize: 20, color: th.bg });
+        if (pngs[sl.icon]?.bg) s.addImage({ data: pngs[sl.icon].bg, x: 9.6, y: 1.4, w: 3.2, h: 3.2, transparency: 70 });
       } else if (kind === "quote") {
         blobs();
         T("“", { x: 0.9, y: 0.6, w: 2, h: 2, fontSize: 150, color: th.accent, fontFace: "Georgia" });
@@ -3567,10 +3805,15 @@ go((parseInt(location.hash.slice(1))||1)-1);setTimeout(()=>{const h=document.que
               const m = String(x?.value ?? "").match(/^([^\d-]*)(-?[\d.,]+)(.*)$/);
               const runs = m ? [[m[1], 22], [m[2], 48], [m[3], 22]].filter(([t]) => t.trim()).map(([t, size]) => ({ text: t, options: { fontSize: size } }))
                 : [{ text: deckPlain(x?.value), options: { fontSize: 30 } }];
-              s.addText(runs, { x: bx, y: top + 0.7, w, h: 1.4, bold: true, color: th.accent, fontFace: font, align: "center", valign: "middle", fit: "shrink" });
-              T(x?.label, { x: bx + 0.2, y: top + 2.1, w: w - 0.4, h: 1.2, fontSize: deckPlain(x?.label).length > 40 ? 13 : 16, color: th.muted, align: "center", valign: "top", fit: "shrink" });
+              const ic = pngs[x?.icon]?.ac2, dy = ic ? 0.3 : 0;
+              if (ic) s.addImage({ data: ic, x: bx + w / 2 - 0.25, y: top + 0.5, w: 0.5, h: 0.5 });
+              s.addText(runs, { x: bx, y: top + 0.7 + dy, w, h: 1.4, bold: true, color: th.accent, fontFace: font, align: "center", valign: "middle", fit: "shrink" });
+              T(x?.label, { x: bx + 0.2, y: top + 2.1 + dy, w: w - 0.4, h: 1.2 - dy, fontSize: deckPlain(x?.label).length > 40 ? 13 : 16, color: th.muted, align: "center", valign: "top", fit: "shrink" });
             } else {
-              if (x?.icon) T(x.icon, { x: bx + 0.3, y: top + 0.5, w: 1.2, h: 0.9, fontSize: 34 });
+              if (pngs[x?.icon]?.ac) {
+                s.addShape(pptx.ShapeType.roundRect, { x: bx + 0.3, y: top + 0.55, w: 0.8, h: 0.8, rectRadius: 0.15, fill: { color: th.accent, transparency: 86 }, line: { color: th.accent, transparency: 100 } });
+                s.addImage({ data: pngs[x.icon].ac, x: bx + 0.45, y: top + 0.7, w: 0.5, h: 0.5 });
+              } else if (x?.icon) T(x.icon, { x: bx + 0.3, y: top + 0.5, w: 1.2, h: 0.9, fontSize: 34 });
               const many = n > 3;
               T(x?.title, { x: bx + 0.3, y: top + 1.5, w: w - 0.6, h: 0.7, fontSize: many ? 17 : 20, bold: true, valign: "top", fit: "shrink" });
               T(x?.text, { x: bx + 0.3, y: top + 2.2, w: w - 0.6, h: 2.2, fontSize: many || deckPlain(x?.text).length > 80 ? 13 : 15, color: th.muted, valign: "top", fit: "shrink" });
@@ -3581,7 +3824,10 @@ go((parseInt(location.hash.slice(1))||1)-1);setTimeout(()=>{const h=document.que
           s.addShape(pptx.ShapeType.rect, { x: 0.7, y, w: 11.9, h: 0.06, fill: { color: th.accent }, line: { color: th.accent } });
           arr.forEach((x, i) => {
             const cx = 0.7 + w * (i + 0.5);
-            s.addShape(pptx.ShapeType.ellipse, { x: cx - 0.17, y: y - 0.14, w: 0.34, h: 0.34, fill: { color: th.bg }, line: { color: th.accent, width: 3 } });
+            if (pngs[x?.icon]?.ac) {
+              s.addShape(pptx.ShapeType.ellipse, { x: cx - 0.32, y: y - 0.29, w: 0.64, h: 0.64, fill: { color: th.bg }, line: { color: th.accent, width: 2.5 } });
+              s.addImage({ data: pngs[x.icon].ac, x: cx - 0.17, y: y - 0.14, w: 0.34, h: 0.34 });
+            } else s.addShape(pptx.ShapeType.ellipse, { x: cx - 0.17, y: y - 0.14, w: 0.34, h: 0.34, fill: { color: th.bg }, line: { color: th.accent, width: 3 } });
             T(x?.time, { x: cx - w / 2, y: y - 0.85, w, h: 0.55, fontSize: 18, bold: true, color: th.accent, align: "center" });
             T(x?.text, { x: cx - w / 2 + 0.1, y: y + 0.4, w: w - 0.2, h: 2.4, fontSize: n > 4 || deckPlain(x?.text).length > 50 ? 12 : 14, align: "center", valign: "top", fit: "shrink" });
           });
@@ -3611,10 +3857,11 @@ go((parseInt(location.hash.slice(1))||1)-1);setTimeout(()=>{const h=document.que
     saveBlob(blob, fileName(spec.file || spec.title || "bai-thuyet-trinh") + ".pptx");
   }
   // Mở hoặc đóng phần trình chiếu ngay dưới thẻ file.
-  function showDeck(card, btn) {
+  async function showDeck(card, btn) {
     const next = card.nextElementSibling;
     if (next?.classList.contains("deck-preview")) { next.remove(); btn.innerHTML = `${ICON_PLAY}Trình chiếu`; return; }
     const spec = parseLoose(card.querySelector(".file-src").textContent);
+    await loadDeckIcons(spec);
     const box = document.createElement("div");
     box.className = "preview deck-preview";
     box.innerHTML = `<div class="preview-bar"><span>Trình chiếu · bấm vào slide rồi dùng ← → để chuyển</span><button type="button" data-full>${ICON_FULL}Toàn màn hình</button></div>`;
@@ -3871,7 +4118,15 @@ go((parseInt(location.hash.slice(1))||1)-1);setTimeout(()=>{const h=document.que
     const htmlBtn = e.target.closest("[data-file-html]");
     if (htmlBtn) {
       const card = htmlBtn.closest(".file-card"), spec = parseLoose(card.querySelector(".file-src").textContent);
-      saveBlob(new Blob([deckHtml(spec)], { type: "text/html" }), fileName(spec.file || spec.title || "bai-trinh-chieu") + ".html");
+      loadDeckIcons(spec).then(() => saveBlob(new Blob([deckHtml(spec)], { type: "text/html" }), fileName(spec.file || spec.title || "bai-trinh-chieu") + ".html"));
+      return;
+    }
+    // Đổi khổ xem trước: điện thoại, máy tính bảng, máy tính.
+    const sizeBtn = e.target.closest("[data-size]");
+    if (sizeBtn) {
+      const box = sizeBtn.closest(".preview");
+      box.querySelector("iframe").style.width = sizeBtn.dataset.size ? sizeBtn.dataset.size + "px" : "";
+      box.querySelectorAll("[data-size]").forEach((b) => b.classList.toggle("on", b === sizeBtn));
       return;
     }
     const prevBtn = e.target.closest("[data-preview], [data-download], [data-full]");
@@ -3897,6 +4152,9 @@ go((parseInt(location.hash.slice(1))||1)-1);setTimeout(()=>{const h=document.que
     } else if (act.dataset.act === "regen" && !controller) {
       chat.messages.splice(idx);
       generate(chat);
+    } else if (act.dataset.act === "continue" && !controller) {
+      // Nhờ viết nốt phần code còn thiếu của câu trả lời này.
+      send("Code ở cuối câu trả lời trước chưa viết xong. Hãy viết tiếp đúng phần còn thiếu (bắt đầu từ dòng đang dở), rồi đưa lại đoạn đó trong một khối code.");
     } else if (act.dataset.act === "speak") {
       speak(act, splitThink(chat.messages[idx].content).answer);
     }
@@ -3991,7 +4249,9 @@ go((parseInt(location.hash.slice(1))||1)-1);setTimeout(()=>{const h=document.que
     if (open) { open.remove(); btn.innerHTML = `${ICON_PLAY}Xem trước`; return; }
     const box = document.createElement("div");
     box.className = "preview";
-    box.innerHTML = `<div class="preview-bar"><span>Xem trước</span><button type="button" data-full>${ICON_FULL}Toàn màn hình</button></div>`;
+    box.innerHTML = `<div class="preview-bar"><span class="sizes">` +
+      `<button type="button" data-size="390">Điện thoại</button><button type="button" data-size="768">Máy tính bảng</button><button type="button" data-size="" class="on">Máy tính</button></span>` +
+      `<button type="button" data-full>${ICON_FULL}Toàn màn hình</button></div>`;
     const frame = document.createElement("iframe");
     frame.sandbox = "allow-scripts allow-modals allow-forms allow-pointer-lock";
     frame.allow = "fullscreen";
