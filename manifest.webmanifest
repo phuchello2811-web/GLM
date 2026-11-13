@@ -1,7 +1,7 @@
 {
-  "name": "Khuê AI",
-  "short_name": "Khuê",
-  "description": "Khuê AI: trợ lý AI tiếng Việt miễn phí, suy nghĩ kỹ, giải toán, viết code, làm website, tra cứu. Không cần tài khoản.",
+  "name": "Astra AI",
+  "short_name": "Astra",
+  "description": "Astra AI: trợ lý AI tiếng Việt miễn phí, suy nghĩ kỹ, giải toán, viết code, làm website, tra cứu. Không cần tài khoản.",
   "lang": "vi",
   "start_url": "./",
   "scope": "./",

@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Khuê AI</title>
-<meta name="description" content="Khuê AI: trợ lý AI tiếng Việt miễn phí, suy nghĩ kỹ, giải toán, viết code, làm website, tra cứu. Không cần tài khoản.">
+<title>Astra AI</title>
+<meta name="description" content="Astra AI: trợ lý AI tiếng Việt miễn phí, suy nghĩ kỹ, giải toán, viết code, làm website, tra cứu. Không cần tài khoản.">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#212121" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
@@ -13,7 +13,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Khuê">
+<meta name="apple-mobile-web-app-title" content="Astra">
 <style>
   :root {
     --bg: #ffffff;
@@ -145,9 +145,12 @@
   .model-menu .opt:hover { background: var(--hover); }
   .model-menu .opt:active { transform: scale(.99); }
   .model-menu .opt:focus-visible { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--ring); }
-  .model-menu .opt[aria-checked="true"] { background: var(--brand-soft); border-color: var(--ring); }
-  .opt-ic { flex: none; width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; color: #fff;
-    background: linear-gradient(135deg, var(--a), var(--b)); box-shadow: 0 4px 12px color-mix(in srgb, var(--a) 35%, transparent), inset 0 1px 0 rgba(255,255,255,.25); }
+  .model-menu .opt[aria-checked="true"] { background: var(--hover); border-color: var(--border); }
+  /* Ô biểu tượng đơn sắc (kiểu Grok): nền trung tính, viền mảnh; mục đang chọn thì đảo màu. */
+  .opt-ic { flex: none; width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; color: var(--text);
+    background: var(--surface); border: 1px solid var(--border); transition: background .15s, color .15s, border-color .15s; }
+  .opt:hover .opt-ic, .mode-card:hover .opt-ic { border-color: var(--muted); }
+  .opt[aria-checked="true"] > .opt-ic, .mode-card.on .opt-ic { background: var(--text); color: var(--bg); border-color: var(--text); }
   .opt-ic svg { width: 19px; height: 19px; }
   .opt-tx { flex: 1; min-width: 0; }
   .model-menu b { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-weight: 600; font-size: 14px; }
@@ -158,7 +161,7 @@
   .model-menu .st.ok { color: var(--ok); background: rgba(16,163,127,.12); }
   .model-menu .st.busy { color: var(--danger); background: rgba(217,48,37,.1); }
   .model-menu .st.wait { color: var(--muted); background: var(--surface); }
-  .model-menu .tick { margin-left: auto; flex: none; width: 22px; height: 22px; padding: 4px; border-radius: 50%; color: #fff; background: var(--brand);
+  .model-menu .tick { margin-left: auto; flex: none; width: 22px; height: 22px; padding: 4px; border-radius: 50%; color: var(--bg); background: var(--text);
     opacity: 0; transform: scale(.6); transition: opacity .15s, transform .15s; }
   .model-menu [aria-checked="true"] .tick { opacity: 1; transform: none; }
   .mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px 2px 2px; }
@@ -167,16 +170,16 @@
   @media (max-width: 420px) { .mode-grid { grid-template-columns: 1fr; } .mode-grid .opt { flex-direction: row; align-items: center; } .mode-grid .opt .tick { position: static; } }
   /* Nút chọn trong khung chat: ô biểu tượng nhỏ cùng màu với mục đang chọn. */
   .chip-ic { display: inline-flex; }
-  .chip-ic .opt-ic { width: 22px; height: 22px; border-radius: 7px; box-shadow: none; }
-  .chip-ic .opt-ic svg { width: 13px; height: 13px; }
+  .chip-ic .opt-ic { width: 20px; height: 20px; border: 0; background: none; color: inherit; }
+  .chip-ic .opt-ic svg { width: 16px; height: 16px; }
   .deep.chip[aria-expanded="true"] { background: var(--brand-soft); color: var(--brand); }
   /* Thẻ chọn chế độ ở màn hình chào. */
   .mode-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; width: min(640px, 100%); margin-top: 18px; }
   .mode-card { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 8px 12px; border-radius: 16px; border: 1px solid var(--border);
     background: var(--bg); text-align: center; transition: border-color .15s, background .15s, transform .15s, box-shadow .15s; }
-  .mode-card:hover { transform: translateY(-2px); border-color: var(--ring); box-shadow: 0 8px 22px rgba(0,0,0,.08); }
+  .mode-card:hover { transform: translateY(-2px); border-color: var(--muted); box-shadow: 0 8px 22px rgba(0,0,0,.08); }
   .mode-card:focus-visible { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--ring); }
-  .mode-card.on { border-color: var(--brand); background: var(--brand-soft); box-shadow: 0 0 0 3px var(--ring); }
+  .mode-card.on { border-color: var(--text); background: var(--surface); }
   .mode-card .opt-ic { width: 40px; height: 40px; border-radius: 13px; }
   .mode-card b { font-size: 14px; font-weight: 650; }
   .mode-card small { font-size: 12px; color: var(--muted); }
@@ -425,6 +428,33 @@
   .send:disabled { box-shadow: none; }
   .deep.on { color: var(--brand); border-color: var(--brand); background: var(--brand-soft); }
   .composer-wrap { position: relative; }
+  /* Hoàn thiện giao diện (kiểu Grok): đơn sắc, tương phản rõ, viền mảnh; màu thương hiệu chỉ giữ cho logo và đường dẫn. */
+  ::selection { background: color-mix(in srgb, var(--text) 18%, transparent); }
+  .empty h1 { background: none; -webkit-background-clip: border-box; background-clip: border-box; color: var(--text); font-weight: 600; letter-spacing: -.025em; }
+  .hero-logo { box-shadow: 0 10px 30px rgba(0,0,0,.18); }
+  .composer { background: var(--surface); border-color: var(--border); box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 8px 24px rgba(0,0,0,.06); }
+  .composer:focus-within { border-color: var(--brand); box-shadow: 0 0 0 4px var(--ring), var(--shadow); } /* giữ hào quang xanh quanh khung chat */
+  .composer.drag { border-color: var(--brand); border-style: dashed; }
+  /* Nút gửi giữ gradient xanh của thương hiệu (đồng bộ với hào quang quanh khung chat). */
+  .send { background: linear-gradient(135deg, var(--brand), var(--brand-2)); color: #fff; box-shadow: 0 4px 14px var(--ring); }
+  .send:not(:disabled):hover { transform: translateY(-1px); opacity: 1; }
+  .send:disabled { opacity: .3; box-shadow: none; }
+  .deep.on, .deep.chip[aria-expanded="true"] { color: var(--text); border-color: color-mix(in srgb, var(--text) 30%, var(--border)); background: var(--hover); }
+  .msg.user .bubble { background: var(--surface); border: 1px solid transparent; border-radius: 22px; border-bottom-right-radius: 8px; }
+  .msg.assistant::before { box-shadow: none; }
+  #newChat:hover { border-color: color-mix(in srgb, var(--text) 25%, var(--border)); color: var(--text); background: var(--hover); }
+  .history-item.active { background: var(--hover); }
+  .history-item.active .title { color: var(--text); font-weight: 600; }
+  .mode-ex { border-style: solid; background: transparent; }
+  .mode-ex:hover { border-color: color-mix(in srgb, var(--text) 25%, var(--border)); background: var(--hover); color: var(--text); }
+  .mode-card { transition: border-color .15s, background .15s; }
+  .mode-card:hover { transform: none; box-shadow: none; background: var(--hover); }
+  .content tr:nth-child(even) td { background: color-mix(in srgb, var(--surface) 55%, transparent); }
+  .content blockquote { border-left-color: var(--border); color: var(--muted); }
+  .sources a:hover { border-color: color-mix(in srgb, var(--text) 25%, var(--border)); background: var(--hover); }
+  .think summary { border: 1px solid var(--border); background: transparent; }
+  .think summary:hover { background: var(--hover); }
+  :focus-visible { outline-color: color-mix(in srgb, var(--text) 55%, transparent); }
   .to-bottom { position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%); width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center;
     background: var(--bg); border: 1px solid var(--border); box-shadow: var(--shadow); color: var(--muted); z-index: 4; }
   .to-bottom:hover { color: var(--text); }
@@ -532,7 +562,7 @@
 
 <aside class="sidebar" id="sidebar">
   <div class="side-top">
-    <div class="brand"><img src="icons/icon.svg" alt="">Khuê <span class="brand-ai">AI</span></div>
+    <div class="brand"><img src="icons/icon.svg" alt="">Astra <span class="brand-ai">AI</span></div>
     <button class="icon-btn" id="closeSide" title="Đóng thanh bên">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg>
     </button>
@@ -592,7 +622,7 @@
     </button>
     <form class="composer" id="form">
       <div class="attachments" id="attachments" hidden></div>
-      <textarea id="input" rows="1" placeholder="Hỏi Khuê bất cứ điều gì" autofocus></textarea>
+      <textarea id="input" rows="1" placeholder="Hỏi Astra bất cứ điều gì" autofocus></textarea>
       <div class="composer-tools">
       <button class="icon-btn attach" id="attachBtn" type="button" title="Thêm ảnh hoặc file (PDF, Word, Excel, code, văn bản)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 11-8.6 8.6a5 5 0 0 1-7.1-7.1l8.6-8.6a3.3 3.3 0 0 1 4.7 4.7L10 17.2a1.7 1.7 0 0 1-2.4-2.4l8-8"/></svg>
@@ -603,12 +633,12 @@
       </button>
       <button class="deep chip mode-chip" id="modeChip" type="button" aria-haspopup="menu" aria-expanded="false" title="Chọn chế độ">
         <span class="chip-ic" id="modeIcon"></span>
-        <span id="modeTitle">Tự động</span>
+        <span id="modeTitle">Auto</span>
         <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
       </button>
       <button class="deep chip" id="modelChip" type="button" aria-haspopup="menu" aria-expanded="false" title="Chọn mô hình">
         <span class="chip-ic" id="chipIcon"></span>
-        <span id="chipTitle">Bắc Đẩu</span>
+        <span id="chipTitle">Titan 3 Ultra</span>
         <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
       </button>
       <button class="deep chip" id="deep" type="button" aria-haspopup="menu" aria-expanded="false" title="Chọn mức suy nghĩ">
@@ -676,7 +706,7 @@
       </label>
       <div class="sec-title">Kiến thức và dữ liệu</div>
       <label>Kho kiến thức
-        <small>Thêm sách, đề thi, ghi chú (PDF, Word, Excel, văn bản). Mỗi câu hỏi, Khuê tự tìm đoạn liên quan trong kho rồi trả lời dựa trên đó. Tài liệu chỉ lưu trong trình duyệt này.</small>
+        <small>Thêm sách, đề thi, ghi chú (PDF, Word, Excel, văn bản). Mỗi câu hỏi, Astra tự tìm đoạn liên quan trong kho rồi trả lời dựa trên đó. Tài liệu chỉ lưu trong trình duyệt này.</small>
         <ul class="mem-list" id="kbList"></ul>
         <div class="mem-add">
           <input id="kbStatus" readonly placeholder="Chưa thêm tài liệu">
@@ -760,7 +790,7 @@
   // Các nguồn mô hình, đều miễn phí và không cần API key. Tất cả dùng API kiểu OpenAI nên chung một cách gọi.
   const PROVIDERS = {
     shared: {
-      name: "Khuê",
+      name: "Astra",
       url: SHARED_URL,
       // Phải khớp FREE_MODELS trong worker/worker.js.
       // Chỉ giữ mô hình đã kiểm tra là trả lời được (12/11/2026). GLM-5.3 Flash, DeepSeek V4.1 Flash, MiniMax M3.1 Flash
@@ -773,29 +803,29 @@
       // máy chủ lỗi thì tới vision (GLM-4.6V Flash của Z.ai).
       visionNvidia: "nemotron-3.5-super-vl",
       vision: "glm-4.6v-flash",
-      // Tên riêng của Khuê cho từng mô hình (theo tên các vì sao), vì cách suy nghĩ, kỹ năng và quy trình kiểm tra là của Khuê.
+      // Tên riêng của Astra cho từng mô hình (theo họ mô hình, giữ số phiên bản), vì cách suy nghĩ, kỹ năng và quy trình kiểm tra là của Astra.
       titles: {
-        "nemotron-3-ultra": ["Bắc Đẩu", "Thông minh nhất: suy luận, toán và code rất tốt, trả lời nhanh"],
-        "nemotron-3.5-super-vl": ["Thiên Nhãn", "Đọc ảnh giỏi, suy nghĩ kỹ, bắt được bẫy trong đề"],
-        "mistral-large-4": ["Văn Khúc", "Viết văn hay, dịch và dùng nhiều ngôn ngữ giỏi, trình bày đẹp"],
-        "nemotron-3.5-lightning": ["Sao Mai", "Giải thích dễ hiểu bằng ví dụ đời thường"],
-        "laguna-xs": ["Lưu Tinh", "Chuyên viết code, trả lời rất nhanh và gọn"],
-        "step-5": ["Thiên Hà", "Suy luận nhiều bước rất kỹ, trả lời chậm hơn"],
-        "glm-4.7-flash": ["Sao Mộc", "Ổn định, suy luận và viết code tốt"],
-        "glm-4.5-flash": ["Sao Thuỷ", "Nhanh nhất, hợp câu hỏi ngắn và trò chuyện"],
-        "glm-4.6v-flash": ["Nguyệt Quang", "Đọc ảnh: ảnh chụp, tài liệu, biểu đồ"],
+        "nemotron-3-ultra": ["Titan 3 Ultra", "Thông minh nhất: suy luận, toán và code rất tốt, trả lời nhanh"],
+        "nemotron-3.5-super-vl": ["Titan 3.5 Vision", "Đọc ảnh giỏi, suy nghĩ kỹ, bắt được bẫy trong đề"],
+        "mistral-large-4": ["Lyra 4", "Viết văn hay, dịch và dùng nhiều ngôn ngữ giỏi, trình bày đẹp"],
+        "nemotron-3.5-lightning": ["Titan 3.5 Lightning", "Giải thích dễ hiểu bằng ví dụ đời thường"],
+        "laguna-xs": ["Forge XS", "Chuyên viết code, trả lời rất nhanh và gọn"],
+        "step-5": ["Atlas 5", "Suy luận nhiều bước rất kỹ, trả lời chậm hơn"],
+        "glm-4.7-flash": ["Nova 4.7", "Ổn định, suy luận và viết code tốt"],
+        "glm-4.5-flash": ["Nova 4.5", "Nhanh nhất, hợp câu hỏi ngắn và trò chuyện"],
+        "glm-4.6v-flash": ["Nova 4.6 Vision", "Đọc ảnh: ảnh chụp, tài liệu, biểu đồ"],
       },
       // Biểu tượng và màu của từng mô hình trong menu.
       looks: {
-        "nemotron-3-ultra": ["#4f46e5", "#06b6d4", "M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"],
-        "nemotron-3.5-super-vl": ["#0891b2", "#10b981", "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12ZM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"],
-        "mistral-large-4": ["#db2777", "#f59e0b", "M20.2 4.2a6 6 0 0 0-8.5 0L5 11v8h8l6.8-6.7a6 6 0 0 0 .4-8.1ZM16 8 2 22M17.5 15H9"],
-        "nemotron-3.5-lightning": ["#f59e0b", "#f97316", "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"],
-        "laguna-xs": ["#7c3aed", "#ec4899", "M13 2 3 14h9l-1 8 10-12h-9l1-8Z"],
-        "step-5": ["#1e3a8a", "#7c3aed", "M12 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4ZM20.2 20.2c2-2-1.1-8.4-6.9-14.2M3.8 3.8c-2 2 1.1 8.4 6.9 14.2M20.2 3.8c2 2-1.1 8.4-6.9 14.2M3.8 20.2c-2-2 1.1-8.4 6.9-14.2"],
-        "glm-4.7-flash": ["#b45309", "#ea580c", "M12 6a6 6 0 1 0 0 12 6 6 0 0 0 0-12ZM3 15.5c-1.3 1.6-1.6 2.9-.9 3.5 1.4 1.2 7-1.6 12.4-6.5S22.3 3.2 21 2c-.7-.6-2 0-3.6 1.2"],
+        "nemotron-3-ultra": ["#6d28d9", "#2563eb", "M6 3h12l4 6-10 12L2 9l4-6ZM2 9h20M12 21 8 9l2-6M12 21l4-12-2-6"],
+        "nemotron-3.5-super-vl": ["#0891b2", "#22c55e", "M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12ZM12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z"],
+        "mistral-large-4": ["#db2777", "#f97316", "M12 19l7-7 3 3-7 7-3-3ZM18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5ZM2 2l7.6 7.6M11 13a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"],
+        "nemotron-3.5-lightning": ["#f59e0b", "#ef4444", "M13 2.5 4.5 13.5H12l-1 8 8.5-11H12l1-8Z"],
+        "laguna-xs": ["#7c3aed", "#ec4899", "M4 17l6-5-6-5M12 19h8"],
+        "step-5": ["#1e3a8a", "#06b6d4", "M12 12c-2-2.7-4-4-6-4a4 4 0 0 0 0 8c2 0 4-1.3 6-4Zm0 0c2 2.7 4 4 6 4a4 4 0 0 0 0-8c-2 0-4 1.3-6 4Z"],
+        "glm-4.7-flash": ["#ea580c", "#facc15", "M4.5 16.5c-1.5 1.3-2 5-2 5s3.7-.5 5-2c.7-.8.7-2.1-.1-2.9a2.2 2.2 0 0 0-2.9-.1ZM12 15l-3-3a22 22 0 0 1 2-4A13 13 0 0 1 22 2c0 2.7-.8 7.5-6 11a22 22 0 0 1-4 2ZM9 12H4s.6-3 2-4c1.6-1.1 5 0 5 0M12 15v5s3-.6 4-2c1.1-1.6 0-5 0-5"],
         "glm-4.5-flash": ["#0284c7", "#22d3ee", "M17.7 7.7A2.5 2.5 0 1 1 19.5 12H2M9.6 4.6A2 2 0 1 1 11 8H2M12.6 19.4A2 2 0 1 0 14 16H2"],
-        "glm-4.6v-flash": ["#475569", "#8b5cf6", "M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"],
+        "glm-4.6v-flash": ["#475569", "#a855f7", "M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M12 10.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3ZM6.5 12S8.5 8.5 12 8.5s5.5 3.5 5.5 3.5-2 3.5-5.5 3.5S6.5 12 6.5 12Z"],
       },
       modelHelp: "Dùng chung máy chủ của trang, không cần key hay tài khoản. Tối đa 40 lượt gọi mỗi phút. Mô hình đang quá tải hoặc chưa bật thì tự chuyển sang mô hình khác.",
       extra: { thinking: { type: "enabled" } },
@@ -816,7 +846,7 @@
   const cloudModel = () => settings.models[settings.provider] || PROVIDERS[settings.provider].models[0];
 
   const modelTitle = (id, m) => PROVIDERS[id].titles[m]?.[0] || m;
-  // Ghi chú của máy chủ dùng tên gốc của mô hình: đổi sang tên của Khuê.
+  // Ghi chú của máy chủ dùng tên gốc của mô hình: đổi sang tên của Astra.
   const ORIGINAL_NAMES = { "Nemotron 3 Ultra": "nemotron-3-ultra", "Nemotron 3.5 Super VL": "nemotron-3.5-super-vl", "Nemotron 3.5 Lightning": "nemotron-3.5-lightning",
     "Mistral Large 4": "mistral-large-4", "Laguna XS": "laguna-xs", "Step 5": "step-5", "GLM-4.7 Flash": "glm-4.7-flash", "GLM-4.5 Flash": "glm-4.5-flash", "GLM-4.6V Flash": "glm-4.6v-flash" };
   const brandNote = (t) => Object.entries(ORIGINAL_NAMES).reduce((a, [o, id]) => a.split(o).join(modelTitle("shared", id)), String(t || ""))
@@ -824,27 +854,27 @@
   // Biểu tượng của một mô hình (ô màu có hình vẽ).
   const modelIcon = (m) => {
     const [a, b, d] = PROVIDERS.shared.looks[m] || ["#64748b", "#94a3b8", "M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"];
-    return `<span class="opt-ic" style="--a:${a};--b:${b}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg></span>`;
+    return `<span class="opt-ic" style="--a:${a};--b:${b}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg></span>`;
   };
   // Mỗi lựa chọn mô hình là một cặp nguồn:mô hình.
   const currentChoice = () => `${settings.provider}:${cloudModel()}`;
 
   // Bốn chế độ: Tự động nhận ra loại câu hỏi; ba chế độ chuyên sâu luôn bật bộ kỹ năng riêng và lời dặn riêng.
   const MODE_ICONS = {
-    auto: "M15 4V2M15 16v-2M8 9h2M20 9h2M17.8 11.8 19 13M15 9h.01M17.8 6.2 19 5M3 21l9-9M12.2 6.2 11 5",
-    life: "M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7Z",
-    web: "M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2ZM3 9h18M9 21V9",
-    cp: "M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.7V17c0 .6-.5 1-1 1.2C7.8 18.8 7 20.2 7 22M14 14.7V17c0 .6.5 1 1 1.2 1.2.6 2 2 2 3.8M18 2H6v7a6 6 0 0 0 12 0V2Z",
+    auto: "M9.9 2.5 11 7.3a2 2 0 0 0 1.5 1.5l4.8 1.2-4.8 1.2a2 2 0 0 0-1.5 1.5l-1.1 4.8-1.2-4.8a2 2 0 0 0-1.5-1.5L2.5 10l4.7-1.2a2 2 0 0 0 1.5-1.5ZM19 3v4M21 5h-4M18 16v4M20 18h-4",
+    life: "M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10ZM2 21c0-3 1.9-5.4 5.1-6",
+    web: "M3 6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2ZM3 9h18M10 13l-2 2 2 2M14 13l2 2-2 2",
+    cp: "M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2M14.5 6.5 18 3h3v3l-3.5 3.5M5 14l4 4M7 17l-3 3M3 19l2 2",
   };
   const MODES = {
-    auto: { name: "Tự động", sub: "Mọi câu hỏi", colors: ["#0a78d1", "#0f9f8f"], skills: [],
+    auto: { name: "Auto", sub: "Mọi câu hỏi", colors: ["#0a78d1", "#0f9f8f"], skills: [],
       ex: ["Giải phương trình x³ − 6x² + 11x − 6 = 0 và kiểm tra lại", "Tóm tắt tin công nghệ nổi bật tuần này", "Vẽ tranh phố cổ Hội An về đêm, phong cách màu nước"],
       desc: "Tự nhận ra bạn đang hỏi gì và dùng đúng kỹ năng: toán, code, tra cứu, vẽ ảnh, file, slide", prompt: "" },
-    life: { name: "An Nhiên", sub: "Vấn đề đời sống", colors: ["#f97316", "#ec4899"], skills: ["life", "time", "reason"],
+    life: { name: "Life", sub: "Vấn đề đời sống", colors: ["#f97316", "#ec4899"], skills: ["life", "time", "reason"],
       ex: ["Lương 15 triệu thì nên chia tiền tiêu và tiết kiệm thế nào?", "Thủ tục làm lại căn cước bị mất cần những gì?", "Dạo này mình hay mất ngủ vì áp lực thi cử, làm sao đây?"],
       desc: "Sức khoẻ, tiền bạc, giấy tờ thủ tục, nấu ăn, học hành, công việc, chuyện gia đình và tâm lý",
       prompt:
-        "Chế độ An Nhiên (vấn đề đời sống). Bạn là người bạn hiểu biết, ấm áp và thực tế của người dùng ở Việt Nam.\n" +
+        "Chế độ Life (vấn đề đời sống). Bạn là người bạn hiểu biết, ấm áp và thực tế của người dùng ở Việt Nam.\n" +
         "- Nắm đúng hoàn cảnh trước khi khuyên: tuổi, nơi sống, ngân sách, thời gian, sức khoẻ, ràng buộc gia đình. Thiếu thông tin quan trọng thì vẫn đưa " +
         "lời khuyên tốt nhất theo giả định hợp lý (nói rõ giả định), rồi hỏi lại một hai câu quan trọng nhất.\n" +
         "- Giải pháp làm được ngay: các bước theo thứ tự, chi phí bằng đồng, thời gian, nơi làm (kể cả trực tuyến), mẫu câu nói hoặc tin nhắn khi cần, " +
@@ -855,21 +885,21 @@
         "- Giá, phí, thủ tục, luật, lịch, thời tiết thay đổi theo thời gian: tra cứu trước khi trả lời và ghi nguồn.\n" +
         "- Giọng văn gần gũi, rõ ràng, không dài dòng; kết thúc bằng bước tiếp theo cụ thể.",
       remind: "trả lời như người bạn thực tế: đúng hoàn cảnh, các bước làm được ngay, con số cụ thể; thông tin hay thay đổi thì tra cứu" },
-    web: { name: "Kiến Tạo", sub: "Làm website", colors: ["#8b5cf6", "#3b82f6"],
+    web: { name: "Studio", sub: "Làm website", colors: ["#8b5cf6", "#3b82f6"],
       ex: ["Làm website bán hàng nhiều trang cho tiệm bánh, có giỏ hàng và thanh toán", "Làm ứng dụng quản lý chi tiêu có biểu đồ và xuất CSV", "Làm game rắn săn mồi chơi được trên điện thoại"], skills: ["web", "webapp", "project", "webdev", "code", "svg"],
       desc: "Thiết kế đẹp như sản phẩm thật, tính năng chạy hết, tự chạy thử và sửa lỗi, dự án nhiều file",
       prompt:
-        "Chế độ Kiến Tạo (làm website). Bạn là kỹ sư frontend kiêm nhà thiết kế sản phẩm hàng đầu.\n" +
+        "Chế độ Studio (làm website). Bạn là kỹ sư frontend kiêm nhà thiết kế sản phẩm hàng đầu.\n" +
         "- Trước khi code: xác định mục tiêu của trang, người dùng, nội dung chính và phong cách; yêu cầu mơ hồ thì tự chọn hướng hợp lý nhất và nói ngắn gọn đã chọn gì.\n" +
         "- Trang hoặc ứng dụng một màn hình: một file HTML hoàn chỉnh. Website nhiều trang, ứng dụng lớn hoặc khi người dùng muốn tách file: dự án nhiều file đúng định dạng dự án.\n" +
         "- Chất lượng như sản phẩm thật: thiết kế có hệ thống, nội dung thật, mọi tính năng chạy được, đẹp trên điện thoại, có chế độ tối, dùng được bằng bàn phím, không lỗi console.\n" +
         "- Câu hỏi về web (giải thích, gỡ lỗi, chọn công nghệ, triển khai) thì trả lời như chuyên gia, kèm code chạy được.",
       remind: "làm như sản phẩm thật: thiết kế có hệ thống, mọi tính năng chạy được, responsive, chế độ tối; website nhiều trang thì theo định dạng dự án nhiều file" },
-    cp: { name: "Đấu Trường", sub: "Lập trình thi đấu", colors: ["#f59e0b", "#ef4444"], skills: ["ioi", "code", "math"],
+    cp: { name: "Arena", sub: "Lập trình thi đấu", colors: ["#f59e0b", "#ef4444"], skills: ["ioi", "code", "math"],
       ex: ["Giải thích Segment Tree lazy propagation kèm code C++", "Đếm số dãy con có tổng chia hết cho k, n ≤ 2·10⁵", "Code của mình bị TLE, giúp tối ưu (dán code vào đây)"],
       desc: "IOI, ICPC, Codeforces, HSG: thuật toán, C++17, kiểm thử với lời giải trâu trước khi nộp",
       prompt:
-        "Chế độ Đấu Trường (lập trình thi đấu). Bạn là huấn luyện viên đội tuyển IOI và ICPC.\n" +
+        "Chế độ Arena (lập trình thi đấu). Bạn là huấn luyện viên đội tuyển IOI và ICPC.\n" +
         "- Bài toán: tóm tắt đề, đọc ràng buộc để suy ra độ phức tạp cần đạt, đi từ ý tưởng trâu tới tối ưu, lập luận tính đúng, viết C++17 sạch và nhanh, " +
         "kiểm tra bằng cpp-run (so với lời giải trâu trên test ngẫu nhiên, thêm test lớn nhất để đo thời gian) trước khi nộp.\n" +
         "- Câu hỏi lý thuyết (thuật toán, cấu trúc dữ liệu, kỹ thuật): giải thích trực quan, ví dụ nhỏ chạy tay, code mẫu, độ phức tạp, " +
@@ -879,7 +909,7 @@
   };
   const modeIcon = (k) => {
     const [a, b] = MODES[k].colors;
-    return `<span class="opt-ic" style="--a:${a};--b:${b}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${MODE_ICONS[k]}"/></svg></span>`;
+    return `<span class="opt-ic" style="--a:${a};--b:${b}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="${MODE_ICONS[k]}"/></svg></span>`;
   };
   delete settings.persona; // bỏ tính năng nhân vật cũ
   if (!MODES[settings.mode]) settings.mode = "auto";
@@ -890,7 +920,7 @@
     $("modeTitle").textContent = currentMode().name;
     $("modeIcon").innerHTML = modeIcon(settings.mode);
     $("modeChip").title = `Chế độ: ${currentMode().name} (${currentMode().sub})`;
-    $("footnote").textContent = "Khuê có thể trả lời sai, hãy kiểm tra thông tin quan trọng.";
+    $("footnote").textContent = "Astra có thể trả lời sai, hãy kiểm tra thông tin quan trọng.";
     paintModeCards();
   }
   function chooseMode(k) {
@@ -933,7 +963,7 @@
       }
       html += `</div>`;
     } else {
-      html = `<div class="menu-head"><b>Mô hình của Khuê</b><small>Đều dùng cách suy nghĩ, công cụ và quy trình kiểm tra của Khuê</small></div>`;
+      html = `<div class="menu-head"><b>Mô hình của Astra</b><small>Đều dùng cách suy nghĩ, công cụ và quy trình kiểm tra của Astra</small></div>`;
       for (const id of Object.keys(PROVIDERS)) {
         let group = "";
         for (const m of PROVIDERS[id].models) {
@@ -1991,7 +2021,7 @@
       remind: "đưa các bước cụ thể làm được ngay; nếu liên quan tới quy định, thủ tục, giá, thuế, phí thì tra cứu bản mới nhất và ghi rõ văn bản, ngày hiệu lực, nguồn",
     },
     {
-      id: "code", test: /lập trình|viết (code|hàm|chương trình|script)|\bcode\b|\bbug\b|debug|gỡ lỗi|sửa lỗi|báo lỗi|\berror\b|exception|traceback|python|javascript|typescript|\bjava\b|c#|golang|\brust\b|\bphp\b|\bsql\b|\bapi\b|react|vue|node\.?js|django|flask|regex|refactor/i,
+      id: "code", test: /lập trình|viết (code|hàm|chương trình|script)|\bcode\b|\bbug\b|debug|gỡ lỗi|sửa lỗi|báo lỗi|bị lỗi|lỗi (gì|này|ở đâu)|không chạy|chạy không được|chạy sai|ra sai|crash|bị treo|\berror\b|exception|traceback|segfault|undefined|\bnull\b|python|javascript|typescript|\bjava\b|c#|golang|\brust\b|\bphp\b|\bsql\b|\bapi\b|react|vue|node\.?js|django|flask|regex|refactor/i,
       prompt:
         "Kỹ năng lập trình:\n" +
         "- Trước khi viết: nắm rõ đầu vào, đầu ra, ràng buộc, môi trường (ngôn ngữ, phiên bản, thư viện); chưa rõ thì nêu giả định hợp lý. " +
@@ -2000,8 +2030,17 @@
         "xử lý đầu vào sai và trường hợp biên (rỗng, rất lớn, trùng lặp, số âm, None/null); không nuốt lỗi im lặng.\n" +
         "- Kiểm thử: chạy thử bằng py-run, js-run hoặc cpp-run với ví dụ bình thường và trường hợp biên; thuật toán thì so sánh với cách vét cạn trên dữ liệu nhỏ. " +
         "Code cuối phải đúng là code đã chạy qua.\n" +
-        "- Gỡ lỗi: đọc kỹ thông báo lỗi và dòng gây lỗi, tái hiện lỗi bằng ví dụ nhỏ nhất, nêu giả thuyết về nguyên nhân rồi kiểm chứng, " +
-        "sửa đúng gốc (không vá triệu chứng), chạy lại để xác nhận, giải thích vì sao lỗi xảy ra.\n" +
+        "- Gỡ lỗi (quy trình bắt buộc): (1) đọc toàn bộ thông báo lỗi, bắt đầu từ dòng cuối của traceback, xác định loại lỗi, file, dòng; " +
+        "(2) tái hiện lỗi bằng py-run, js-run hoặc cpp-run với ví dụ nhỏ nhất; (3) liệt kê 2–3 nguyên nhân khả dĩ, xếp theo khả năng, " +
+        "rồi kiểm chứng từng cái bằng cách in giá trị trung gian hoặc assert, không đoán; (4) sửa đúng gốc với thay đổi nhỏ nhất, " +
+        "không vá triệu chứng (không bọc try/except cho qua, không hard-code kết quả); (5) chạy lại cả ví dụ gây lỗi lẫn trường hợp biên để chắc không sinh lỗi mới; " +
+        "(6) giải thích ngắn: lỗi gì, vì sao xảy ra, sửa ở đâu, cách tránh lần sau.\n" +
+        "- Người dùng dán code lỗi: đọc hết code trước khi sửa, tìm mọi lỗi chứ không chỉ lỗi đầu tiên (cú pháp, logic, off-by-one, biến chưa khởi tạo, " +
+        "so sánh sai kiểu, quên return, sửa list khi đang duyệt, tham chiếu dùng chung, async thiếu await, race condition); " +
+        "trả về code đã sửa hoàn chỉnh và danh sách thay đổi (dòng nào, vì sao). Không có thông báo lỗi thì tự chạy để tìm, hoặc hỏi lại kết quả mong đợi.\n" +
+        "- Lỗi thường gặp cần soát: Python (thụt lề, mutable default argument, chia nguyên //, so sánh float, biến toàn cục trong hàm); " +
+        "JavaScript (this bị mất, == thay vì ===, so sánh mảng/đối tượng, closure trong vòng lặp, Promise không await, sort() so sánh theo chuỗi); " +
+        "C++ (tràn int nên dùng long long, mảng ngoài phạm vi, biến chưa khởi tạo, quên reset giữa các test, cin chậm, ép kiểu khi chia).\n" +
         "- An toàn và hiệu năng: tránh SQL injection (dùng tham số), không lộ mật khẩu hay key trong code, kiểm tra dữ liệu từ người dùng; " +
         "nêu độ phức tạp và chọn cấu trúc dữ liệu phù hợp.\n" +
         "- Trình bày: code hoàn chỉnh chạy được ngay (kèm import), cách chạy hoặc cài thư viện, giải thích ngắn ý tưởng; khi sửa code của người dùng thì chỉ rõ chỗ đổi và lý do.\n" +
@@ -2113,10 +2152,10 @@
 
   function systemPrompt(chat) {
     const today = new Date().toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "numeric", year: "numeric" });
-    const [mName, mDesc] = PROVIDERS.shared.titles[cloudModel()] || ["Bắc Đẩu", ""];
-    const identity = `Bạn là Khuê, trợ lý AI tiếng Việt, đang chạy mô hình ${mName} (${mDesc.toLowerCase()}). Khi được hỏi bạn là ai hay là mô hình gì, ` +
-      `hãy nói bạn là Khuê, mô hình ${mName}. Nếu được hỏi về công nghệ bên dưới thì nói Khuê được xây dựng trên các mô hình ngôn ngữ mở, ` +
-      "cộng với cách suy nghĩ, kỹ năng, công cụ (chạy code, tra cứu, vẽ ảnh, xuất file) và quy trình kiểm tra chéo riêng của Khuê.";
+    const [mName, mDesc] = PROVIDERS.shared.titles[cloudModel()] || ["Titan 3 Ultra", ""];
+    const identity = `Bạn là Astra, trợ lý AI tiếng Việt, đang chạy mô hình ${mName} (${mDesc.toLowerCase()}). Khi được hỏi bạn là ai hay là mô hình gì, ` +
+      `hãy nói bạn là Astra, mô hình ${mName}. Nếu được hỏi về công nghệ bên dưới thì nói Astra được xây dựng trên các mô hình ngôn ngữ mở, ` +
+      "cộng với cách suy nghĩ, kỹ năng, công cụ (chạy code, tra cứu, vẽ ảnh, xuất file) và quy trình kiểm tra chéo riêng của Astra.";
     const parts = [identity, `Hôm nay là ${today}. Kiến thức có sẵn của bạn chỉ cập nhật đến khoảng năm 2024–2025, nên những gì xảy ra sau đó (ai đang giữ chức vụ, giá cả, phiên bản mới, kết quả thi đấu, sự kiện gần đây) bạn phải tra cứu, không được đoán.`, THINK_PROMPT];
     if (/^glm/.test(cloudModel())) parts.push(GLM_PROMPT);
     if (settings.system.trim()) parts.push(settings.system.trim());
@@ -2517,10 +2556,7 @@
     return new Promise((resolve) => {
       const id = Math.random().toString(36).slice(2), errors = [];
       const probe = `<script>(()=>{const id=${JSON.stringify(id)},seen=new Set(),send=(m)=>{m=String(m).slice(0,300);if(seen.has(m)||seen.size>12)return;seen.add(m);parent.postMessage({chk:id,msg:m},"*")};` +
-        // Ảnh, video, âm thanh lấy từ mạng ngoài (ảnh AI, ảnh minh hoạ) tải chậm hoặc bị chặn trong khung thử không phải lỗi code: bỏ qua.
-        `addEventListener("error",e=>{const t=e.target;if(t&&t!==window&&(t.src||t.href)){const raw=t.getAttribute("src")||t.getAttribute("href")||"";` +
-        `if(/^(IMG|SOURCE|VIDEO|AUDIO|TRACK)$/.test(t.tagName)&&/^(https?:)?[/][/]/i.test(raw))return;send("Không tải được "+(t.src||t.href))}` +
-        `else send((e.message||"Lỗi")+(e.lineno?" (dòng "+e.lineno+")":""))},true);` +
+        `addEventListener("error",e=>{if(e.target&&e.target!==window&&(e.target.src||e.target.href))send("Không tải được "+(e.target.src||e.target.href));else send((e.message||"Lỗi")+(e.lineno?" (dòng "+e.lineno+")":""))},true);` +
         `addEventListener("unhandledrejection",e=>send("Promise bị lỗi: "+((e.reason&&e.reason.message)||e.reason)));` +
         `const ce=console.error;console.error=(...a)=>{send("console.error: "+a.map(String).join(" "));ce.apply(console,a)};` +
         `addEventListener("submit",e=>e.preventDefault(),true);` +
@@ -2973,10 +3009,70 @@
       paintAssistant(node, reply, false);
     }
   }
+  // Phân tích kết quả chạy code bị lỗi: chỉ ra dòng gây lỗi kèm ngữ cảnh, gợi ý theo loại lỗi, và phát hiện lặp lại cùng một lỗi.
+  const FIX_BONUS = 4; // số lượt công cụ được cộng thêm khi đang sửa lỗi
+  const ERROR_HINTS = [
+    [/SyntaxError|IndentationError|Unexpected token|expected .* before|missing terminating/i, "lỗi cú pháp: soát ngoặc, dấu hai chấm, thụt lề, dấu nháy và dấu chấm phẩy quanh dòng báo lỗi (lỗi thật thường nằm ở dòng ngay trước)"],
+    [/NameError|is not defined|was not declared in this scope|ReferenceError/i, "tên chưa được khai báo: kiểm tra chính tả, phạm vi biến, import còn thiếu hoặc dùng trước khi gán"],
+    [/ModuleNotFoundError|No module named/i, "thiếu thư viện: Pyodide chỉ có các gói thuần Python và gói khoa học phổ biến; đổi sang thư viện có sẵn (numpy, pandas, sympy, math…) hoặc tự viết phần đó"],
+    [/IndexError|out of range|out_of_range|Segmentation fault|exit code 139|mã lỗi 139|SIGSEGV/i, "truy cập ngoài mảng: in độ dài và chỉ số ngay trước dòng lỗi, soát điều kiện vòng lặp (< hay <=), mảng rỗng, chỉ số âm, kích thước mảng C++ có đủ lớn không"],
+    [/KeyError|undefined is not|Cannot read propert|of undefined|of null|NoneType/i, "giá trị không tồn tại hoặc rỗng (None/null/undefined): kiểm tra dữ liệu trước khi dùng, hàm có quên return không, khoá có đúng tên không"],
+    [/TypeError|cannot convert|invalid conversion|no match for|unsupported operand/i, "sai kiểu dữ liệu: in type()/typeof của các giá trị liên quan, soát chuỗi với số, list với số, số lượng tham số của hàm"],
+    [/ValueError|NaN|invalid literal/i, "giá trị không hợp lệ: soát dữ liệu đầu vào, chuyển kiểu (int(), float(), parseInt) và các trường hợp biên"],
+    [/ZeroDivisionError|division by zero|floating point exception|SIGFPE|mã lỗi 136/i, "chia cho 0: tìm biến mẫu số có thể bằng 0 và xử lý riêng trường hợp đó"],
+    [/RecursionError|Maximum call stack|stack overflow/i, "đệ quy quá sâu hoặc không dừng: soát điều kiện dừng, hoặc đổi sang vòng lặp / ngăn xếp tự quản"],
+    [/quá lâu|quá thời gian|quá 5 giây|timed? ?out|TLE/i, "chạy quá lâu: có thể vòng lặp vô hạn (biến điều khiển không đổi) hoặc độ phức tạp quá lớn; thử với dữ liệu nhỏ, in tiến trình, rồi tối ưu thuật toán"],
+    [/AssertionError|assert/i, "điều kiện kiểm tra sai: in giá trị thực tế và giá trị mong đợi, xác định code sai hay chính test sai"],
+    [/MemoryError|bad_alloc|out of memory/i, "hết bộ nhớ: giảm kích thước dữ liệu, tránh tạo list/mảng khổng lồ, dùng generator hoặc thuật toán ít bộ nhớ hơn"],
+  ];
+  const RUN_LANGS = /^(js-run|py-run|python-run|cpp-run)$/;
+  function runFailed(out) {
+    return /^Lỗi[: ]|Traceback \(most recent call last\)|^\w*(Error|Exception): |Lỗi biên dịch|mã lỗi \d+|bị dừng|console\.error:|Promise bị lỗi/m.test(out);
+  }
+  function errorLines(lang, out) {
+    const nums = [];
+    const re = lang === "cpp-run" ? /<source>:(\d+)(?::\d+)?:\s*(?:fatal )?error/g : lang === "js-run" ? /dòng (\d+)/g : /File "<exec>", line (\d+)/g;
+    for (const m of out.matchAll(re)) nums.push(+m[1]);
+    if (!nums.length && lang !== "js-run") for (const m of out.matchAll(/\bline (\d+)\b/g)) nums.push(+m[1]);
+    return [...new Set(nums)].slice(-2);
+  }
+  function codeContext(code, nums) {
+    const src = String(code).split(/^---INPUT---\s*$/m)[0].replace(/^\n/, "").split("\n");
+    return nums.filter((n) => n >= 1 && n <= src.length).map((n) => {
+      const from = Math.max(1, n - 2), to = Math.min(src.length, n + 2);
+      const rows = [];
+      for (let i = from; i <= to; i++) rows.push(`${i === n ? ">>" : "  "} ${String(i).padStart(3)} | ${src[i - 1]}`);
+      return rows.join("\n");
+    }).join("\n…\n");
+  }
+  const errorKey = (out) => String(out).split("\n").filter((l) => /error|lỗi|exception/i.test(l)).slice(-1)[0]?.replace(/\d+/g, "#").trim() || "";
+  function debugFeedback(lang, code, out, fix) {
+    if (!RUN_LANGS.test(lang) || !runFailed(out)) { fix.streak = 0; fix.last = ""; return ""; }
+    const key = errorKey(out);
+    fix.streak = key && key === fix.last ? fix.streak + 1 : 1;
+    fix.last = key; fix.total++;
+    const hints = ERROR_HINTS.filter(([re]) => re.test(out)).slice(0, 2).map(([, h]) => "- Gợi ý: " + h + ".");
+    const ctx = codeContext(code, errorLines(lang, out));
+    return "\n\nCODE BỊ LỖI. Gỡ lỗi theo đúng quy trình, không đoán mò:\n" +
+      (ctx ? "Dòng gây lỗi (đánh dấu >>):\n```\n" + ctx + "\n```\n" : "") +
+      (hints.length ? hints.join("\n") + "\n" : "") +
+      "1) Đọc dòng cuối của thông báo lỗi: loại lỗi gì, ở dòng nào, giá trị nào gây ra.\n" +
+      "2) Nêu MỘT giả thuyết cụ thể về nguyên nhân gốc (không phải triệu chứng). Chưa chắc thì in thêm giá trị trung gian để kiểm chứng.\n" +
+      "3) Sửa đúng gốc, sửa ít nhất có thể, không viết lại phần đang chạy đúng; soát luôn các chỗ khác có cùng kiểu lỗi.\n" +
+      "4) Chạy lại TOÀN BỘ code đã sửa (đủ import, đủ dữ liệu) trong một khối mới, kèm vài test cả trường hợp biên.\n" +
+      (fix.streak >= 2
+        ? "CẢNH BÁO: cùng một lỗi đã lặp lại " + fix.streak + " lần, cách sửa vừa rồi KHÔNG đúng hướng. Dừng lại, xem lại giả định từ đầu, " +
+          "thu nhỏ code thành ví dụ ngắn nhất còn tái hiện lỗi, hoặc đổi hẳn cách làm (thuật toán, thư viện, cấu trúc dữ liệu) khác.\n"
+        : "") +
+      "Khi trả lời người dùng, nói ngắn gọn lỗi gì, vì sao, đã sửa thế nào; code cuối phải là code đã chạy qua không lỗi.";
+  }
+
   async function answerWithTools(messages, reply, node) {
+    const fix = { streak: 0, last: "", total: 0 };
+    let toolLimit = TOOL_ROUNDS;
     for (let round = 0; ; round++) {
       const start = reply.content.length;
-      const allowTool = round < TOOL_ROUNDS;
+      const allowTool = round < toolLimit;
       // Máy chủ đôi khi ngắt luồng giữa chừng ("network error"): gửi lại tối đa 2 lần, cho mô hình viết tiếp từ chỗ dừng.
       for (let retry = 0; ; retry++) {
         const partial = reply.content.slice(start).trim();
@@ -3027,14 +3123,17 @@
         reply.sources = [...known, ...sourcesFrom(out).filter((x) => !known.some((k) => k.url === x.url))].slice(0, 16);
       }
       reply.content += "\n\n```output\n" + out + "\n```\n\n";
-      reply.notice = "Đang đọc kết quả…";
+      const debug = search ? "" : debugFeedback(m[1], m[2], String(out), fix);
+      // Đang sửa lỗi thì cho thêm lượt chạy lại (tối đa FIX_BONUS lượt), để không phải dừng khi code vẫn còn lỗi.
+      if (debug && round + 1 >= toolLimit && toolLimit < TOOL_ROUNDS + FIX_BONUS) toolLimit++;
+      reply.notice = debug ? (fix.streak >= 2 ? "Lỗi lặp lại, đang đổi cách sửa…" : "Code bị lỗi, đang tìm nguyên nhân và sửa…") : "Đang đọc kết quả…";
       paintAssistant(node, reply, true);
       messages = [...messages,
         { role: "assistant", content: reply.content.slice(start, cut).trim() },
         { role: "user", content: (search ? `Kết quả ${tool.label.toLowerCase()}:\n\`\`\`\n` : "Kết quả chạy code:\n```\n") + out +
-          "\n```\nTiếp tục trả lời dựa trên kết quả này, không lặp lại khối lệnh vừa chạy." +
+          "\n```\nTiếp tục trả lời dựa trên kết quả này, không lặp lại khối lệnh vừa chạy." + debug +
           // Lượt cuối: không chạy công cụ nữa, nên bắt mô hình trả lời luôn.
-          (round + 1 >= TOOL_ROUNDS ? " Đã hết lượt dùng công cụ: không viết thêm khối lệnh nào, trả lời ngay bằng thông tin đã có." : "") },
+          (round + 1 >= toolLimit ? (debug ? " Đã hết lượt chạy code: trình bày code đã sửa tốt nhất kèm nói rõ lỗi còn lại (nếu có) và cách người dùng tự kiểm tra." : "") + " Đã hết lượt dùng công cụ: không viết thêm khối lệnh nào, trả lời ngay bằng thông tin đã có." : "") },
       ];
       if (reply.reasoning) reply.reasoning += "\n\n· · ·\n\n";
     }
@@ -3366,7 +3465,10 @@
         let r = (0, eval)(e.data);
         if (r instanceof Promise) r = await r;
         if (r !== undefined && !out.length) out.push(fmt(r));
-      } catch (err) { out.push("Lỗi: " + err.message); }
+      } catch (err) {
+        const at = String(err?.stack || "").match(/<anonymous>:(\d+):(\d+)/);
+        out.push("Lỗi: " + (err?.name && err.name !== "Error" ? err.name + ": " : "") + (err?.message ?? err) + (at ? ` (dòng ${at[1]}, cột ${at[2]})` : ""));
+      }
       postMessage(out.join("\n"));
     };
   }
@@ -3579,7 +3681,7 @@
       await res?.body?.cancel();
       show(`${modelTitle(id, m)} đang quá tải, chuyển sang ${modelTitle(...order[i + 1])}…`);
     }
-    if (!res) throw new Error("Máy chủ của Khuê không phản hồi. Đợi một lúc rồi thử lại.");
+    if (!res) throw new Error("Máy chủ của Astra không phản hồi. Đợi một lúc rồi thử lại.");
     if (vision && [429, 502, 503, 504, 524].includes(res.status)) {
       await res.body?.cancel();
       throw new Error(`Mô hình đọc ảnh (${modelTitle("shared", model)}) đang quá tải. Đợi khoảng một phút rồi bấm Tạo lại.`);
@@ -3647,7 +3749,7 @@
         const att = [...(m.files || []).map((f) => f.name), ...(m.images?.length ? [`${m.images.length} ảnh`] : [])];
         md += `## Bạn\n\n${att.length ? `*Đính kèm: ${att.join(", ")}*\n\n` : ""}${m.content}\n\n`;
       } else {
-        md += `## Khuê\n\n${splitThink(m.content).answer.replace(MEMO_TAG, "").trim()}\n\n`;
+        md += `## Astra\n\n${splitThink(m.content).answer.replace(MEMO_TAG, "").trim()}\n\n`;
       }
     }
     const a = document.createElement("a");
