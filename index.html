@@ -2556,7 +2556,10 @@
     return new Promise((resolve) => {
       const id = Math.random().toString(36).slice(2), errors = [];
       const probe = `<script>(()=>{const id=${JSON.stringify(id)},seen=new Set(),send=(m)=>{m=String(m).slice(0,300);if(seen.has(m)||seen.size>12)return;seen.add(m);parent.postMessage({chk:id,msg:m},"*")};` +
-        `addEventListener("error",e=>{if(e.target&&e.target!==window&&(e.target.src||e.target.href))send("Không tải được "+(e.target.src||e.target.href));else send((e.message||"Lỗi")+(e.lineno?" (dòng "+e.lineno+")":""))},true);` +
+        // Ảnh, video, âm thanh lấy từ mạng ngoài (ảnh AI, ảnh minh hoạ) tải chậm hoặc bị chặn trong khung thử không phải lỗi code: bỏ qua.
+        `addEventListener("error",e=>{const t=e.target;if(t&&t!==window&&(t.src||t.href)){const raw=t.getAttribute("src")||t.getAttribute("href")||"";` +
+        `if(/^(IMG|SOURCE|VIDEO|AUDIO|TRACK)$/.test(t.tagName)&&/^(https?:)?[/][/]/i.test(raw))return;send("Không tải được "+(t.src||t.href))}` +
+        `else send((e.message||"Lỗi")+(e.lineno?" (dòng "+e.lineno+")":""))},true);` +
         `addEventListener("unhandledrejection",e=>send("Promise bị lỗi: "+((e.reason&&e.reason.message)||e.reason)));` +
         `const ce=console.error;console.error=(...a)=>{send("console.error: "+a.map(String).join(" "));ce.apply(console,a)};` +
         `addEventListener("submit",e=>e.preventDefault(),true);` +
