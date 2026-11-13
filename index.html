@@ -820,7 +820,7 @@
       },
       // Biểu tượng và màu của từng mô hình trong menu.
       looks: {
-        "glm-5.3-flash": ["#6d28d9", "#2563eb", "M3 18h18M4 7l4 4.5L12 4l4 7.5L20 7l-1.5 11h-13Z"],
+        "glm-5.3-flash": ["#6d28d9", "#2563eb", "M5.2 17.5 4 10.3l4.6 3.1L12 7.6l3.4 5.8 4.6-3.1-1.2 7.2ZM5.2 20.5h13.6M4.9 8.4a1.3 1.3 0 1 1-2.6 0 1.3 1.3 0 0 1 2.6 0ZM13.3 4.9a1.3 1.3 0 1 1-2.6 0 1.3 1.3 0 0 1 2.6 0ZM21.7 8.4a1.3 1.3 0 1 1-2.6 0 1.3 1.3 0 0 1 2.6 0ZM12 12.6l1.5 1.7-1.5 1.7-1.5-1.7Z"],
         "nemotron-3-ultra": ["#6d28d9", "#2563eb", "M6 3h12l4 6-10 12L2 9l4-6ZM2 9h20M12 21 8 9l2-6M12 21l4-12-2-6"],
         "nemotron-3.5-super-vl": ["#0891b2", "#22c55e", "M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12ZM12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z"],
         "mistral-large-4": ["#db2777", "#f97316", "M12 19l7-7 3 3-7 7-3-3ZM18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5ZM2 2l7.6 7.6M11 13a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"],
@@ -973,7 +973,8 @@
       for (const id of Object.keys(PROVIDERS)) {
         let group = "";
         for (const m of PROVIDERS[id].models) {
-          const g = m.startsWith("glm") ? "Nhanh và ổn định" : "Mạnh nhất";
+          // Chia nhóm theo nơi chạy: mô hình trên NVIDIA là nhóm mạnh (Titan 4 Mega có mã glm-5.3-flash nhưng chạy trên NVIDIA).
+          const g = PROVIDERS[id].nvidia?.includes(m) ? "Mạnh nhất" : "Nhanh và ổn định";
           if (g !== group) { html += `<div class="group">${g}</div>`; group = g; }
           const [title, desc] = PROVIDERS[id].titles[m];
           html += `<button role="menuitemradio" class="opt" data-key="${id}:${m}" aria-checked="${`${id}:${m}` === currentChoice()}">${modelIcon(m)}` +
@@ -2422,10 +2423,10 @@
         await ensureAnswer(base, reply, node);
         const draft = splitThink(reply.content).answer.trim();
 
-        // Mức Cân bằng: mô hình GLM tự chấm lại một lượt với câu khó (toán, logic, lập trình thi đấu), câu hỏi lập trình và câu cần lập luận
+        // Mức Cân bằng: mô hình GLM nhóm nhanh (Z.ai, không gồm Titan 4 Mega) tự chấm lại một lượt với câu khó (toán, logic, lập trình thi đấu), câu hỏi lập trình và câu cần lập luận
         // (trừ trang web: đã có bước tự chạy thử và sửa lỗi).
         const skillsNow = activeSkills(chat);
-        if (draft && level === "normal" && /^glm/.test(cloudModel()) && !skillsNow.some((k) => k.id === "web" || k.id === "project") &&
+        if (draft && level === "normal" && /^glm/.test(cloudModel()) && !PROVIDERS.shared.nvidia.includes(cloudModel()) && !skillsNow.some((k) => k.id === "web" || k.id === "project") &&
           (skillsNow.some((k) => k.hard || k.id === "code" || k.id === "reason") || draft.length > 1500)) {
           reply.fallback = shelve("Bản nháp đầu tiên");
           await judge([...history, { role: "assistant", content: draft }, { role: "user", content: REVIEW_PROMPT }], reply, node);
