@@ -67,6 +67,10 @@ Nhóm **Nhanh và ổn định** (chạy trên Z.ai):
 | **Nova 4.5** | GLM-4.5 Flash | nhanh nhất, hợp câu hỏi ngắn và trò chuyện |
 | **Nova 4.6 Vision** | GLM-4.6V Flash | đọc ảnh: ảnh chụp, tài liệu, biểu đồ |
 
+Mỗi mô hình có **lời dặn điểm mạnh riêng** để phát huy sở trường và tránh lỗi hay mắc: Titan 3 Ultra lập luận chặt và luôn tự kiểm chứng; Titan 3.5 Vision và Nova 4.6 Vision đọc ảnh theo quy trình (nhìn tổng thể, quét từng vùng, chép nguyên văn chữ và số, đọc trục biểu đồ, nói rõ chỗ không đọc được); Lyra 4 viết tiếng Việt tự nhiên, dịch giữ nghĩa và giọng văn gốc; Titan 3.5 Lightning giải thích theo lớp bằng ví dụ đời thường; Forge XS viết code gọn kiểu production; Atlas 5 lập kế hoạch, ghi kết quả trung gian và kiểm tra từng chặng. Lời dặn gắn theo mô hình thật sự trả lời, kể cả khi máy chủ tự đổi mô hình lúc quá tải hoặc nhiều mô hình cùng giải ở mức Tối đa, Ultra.
+
+Mọi mô hình cũng được dạy **thói quen của người giỏi** cho câu khó: nhận diện dạng bài, ước lượng đáp số trước khi tính, tự đoán 2 chỗ dễ sai nhất rồi kiểm tra riêng, tránh các lỗi tư duy hay gặp (bám ý đầu tiên, nhầm điều kiện cần và đủ, coi tương quan là nhân quả…), đổi góc nhìn khi bế tắc, lập danh sách yêu cầu cho việc dài và nói rõ mức chắc chắn.
+
 Ba mô hình nhóm Nhanh và ổn định có thêm lời dặn riêng cho những lỗi chúng hay mắc. Khi suy nghĩ, chúng đi theo khung Đề → Bẫy → Cách 1 → Cách 2 → Đối chiếu → Kết luận. Chúng phải thử phản bác đáp án đầu tiên, tính bằng code thay vì tính nhẩm, và không chen chữ Hán. Ở mức Cân bằng, chúng còn tự chấm lại rồi sửa câu trả lời một lượt với các câu toán, logic, lập trình và câu cần lập luận. Mọi mô hình đều học thêm cách chọn chiến lược theo loại câu hỏi và tự soát trước khi gửi.
 
 **Bốn chế độ** (nút cạnh tên mô hình, hoặc bấm thẻ ở màn hình chào; mỗi chế độ có sẵn vài câu hỏi mẫu):
