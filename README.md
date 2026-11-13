@@ -44,26 +44,39 @@ Mở http://127.0.0.1:8080. Server cũng có API tương thích OpenAI tại `ht
 
 Mở https://phuchello2811-web.github.io/GLM/ (hoặc mở `index.html` bằng **Go Live** trong VS Code). Muốn dùng như ứng dụng riêng, bấm **Cài thành ứng dụng** ở góc dưới thanh bên.
 
-Trang dùng **GLM miễn phí** qua máy chủ chung (dựng theo [worker/README.md](worker/README.md)). Ai mở link cũng chat được ngay, không cần key hay tài khoản. Bấm nút tên mô hình trong khung chat (hoặc ở đầu trang) để chọn:
+Trang chat có tên **Khuê AI**. Khuê dùng máy chủ chung, dựng theo [worker/README.md](worker/README.md). Ai mở link cũng chat được ngay, không cần key hay tài khoản.
 
-Nhóm **Mô hình mạnh** (miễn phí trên NVIDIA, cần thêm key NVIDIA vào máy chủ theo [worker/README.md](worker/README.md)):
+Các mô hình của Khuê được đặt tên theo các vì sao, vì chúng cùng dùng cách suy nghĩ, kỹ năng, công cụ và quy trình kiểm tra chéo riêng của Khuê. Khi được hỏi, Khuê tự giới thiệu là Khuê và tên mô hình đang chạy. Bấm nút tên mô hình trong khung chat để chọn:
 
-- **Nemotron 3 Ultra**: thông minh nhất, trả lời nhanh, suy luận, toán và code rất tốt. Mặc định.
-- **Nemotron 3.5 Super VL**: đọc ảnh giỏi, suy nghĩ kỹ. Câu hỏi có ảnh tự gửi tới mô hình này.
-- **Mistral Large 4**: viết văn hay, dịch và dùng nhiều ngôn ngữ giỏi.
-- **Nemotron 3.5 Lightning**: giải thích dễ hiểu bằng ví dụ đời thường.
-- **Laguna XS**: chuyên viết code, trả lời rất nhanh.
-- **Step 5**: suy luận nhiều bước rất kỹ, trả lời chậm hơn.
+Nhóm **Mạnh nhất** (chạy trên NVIDIA, cần thêm key NVIDIA vào máy chủ theo [worker/README.md](worker/README.md)):
 
-Nhóm **GLM** (Z.ai):
+| Tên trong Khuê | Mô hình gốc | Điểm mạnh |
+| --- | --- | --- |
+| **Bắc Đẩu** (mặc định) | Nemotron 3 Ultra | thông minh nhất, trả lời nhanh, suy luận, toán và code rất tốt |
+| **Thiên Nhãn** | Nemotron 3.5 Super VL | đọc ảnh giỏi, suy nghĩ kỹ; câu hỏi có ảnh tự gửi tới mô hình này |
+| **Văn Khúc** | Mistral Large 4 | viết văn hay, dịch và dùng nhiều ngôn ngữ giỏi |
+| **Sao Mai** | Nemotron 3.5 Lightning | giải thích dễ hiểu bằng ví dụ đời thường |
+| **Lưu Tinh** | Laguna XS | chuyên viết code, trả lời rất nhanh |
+| **Thiên Hà** | Step 5 | suy luận nhiều bước rất kỹ, trả lời chậm hơn |
 
-- **GLM-4.7 Flash**: suy luận tốt, viết code giỏi, trả lời ổn định.
-- **GLM-4.5 Flash**: trả lời nhanh nhất, hợp câu hỏi ngắn và trò chuyện.
-- **GLM-4.6V Flash**: chuyên đọc ảnh (ảnh chụp, tài liệu, biểu đồ).
+Nhóm **Nhanh và ổn định** (chạy trên Z.ai):
 
-Các mô hình GLM có thêm lời dặn riêng (nghĩ đủ bốn bước Đề bài → Kế hoạch → Giải → Kiểm tra, thử phản bác đáp án đầu tiên, tính bằng code thay vì tính nhẩm, không chen chữ Hán). Với câu toán, logic, lập trình thi đấu, GLM tự chấm lại và sửa câu trả lời một lượt, kể cả khi không bật Nghĩ kỹ.
+| Tên trong Khuê | Mô hình gốc | Điểm mạnh |
+| --- | --- | --- |
+| **Sao Mộc** | GLM-4.7 Flash | ổn định, suy luận và viết code tốt |
+| **Sao Thuỷ** | GLM-4.5 Flash | nhanh nhất, hợp câu hỏi ngắn và trò chuyện |
+| **Nguyệt Quang** | GLM-4.6V Flash | đọc ảnh: ảnh chụp, tài liệu, biểu đồ |
 
-Danh sách trên đã được kiểm tra trả lời được ngày 12/11/2026. GLM-5.3 Flash, DeepSeek V4.1 Flash và MiniMax M3.1 Flash cũng có trên NVIDIA nhưng bản miễn phí đang quá tải nên chưa có trong menu. Khi mở menu, mỗi mô hình mạnh có nhãn **Sẵn sàng** hoặc **Đang quá tải**. Mô hình nào không trả lời trong 25 giây thì máy chủ trả lời bằng GLM-4.7 Flash, ghi lý do dưới câu trả lời, và tạm bỏ qua mô hình đó 5 phút.
+Ba mô hình nhóm Nhanh và ổn định có thêm lời dặn riêng cho những lỗi chúng hay mắc. Khi suy nghĩ, chúng đi theo khung Đề → Bẫy → Cách 1 → Cách 2 → Đối chiếu → Kết luận. Chúng phải thử phản bác đáp án đầu tiên, tính bằng code thay vì tính nhẩm, và không chen chữ Hán. Ở mức Cân bằng, chúng còn tự chấm lại rồi sửa câu trả lời một lượt với các câu toán, logic, lập trình và câu cần lập luận. Mọi mô hình đều học thêm cách chọn chiến lược theo loại câu hỏi và tự soát trước khi gửi.
+
+**Bốn chế độ** (nút cạnh tên mô hình, hoặc bấm thẻ ở màn hình chào; mỗi chế độ có sẵn vài câu hỏi mẫu):
+
+- **Tự động**: tự nhận ra bạn đang hỏi gì và dùng đúng kỹ năng.
+- **An Nhiên** (vấn đề đời sống): sức khoẻ, tiền bạc, giấy tờ thủ tục, nấu ăn, học hành, công việc, chuyện gia đình và tâm lý. Khuê nói chuyện như một người bạn thực tế: hiểu đúng hoàn cảnh, đưa các bước làm được ngay kèm con số cụ thể, và tra cứu những thông tin hay thay đổi.
+- **Kiến Tạo** (làm website): luôn bật kỹ năng làm web, phát triển ứng dụng web lớn, dự án nhiều file, kiến thức web và vẽ SVG.
+- **Đấu Trường** (lập trình thi đấu): luôn bật kỹ năng IOI, lập trình và toán. Lời giải được kiểm tra bằng cpp-run, đối chiếu với lời giải trâu trước khi nộp.
+
+Danh sách trên đã được kiểm tra trả lời được ngày 12/11/2026. GLM-5.3 Flash, DeepSeek V4.1 Flash và MiniMax M3.1 Flash cũng có trên NVIDIA nhưng bản miễn phí đang quá tải nên chưa có trong menu. Khi mở menu, mỗi mô hình mạnh có nhãn **Sẵn sàng** hoặc **Đang quá tải**. Mô hình nào không trả lời trong 25 giây thì máy chủ trả lời bằng Sao Mộc, ghi lý do dưới câu trả lời, và tạm bỏ qua mô hình đó 5 phút.
 
 Mô hình nào quá tải hoặc trả lời quá chậm thì trang tự chuyển sang mô hình GLM khác. Trang chỉ dùng mô hình miễn phí, không có chỗ nhập API key. Trang không dùng mô hình tải về máy; muốn chạy offline thì dùng `./chat.sh` hoặc `./server.sh` ở trên.
 
@@ -75,7 +88,16 @@ Nút **Mức suy nghĩ** (biểu tượng bóng đèn) trong khung chat mở m�
 - **Cân bằng** (mặc định): suy nghĩ bình thường. Mô hình GLM tự chấm lại câu toán, logic, lập trình thi đấu.
 - **Kỹ** (4 bước, khoảng 1–3 phút): phân tích đề (yêu cầu, dữ kiện, bẫy, kế hoạch, cách kiểm chứng) → giải theo kế hoạch với suy nghĩ ở mức cao nhất → một mô hình khác đóng vai người chấm, soát từng bước và chạy code kiểm chứng → sửa lỗi và viết câu trả lời cuối (người chấm không thấy lỗi thì giữ nguyên).
 - **Tối đa** (5 bước, khoảng 3–8 phút): phân tích đề → **ba mô hình giải song song** (mô hình đang chọn và hai mô hình mạnh khác họ), mỗi mô hình một góc nhìn: giải bình thường, giải theo hướng khác, đóng vai người phản biện tìm bẫy → **kiểm tra chéo**: cả ba mô hình soát tất cả lời giải và chạy code kiểm chứng → mô hình đang chọn tổng hợp, tự kiểm chứng chỗ khác nhau (không tin theo số đông) và viết câu trả lời → một mô hình khác **kiểm tra lần cuối**, còn lỗi thì sửa thêm một lượt. Bước nào quá chậm thì bị dừng đúng hạn và dùng phần đã viết.
-- **Ultra** (8 bước, hết công suất): phân tích đề → vòng 1: **bốn mô hình** giải độc lập → vòng 2: các mô hình **trao đổi suy luận**, đọc lời giải của cả nhóm, kiểm chứng chỗ mâu thuẫn bằng code rồi viết lại lời giải đã cải tiến → so sánh kết luận, **còn bất đồng thì thêm vòng 3** chỉ bàn về chỗ bất đồng → giám khảo tổng hợp → ba mô hình khác **kiểm tra chéo** → giám khảo **tinh chỉnh** theo nhận xét → kiểm tra lần cuối (sửa xong thì kiểm lại thêm một lượt). **Lưu ý: Ultra chạy rất lâu (khoảng 6–20 phút), chỉ dùng cho bài khó hoặc việc lớn.**
+- **Ultra** (8 bước, hết công suất): phân tích đề → vòng 1: **bốn mô hình** giải độc lập → vòng 2: các mô hình **trao đổi suy luận**, đọc lời giải của cả nhóm, kiểm chứng chỗ mâu thuẫn bằng code rồi viết lại lời giải đã cải tiến → so sánh kết luận, **còn bất đồng thì thêm vòng 3** chỉ bàn về chỗ bất đồng → giám khảo tổng hợp → ba mô hình khác **kiểm tra chéo** → giám khảo **tinh chỉnh** theo nhận xét → kiểm tra lần cuối (sửa xong thì kiểm lại thêm một lượt). Khi yêu cầu là **xây dựng phần mềm** (làm web, app, game, công cụ), Ultra làm như một lập trình viên chuyên nghiệp, theo 7 bước:
+  1. viết **kế hoạch Markdown** (mục tiêu, yêu cầu, công nghệ, kiến trúc, cấu trúc thư mục, các giai đoạn kèm tiêu chí hoàn thành, kiểm thử, rủi ro);
+  2. một kỹ sư khác **phản biện kế hoạch**, rồi kế hoạch được cải tiến;
+  3. **code theo từng giai đoạn**, chạy thử và sửa lỗi ngay sau mỗi giai đoạn;
+  4. hai mô hình khác **rà soát code**;
+  5. sửa theo kết quả rà soát;
+  6. **chạy thử toàn bộ** (trang web) hoặc viết và chạy kiểm thử (code khác);
+  7. tổng hợp. Câu trả lời cuối có đủ mọi file, kèm `PLAN.md`.
+
+  **Lưu ý: Ultra chạy rất lâu (khoảng 6–30 phút), chỉ dùng cho bài khó hoặc việc lớn.**
 
 Các lời giải nháp vẫn xem được bên trên câu trả lời, kèm tên mô hình.
 
@@ -91,13 +113,12 @@ Khi cần tính toán, mô hình tự viết code JavaScript, Python hoặc C++.
 - **Lập trình:** câu hỏi và câu trả lời hay nhất trên Stack Overflow, cùng kho mã trên GitHub.
 - **Từ điển tiếng Anh** ([Wiktionary](https://en.wiktionary.org)).
 
-Các trang đã tra hiện thành danh sách **Nguồn** dưới câu trả lời. Từ khoá tra cứu được gửi tới các dịch vụ trên. Mô hình cũng được dạy cách suy nghĩ: hiểu đề, chia thành câu hỏi con, thử ít nhất hai hướng, kiểm chứng kết quả bằng một cách độc lập (chạy code, thay ngược, vét cạn) và nói rõ mức độ chắc chắn. Bài toán, xác suất và câu đố logic được kiểm lại bằng sympy hoặc vét cạn. Nếu máy chủ ngắt kết nối giữa chừng, trang tự nối lại và cho mô hình viết tiếp. Nếu câu trả lời bị ngắt giữa khối code (khối chưa đóng, trang HTML thiếu `</html>`, code thiếu dấu `}`), trang tự cho viết tiếp đúng vào trong khối, bỏ phần lặp; vẫn chưa đủ thì hiện nút **Viết tiếp**. Muốn mô hình nhớ điều gì ở mọi đoạn chat, cứ nói "hãy nhớ: …". Danh sách ghi nhớ nằm trong **Cài đặt → Bộ nhớ**.
+Các trang đã tra hiện thành danh sách **Nguồn** dưới câu trả lời. Từ khoá tra cứu được gửi tới các dịch vụ trên. Mô hình cũng được dạy cách suy nghĩ: hiểu đề, chia thành câu hỏi con, thử ít nhất hai hướng, kiểm chứng kết quả bằng một cách độc lập (chạy code, thay ngược, vét cạn) và nói rõ mức độ chắc chắn. Bài toán, xác suất và câu đố logic được kiểm lại bằng sympy hoặc vét cạn. Nếu máy chủ ngắt kết nối giữa chừng, trang tự nối lại và cho mô hình viết tiếp. Nếu câu trả lời bị ngắt giữa khối code (khối chưa đóng, trang HTML thiếu thẻ đóng, code thiếu dấu `}`), trang tự cho viết tiếp đúng vào dòng đang dở. Phần mô hình lặp lại được bỏ đi, dù lặp theo từng dòng, giữa dòng hay viết lại cả khối từ đầu. Viết tiếp không được thì trang đổi cách: gửi phần cuối ngắn hơn, rồi nhờ viết lại trọn file đang dở. Với dự án nhiều file, trang còn tự tìm các file được trang dẫn tới (link, script, fetch) hoặc có trong sơ đồ thư mục mà chưa viết, cùng các file bị cắt hay JSON sai, rồi nhờ viết nốt. Chỉ khi thật sự không tiến thêm được mới hiện nút **Viết tiếp** (ghi rõ file nào còn thiếu). Bấm nút thì câu trả lời được viết nốt ngay tại chỗ, không tạo tin nhắn mới, rồi chạy thử lại. Muốn mô hình nhớ điều gì ở mọi đoạn chat, cứ nói "hãy nhớ: …". Danh sách ghi nhớ nằm trong **Cài đặt → Bộ nhớ**.
 
-**Nhân vật, kho kiến thức, đồng bộ:**
+**Kho kiến thức, đồng bộ:**
 
-- **Nhân vật:** chọn trong menu mô hình ở khung chat, gồm Thầy dạy Toán, Huấn luyện viên IOI, Dịch giả Anh–Việt, Gia sư tiếng Anh, Trợ lý viết văn. Có thể tự tạo thêm trong **Cài đặt**.
-- **Kho kiến thức:** **Cài đặt → Kho kiến thức → Thêm tài liệu** (PDF, Word, Excel, văn bản). Mỗi câu hỏi, GLM tự tìm đoạn liên quan trong kho và ghi rõ tài liệu đã dùng. Tài liệu chỉ lưu trong trình duyệt.
-- **Học từ câu trả lời được thích:** khi bạn hỏi câu giống câu cũ, các câu trả lời bạn đã bấm thích được dùng làm mẫu, để GLM trả lời đúng văn phong bạn muốn.
+- **Kho kiến thức:** **Cài đặt → Kho kiến thức → Thêm tài liệu** (PDF, Word, Excel, văn bản). Mỗi câu hỏi, Khuê tự tìm đoạn liên quan trong kho và ghi rõ tài liệu đã dùng. Tài liệu chỉ lưu trong trình duyệt.
+- **Học từ câu trả lời được thích:** khi bạn hỏi câu giống câu cũ, các câu trả lời bạn đã bấm thích được dùng làm mẫu, để Khuê trả lời đúng văn phong bạn muốn.
 - **Tạo và sửa ảnh:** nhờ "vẽ…" hoặc "tạo bức tranh…", GLM tự viết mô tả chi tiết và chọn khổ ảnh (vuông, ngang 16:9, dọc 9:16…). Có thể xin **nhiều phiên bản cùng lúc** (2–4 ảnh hiện thành lưới), **ảnh cỡ lớn**, và **phong cách có sẵn** (ảnh thật, anime, Ghibli, màu nước, sơn dầu, 3D, pixel art, phác thảo chì, điện ảnh, cyberpunk, poster). Dưới mỗi ảnh ghi số seed để vẽ lại đúng ảnh đó. Trên mỗi ảnh có nút **Tải về**, **Vẽ lại** (cùng mô tả, ảnh khác) và **Sửa** (gõ thay đổi, ví dụ "đổi nền thành bãi biển"). Ảnh do FLUX.2 trên Cloudflare vẽ; sửa ảnh cần bật Workers AI theo [worker/README.md](worker/README.md).
 - **Xuất file PowerPoint, Excel, Word:** nhờ "làm file PowerPoint…", "tạo file Excel…" hoặc "xuất file Word…". Câu trả lời hiện một thẻ file có nút **Tải về**, file được tạo ngay trong trình duyệt: PowerPoint xem mục Làm slide; Excel có nhiều trang tính và công thức (tự tính khi mở); Word có tiêu đề, danh sách và bảng.
 - **Đồng bộ giữa các máy:** **Cài đặt → Đồng bộ giữa các máy**. Cần bật trên Cloudflare theo [worker/README.md](worker/README.md).
@@ -120,7 +141,10 @@ Các trang đã tra hiện thành danh sách **Nguồn** dưới câu trả lờ
 
 GLM được dạy thêm vài kỹ năng, tự bật khi câu hỏi đúng chủ đề:
 
-- **Làm trang web:** viết trọn một file HTML có thiết kế chuyên nghiệp (khoảng cách, cỡ chữ, màu theo hệ thống; đủ trạng thái đang tải, trống, lỗi), chế độ tối, chạy tốt trên điện thoại, dùng được bằng bàn phím, biểu tượng SVG (Lucide), ảnh minh hoạ do AI vẽ thay cho khung trống, và tính năng chạy thật (thêm, sửa, xoá, tìm, lọc, lưu lại). Sau khi viết, trang **tự chạy thử** trang web trong khung điện thoại: bắt lỗi JavaScript, bấm thử mọi nút, kiểm tra tràn ngang; có lỗi thì tự nhờ GLM sửa (tối đa 2 lượt) và ghi rõ kết quả. Bấm **Xem trước** để dùng ngay, đổi khổ Điện thoại, Máy tính bảng, Máy tính, hoặc **Tải về** để lấy file.
+- **Làm trang web:** viết trọn một file HTML có thiết kế chuyên nghiệp (khoảng cách, cỡ chữ, màu theo hệ thống; đủ trạng thái đang tải, trống, lỗi), chế độ tối, chạy tốt trên điện thoại, dùng được bằng bàn phím, biểu tượng SVG (Lucide), ảnh minh hoạ do AI vẽ thay cho khung trống, và tính năng chạy thật (thêm, sửa, xoá, tìm, lọc, lưu lại). Sau khi viết, trang **tự chạy thử** trang web trong khung điện thoại: bắt lỗi JavaScript, bấm thử mọi nút, kiểm tra tràn ngang; có lỗi thì tự sửa (tối đa 2 lượt) và ghi rõ kết quả. Bấm **Xem trước** để dùng ngay, đổi khổ Điện thoại, Máy tính bảng, Máy tính, hoặc **Tải về** để lấy file.
+- **Ứng dụng web lớn:** Khuê được dạy kiến trúc phía trình duyệt (store chứa state, lớp dữ liệu có phiên bản, định tuyến theo hash, gán sự kiện theo kiểu uỷ quyền). Khuê cũng học các tính năng nền tảng mà sản phẩm thật luôn có (tìm kiếm, lọc, sắp xếp, phân trang, hoàn tác, xuất và nhập dữ liệu, phím tắt) và form chuyên nghiệp. Với từng loại sản phẩm (bán hàng, dashboard, đặt lịch, blog, quiz, Kanban, mạng xã hội, đăng nhập), Khuê biết danh sách tính năng tối thiểu. Ngoài ra còn hiệu năng, PWA, SEO, cách làm máy chủ Node.js, và tự đi qua từng luồng như người dùng thật trước khi nộp.
+- **Kỹ sư phần mềm:** Khuê học thêm thiết kế (tách lớp, SOLID, mẫu thiết kế), xử lý lỗi, kiểm thử, bất đồng bộ, hiệu năng, cơ sở dữ liệu, thiết kế API, bảo mật OWASP, cách viết đúng chuẩn từng ngôn ngữ (Python, JS/TS, Java, C++, Go, Rust, SQL), Git, CI và Docker.
+- **Dự án web nhiều file:** website nhiều trang hoặc khi bạn muốn tách file, mô hình viết đủ cấu trúc thư mục (`index.html`, các trang con, `css/`, `js/`, `data/*.json`, `README.md`), mỗi file một khối code có tên file, các trang dùng chung header, footer và menu. Dưới câu trả lời hiện **thẻ dự án** có cây thư mục và hai nút: **Chạy thử** chạy cả dự án ngay trong chat (bấm link giữa các trang vẫn chuyển được, fetch đọc được file JSON trong dự án, chọn trang, đổi khổ thiết bị) và **Tải .zip** để lấy cả thư mục. Khi nhờ sửa, mô hình chỉ viết lại các file thay đổi, trang tự ghép với các file cũ trong đoạn chat. Mọi trang cũng được tự chạy thử, kiểm tra link tới file không có và tự sửa lỗi. Trong khung chạy thử, `localStorage` dùng bộ nhớ tạm, giữ được dữ liệu khi chuyển giữa các trang (ví dụ giỏ hàng). Dự án React, Vite, Node.js có đủ `package.json` và lệnh chạy (nút Chạy thử chỉ chạy được trang tĩnh).
 - **Làm slide:** nhờ "làm bài thuyết trình về…". GLM tra cứu số liệu trước, rồi viết nội dung theo mạch kể chuyện; trang tự dựng slide bằng bộ khung có sẵn nên luôn đẹp và đồng bộ: 8 bộ màu (midnight, ocean, sunset, forest, minimal, corporate, neon, warm), nhiều kiểu slide (tiêu đề, chia phần, gạch đầu dòng, hai cột, bảng, biểu đồ cột/đường/tròn, số liệu nổi bật, thẻ có biểu tượng, dòng thời gian, trích dẫn, slide kết), chữ tự co cho vừa slide. Bấm **Trình chiếu** để xem ngay trong chat với hiệu ứng (chữ hiện dần, chuyển slide, số liệu đếm tăng, biểu đồ tự vẽ; phím ← →, F toàn màn hình, N xem ghi chú), hoặc tải **PowerPoint** (có hiệu ứng chuyển slide và ghi chú người thuyết trình) hay **HTML**.
 - **Vẽ hình:** logo, icon, biểu đồ được vẽ bằng SVG và hiện ảnh ngay trong chat.
 - **Lập trình:** nắm rõ yêu cầu, viết code sạch có xử lý lỗi và trường hợp biên, chạy thử bằng Python, JavaScript hoặc C++ trước khi đưa code cuối; gỡ lỗi theo các bước tái hiện, tìm nguyên nhân, sửa đúng gốc, chạy lại; chú ý bảo mật và độ phức tạp.

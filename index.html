@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>GLM Chat</title>
-<meta name="description" content="Trò chuyện miễn phí với các mô hình GLM, không cần API key hay tài khoản.">
+<title>Khuê AI</title>
+<meta name="description" content="Khuê AI: trợ lý AI tiếng Việt miễn phí, suy nghĩ kỹ, giải toán, viết code, làm website, tra cứu. Không cần tài khoản.">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#212121" media="(prefers-color-scheme: dark)">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
@@ -13,7 +13,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="GLM">
+<meta name="apple-mobile-web-app-title" content="Khuê">
 <style>
   :root {
     --bg: #ffffff;
@@ -130,20 +130,64 @@
   .main { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; }
   .topbar { display: flex; align-items: center; gap: 4px; padding: 8px 12px; height: 56px; }
   .hero-logo { width: 56px; height: 56px; border-radius: 15px; margin-bottom: -12px; }
-  .model-menu { position: fixed; z-index: 30; max-height: calc(100vh - 32px); overflow-y: auto; width: min(340px, calc(100vw - 32px)); padding: 6px;
-    background: var(--bg); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 8px 28px rgba(0,0,0,.16); }
-  .model-menu .group { font-size: 12px; color: var(--muted); padding: 8px 10px 4px; }
-  .model-menu button { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 8px 10px; border-radius: 9px; }
-  .model-menu button:hover { background: var(--hover); }
-  .model-menu b { display: block; font-weight: 600; font-size: 14px; }
-  .model-menu small { display: block; color: var(--muted); font-size: 12px; margin-top: 1px; }
-  .model-menu .st { font-style: normal; font-weight: 500; font-size: 11px; padding: 1px 7px; border-radius: 999px; margin-left: 6px; vertical-align: 1px; }
+  /* Menu chọn mô hình và chọn chế độ: thẻ có ô biểu tượng màu, mục đang chọn được tô nền và viền. */
+  .model-menu { position: fixed; z-index: 30; max-height: calc(100vh - 32px); overflow-y: auto; width: min(372px, calc(100vw - 32px)); padding: 8px;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 18px; box-shadow: 0 18px 48px rgba(0,0,0,.22), 0 2px 6px rgba(0,0,0,.06);
+    animation: menu-in .16s ease-out both; scrollbar-width: thin; }
+  .model-menu.modes { width: min(440px, calc(100vw - 32px)); }
+  @keyframes menu-in { from { opacity: 0; transform: translateY(6px) scale(.985); } }
+  .menu-head { padding: 8px 10px 6px; }
+  .menu-head b { display: block; font-size: 15px; font-weight: 650; letter-spacing: -.01em; }
+  .menu-head small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .model-menu .group { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); padding: 12px 10px 6px; }
+  .model-menu .opt { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; padding: 9px 10px; border-radius: 12px;
+    border: 1px solid transparent; transition: background .12s, border-color .12s, transform .12s; }
+  .model-menu .opt:hover { background: var(--hover); }
+  .model-menu .opt:active { transform: scale(.99); }
+  .model-menu .opt:focus-visible { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--ring); }
+  .model-menu .opt[aria-checked="true"] { background: var(--brand-soft); border-color: var(--ring); }
+  .opt-ic { flex: none; width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; color: #fff;
+    background: linear-gradient(135deg, var(--a), var(--b)); box-shadow: 0 4px 12px color-mix(in srgb, var(--a) 35%, transparent), inset 0 1px 0 rgba(255,255,255,.25); }
+  .opt-ic svg { width: 19px; height: 19px; }
+  .opt-tx { flex: 1; min-width: 0; }
+  .model-menu b { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-weight: 600; font-size: 14px; }
+  .model-menu small { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; line-height: 1.4; }
+  .model-menu small.opt-sub { color: var(--text); opacity: .8; font-weight: 500; margin-top: 1px; }
+  .model-menu .st { font-style: normal; font-weight: 600; font-size: 10.5px; padding: 1px 7px; border-radius: 999px; }
   .model-menu .st:empty { display: none; }
   .model-menu .st.ok { color: var(--ok); background: rgba(16,163,127,.12); }
   .model-menu .st.busy { color: var(--danger); background: rgba(217,48,37,.1); }
   .model-menu .st.wait { color: var(--muted); background: var(--surface); }
-  .model-menu .tick { margin-left: auto; width: 18px; height: 18px; flex: none; visibility: hidden; }
-  .model-menu [aria-checked="true"] .tick { visibility: visible; }
+  .model-menu .tick { margin-left: auto; flex: none; width: 22px; height: 22px; padding: 4px; border-radius: 50%; color: #fff; background: var(--brand);
+    opacity: 0; transform: scale(.6); transition: opacity .15s, transform .15s; }
+  .model-menu [aria-checked="true"] .tick { opacity: 1; transform: none; }
+  .mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px 2px 2px; }
+  .mode-grid .opt { flex-direction: column; align-items: flex-start; gap: 8px; padding: 12px; border: 1px solid var(--border); position: relative; }
+  .mode-grid .opt .tick { position: absolute; top: 10px; right: 10px; }
+  @media (max-width: 420px) { .mode-grid { grid-template-columns: 1fr; } .mode-grid .opt { flex-direction: row; align-items: center; } .mode-grid .opt .tick { position: static; } }
+  /* Nút chọn trong khung chat: ô biểu tượng nhỏ cùng màu với mục đang chọn. */
+  .chip-ic { display: inline-flex; }
+  .chip-ic .opt-ic { width: 22px; height: 22px; border-radius: 7px; box-shadow: none; }
+  .chip-ic .opt-ic svg { width: 13px; height: 13px; }
+  .deep.chip[aria-expanded="true"] { background: var(--brand-soft); color: var(--brand); }
+  /* Thẻ chọn chế độ ở màn hình chào. */
+  .mode-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; width: min(640px, 100%); margin-top: 18px; }
+  .mode-card { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 8px 12px; border-radius: 16px; border: 1px solid var(--border);
+    background: var(--bg); text-align: center; transition: border-color .15s, background .15s, transform .15s, box-shadow .15s; }
+  .mode-card:hover { transform: translateY(-2px); border-color: var(--ring); box-shadow: 0 8px 22px rgba(0,0,0,.08); }
+  .mode-card:focus-visible { outline: none; border-color: var(--brand); box-shadow: 0 0 0 3px var(--ring); }
+  .mode-card.on { border-color: var(--brand); background: var(--brand-soft); box-shadow: 0 0 0 3px var(--ring); }
+  .mode-card .opt-ic { width: 40px; height: 40px; border-radius: 13px; }
+  .mode-card b { font-size: 14px; font-weight: 650; }
+  .mode-card small { font-size: 12px; color: var(--muted); }
+  @media (max-width: 560px) { .mode-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .mode-exs { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; width: min(640px, 100%); margin-top: 4px; }
+  .mode-ex { font-size: 13px; color: var(--muted); padding: 7px 12px; border-radius: 999px; border: 1px dashed var(--border); background: transparent;
+    max-width: 100%; text-align: left; transition: color .15s, border-color .15s, background .15s; }
+  .mode-ex:hover { color: var(--text); border-style: solid; border-color: var(--ring); background: var(--brand-soft); }
+  @media (max-width: 560px) { .mode-ex:nth-child(n+3) { display: none; } }
+  @media (prefers-reduced-motion: reduce) { .model-menu, .mode-card, .model-menu .opt, .model-menu .tick { animation: none; transition: none; } }
+  .brand-ai { font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 6px; color: #fff; background: linear-gradient(135deg, var(--brand), var(--brand-2)); letter-spacing: .04em; }
   .topbar .spacer { flex: 1; }
   .open-side { display: none; }
   .sidebar.hidden ~ .main .open-side { display: inline-flex; }
@@ -411,6 +455,10 @@
   .file-card { margin: 0 0 12px; border: 1px solid var(--border); border-radius: 14px; background: var(--bg); overflow: hidden; }
   .file-head { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
   .file-badge { flex: none; width: 46px; height: 46px; border-radius: 10px; display: grid; place-items: center; color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .03em; }
+  .file-badge.proj { background: linear-gradient(135deg, #6d28d9, #2563eb); }
+  .file-card pre.tree { margin: 8px 0 4px; padding: 10px 12px; border-radius: 10px; background: var(--hover); font-size: 13px; line-height: 1.55; overflow-x: auto; }
+  .proj-preview .preview-bar select { max-width: 42%; min-width: 0; padding: 3px 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font: inherit; font-size: 13px; }
+  .code-head .code-path { font-weight: 600; color: var(--text); }
   .file-badge.pptx { background: #c43e1c; } .file-badge.xlsx { background: #107c41; } .file-badge.docx { background: #185abd; }
   .file-name { flex: 1; min-width: 0; }
   .file-name b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -457,6 +505,12 @@
   .lp-range input::-webkit-slider-thumb { -webkit-appearance: none; width: var(--k); height: var(--k); border-radius: 50%; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.35); cursor: grab; }
   .lp-range input::-moz-range-thumb { width: var(--k); height: var(--k); border: 0; border-radius: 50%; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.35); cursor: grab; }
   .lp-range input:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px var(--ring), 0 2px 10px rgba(0,0,0,.35); }
+  .lp-range::before { background: linear-gradient(90deg, var(--brand), var(--brand-2)); }
+  .lp-range.hot::before { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+  .lp-labels { display: grid; grid-template-columns: repeat(5, 1fr); margin: 8px -6px 0; }
+  .lp-labels button { font-size: 11.5px; color: var(--muted); padding: 4px 0; border-radius: 8px; transition: color .12s, background .12s; }
+  .lp-labels button:hover { color: var(--text); background: var(--hover); }
+  .lp-labels button.on { color: var(--brand); font-weight: 650; }
   .lp-desc { margin-top: 12px; font-size: 13px; line-height: 1.45; color: var(--muted); text-align: center; }
   .lp-desc.warn { color: #c2410c; }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .lp-desc.warn { color: #fdba74; } }
@@ -468,7 +522,8 @@
   /* Màn hình hẹp: chip mô hình co lại, nút Nghĩ kỹ chỉ còn biểu tượng để hàng nút không tràn ra ngoài. */
   .deep.chip { flex-shrink: 1; }
   @media (max-width: 480px) {
-    #deep { font-size: 0; gap: 0; padding: 0 10px; }
+    #deep, #modeChip { font-size: 0; gap: 0; padding: 0 8px; }
+    #modeChip .chev { display: none; }
     .composer-tools { gap: 4px; }
   }
 </style>
@@ -477,7 +532,7 @@
 
 <aside class="sidebar" id="sidebar">
   <div class="side-top">
-    <div class="brand"><img src="icons/icon.svg" alt="">GLM Chat</div>
+    <div class="brand"><img src="icons/icon.svg" alt="">Khuê <span class="brand-ai">AI</span></div>
     <button class="icon-btn" id="closeSide" title="Đóng thanh bên">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg>
     </button>
@@ -524,7 +579,9 @@
     <div class="empty" id="empty">
       <img class="hero-logo" src="icons/icon.svg" alt="">
       <h1 id="hello">Hôm nay bạn muốn hỏi gì?</h1>
-      <p class="hero-sub">Giải toán, viết code, tra tin mới, nghiên cứu nhiều nguồn, vẽ và sửa ảnh. Cứ hỏi bằng tiếng Việt.</p>
+      <p class="hero-sub" id="heroSub">Giải toán, viết code, tra tin mới, nghiên cứu nhiều nguồn, vẽ và sửa ảnh. Cứ hỏi bằng tiếng Việt.</p>
+      <div class="mode-cards" id="modeCards" role="group" aria-label="Chọn chế độ"></div>
+      <div class="mode-exs" id="modeEx" aria-label="Câu hỏi mẫu"></div>
     </div>
     <div class="thread" id="thread" hidden></div>
   </div>
@@ -535,7 +592,7 @@
     </button>
     <form class="composer" id="form">
       <div class="attachments" id="attachments" hidden></div>
-      <textarea id="input" rows="1" placeholder="Nhắn tin cho GLM" autofocus></textarea>
+      <textarea id="input" rows="1" placeholder="Hỏi Khuê bất cứ điều gì" autofocus></textarea>
       <div class="composer-tools">
       <button class="icon-btn attach" id="attachBtn" type="button" title="Thêm ảnh hoặc file (PDF, Word, Excel, code, văn bản)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21 11-8.6 8.6a5 5 0 0 1-7.1-7.1l8.6-8.6a3.3 3.3 0 0 1 4.7 4.7L10 17.2a1.7 1.7 0 0 1-2.4-2.4l8-8"/></svg>
@@ -544,9 +601,14 @@
       <button class="icon-btn attach mic" id="micBtn" type="button" title="Nói thay vì gõ">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
       </button>
+      <button class="deep chip mode-chip" id="modeChip" type="button" aria-haspopup="menu" aria-expanded="false" title="Chọn chế độ">
+        <span class="chip-ic" id="modeIcon"></span>
+        <span id="modeTitle">Tự động</span>
+        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
       <button class="deep chip" id="modelChip" type="button" aria-haspopup="menu" aria-expanded="false" title="Chọn mô hình">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>
-        <span id="chipTitle">GLM-4.7 Flash</span>
+        <span class="chip-ic" id="chipIcon"></span>
+        <span id="chipTitle">Bắc Đẩu</span>
         <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
       </button>
       <button class="deep chip" id="deep" type="button" aria-haspopup="menu" aria-expanded="false" title="Chọn mức suy nghĩ">
@@ -563,6 +625,7 @@
           <span class="lp-dot" style="--i:0"></span><span class="lp-dot" style="--i:1"></span><span class="lp-dot" style="--i:2"></span><span class="lp-dot" style="--i:3"></span><span class="lp-dot" style="--i:4"></span>
           <input type="range" id="lpInput" min="0" max="4" step="1" aria-label="Mức suy nghĩ">
         </div>
+        <div class="lp-labels" id="lpLabels"></div>
         <div class="lp-desc" id="lpDesc"></div>
         <div class="lp-more" id="lpMore" hidden></div>
       </div>
@@ -603,13 +666,6 @@
         <textarea id="setSystem" placeholder="Ví dụ: Luôn trả lời bằng tiếng Việt."></textarea>
       </label>
       <div class="sec-title">Cá nhân hoá</div>
-      <label>Nhân vật của bạn
-        <small>Chọn nhân vật trong menu mô hình ở khung chat. Có sẵn Thầy dạy Toán, Huấn luyện viên IOI, Dịch giả, Gia sư tiếng Anh, Trợ lý viết văn; tạo thêm ở đây.</small>
-        <ul class="mem-list" id="personaList"></ul>
-        <input id="personaName" placeholder="Tên nhân vật, ví dụ: Thầy dạy Lý">
-        <textarea id="personaPrompt" placeholder="Lời dặn cho nhân vật, ví dụ: Bạn là thầy giáo Vật lý, giải thích bằng ví dụ đời thường, luôn vẽ sơ đồ lực…"></textarea>
-        <button class="btn" id="personaAdd" type="button">Thêm nhân vật</button>
-      </label>
       <label>Bộ nhớ
         <small>AI dùng những điều này ở mọi đoạn chat. Trong lúc chat, cứ nói "hãy nhớ…" để thêm.</small>
         <ul class="mem-list" id="memList"></ul>
@@ -620,7 +676,7 @@
       </label>
       <div class="sec-title">Kiến thức và dữ liệu</div>
       <label>Kho kiến thức
-        <small>Thêm sách, đề thi, ghi chú (PDF, Word, Excel, văn bản). Mỗi câu hỏi, GLM tự tìm đoạn liên quan trong kho rồi trả lời dựa trên đó. Tài liệu chỉ lưu trong trình duyệt này.</small>
+        <small>Thêm sách, đề thi, ghi chú (PDF, Word, Excel, văn bản). Mỗi câu hỏi, Khuê tự tìm đoạn liên quan trong kho rồi trả lời dựa trên đó. Tài liệu chỉ lưu trong trình duyệt này.</small>
         <ul class="mem-list" id="kbList"></ul>
         <div class="mem-add">
           <input id="kbStatus" readonly placeholder="Chưa thêm tài liệu">
@@ -637,7 +693,7 @@
       </label>
       <div class="sec-title">Đồng bộ</div>
       <label>Đồng bộ giữa các máy
-        <small>Dùng chung lịch sử chat, bộ nhớ và nhân vật trên nhiều máy (Mac, điện thoại, trình duyệt khác). Ảnh trong chat không đồng bộ. Ai có mã đều xem được chat của bạn, nên đừng chia sẻ mã.</small>
+        <small>Dùng chung lịch sử chat và bộ nhớ trên nhiều máy (Mac, điện thoại, trình duyệt khác). Ảnh trong chat không đồng bộ. Ai có mã đều xem được chat của bạn, nên đừng chia sẻ mã.</small>
         <div id="syncOff" class="mem-add">
           <button class="btn" id="syncNew" type="button">Bật đồng bộ (tạo mã mới)</button>
         </div>
@@ -704,7 +760,7 @@
   // Các nguồn mô hình, đều miễn phí và không cần API key. Tất cả dùng API kiểu OpenAI nên chung một cách gọi.
   const PROVIDERS = {
     shared: {
-      name: "GLM miễn phí",
+      name: "Khuê",
       url: SHARED_URL,
       // Phải khớp FREE_MODELS trong worker/worker.js.
       // Chỉ giữ mô hình đã kiểm tra là trả lời được (12/11/2026). GLM-5.3 Flash, DeepSeek V4.1 Flash, MiniMax M3.1 Flash
@@ -717,16 +773,29 @@
       // máy chủ lỗi thì tới vision (GLM-4.6V Flash của Z.ai).
       visionNvidia: "nemotron-3.5-super-vl",
       vision: "glm-4.6v-flash",
+      // Tên riêng của Khuê cho từng mô hình (theo tên các vì sao), vì cách suy nghĩ, kỹ năng và quy trình kiểm tra là của Khuê.
       titles: {
-        "glm-4.7-flash": ["GLM-4.7 Flash", "Suy luận tốt, viết code giỏi, trả lời ổn định"],
-        "glm-4.5-flash": ["GLM-4.5 Flash", "Trả lời nhanh nhất, hợp câu hỏi ngắn và trò chuyện"],
-        "glm-4.6v-flash": ["GLM-4.6V Flash", "Chuyên đọc ảnh: ảnh chụp, tài liệu, biểu đồ"],
-        "nemotron-3-ultra": ["Nemotron 3 Ultra", "Thông minh nhất, trả lời nhanh: suy luận, toán và code rất tốt"],
-        "nemotron-3.5-super-vl": ["Nemotron 3.5 Super VL", "Đọc ảnh giỏi, suy nghĩ kỹ, chỉ ra được bẫy trong đề"],
-        "mistral-large-4": ["Mistral Large 4", "Viết văn hay, dịch và dùng nhiều ngôn ngữ giỏi, trình bày đẹp"],
-        "nemotron-3.5-lightning": ["Nemotron 3.5 Lightning", "Giải thích dễ hiểu bằng ví dụ đời thường"],
-        "laguna-xs": ["Laguna XS", "Chuyên viết code, trả lời rất nhanh và gọn"],
-        "step-5": ["Step 5", "Suy luận nhiều bước rất kỹ, trả lời chậm hơn"],
+        "nemotron-3-ultra": ["Bắc Đẩu", "Thông minh nhất: suy luận, toán và code rất tốt, trả lời nhanh"],
+        "nemotron-3.5-super-vl": ["Thiên Nhãn", "Đọc ảnh giỏi, suy nghĩ kỹ, bắt được bẫy trong đề"],
+        "mistral-large-4": ["Văn Khúc", "Viết văn hay, dịch và dùng nhiều ngôn ngữ giỏi, trình bày đẹp"],
+        "nemotron-3.5-lightning": ["Sao Mai", "Giải thích dễ hiểu bằng ví dụ đời thường"],
+        "laguna-xs": ["Lưu Tinh", "Chuyên viết code, trả lời rất nhanh và gọn"],
+        "step-5": ["Thiên Hà", "Suy luận nhiều bước rất kỹ, trả lời chậm hơn"],
+        "glm-4.7-flash": ["Sao Mộc", "Ổn định, suy luận và viết code tốt"],
+        "glm-4.5-flash": ["Sao Thuỷ", "Nhanh nhất, hợp câu hỏi ngắn và trò chuyện"],
+        "glm-4.6v-flash": ["Nguyệt Quang", "Đọc ảnh: ảnh chụp, tài liệu, biểu đồ"],
+      },
+      // Biểu tượng và màu của từng mô hình trong menu.
+      looks: {
+        "nemotron-3-ultra": ["#4f46e5", "#06b6d4", "M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"],
+        "nemotron-3.5-super-vl": ["#0891b2", "#10b981", "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12ZM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"],
+        "mistral-large-4": ["#db2777", "#f59e0b", "M20.2 4.2a6 6 0 0 0-8.5 0L5 11v8h8l6.8-6.7a6 6 0 0 0 .4-8.1ZM16 8 2 22M17.5 15H9"],
+        "nemotron-3.5-lightning": ["#f59e0b", "#f97316", "M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8ZM12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"],
+        "laguna-xs": ["#7c3aed", "#ec4899", "M13 2 3 14h9l-1 8 10-12h-9l1-8Z"],
+        "step-5": ["#1e3a8a", "#7c3aed", "M12 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4ZM20.2 20.2c2-2-1.1-8.4-6.9-14.2M3.8 3.8c-2 2 1.1 8.4 6.9 14.2M20.2 3.8c2 2-1.1 8.4-6.9 14.2M3.8 20.2c-2-2 1.1-8.4 6.9-14.2"],
+        "glm-4.7-flash": ["#b45309", "#ea580c", "M12 6a6 6 0 1 0 0 12 6 6 0 0 0 0-12ZM3 15.5c-1.3 1.6-1.6 2.9-.9 3.5 1.4 1.2 7-1.6 12.4-6.5S22.3 3.2 21 2c-.7-.6-2 0-3.6 1.2"],
+        "glm-4.5-flash": ["#0284c7", "#22d3ee", "M17.7 7.7A2.5 2.5 0 1 1 19.5 12H2M9.6 4.6A2 2 0 1 1 11 8H2M12.6 19.4A2 2 0 1 0 14 16H2"],
+        "glm-4.6v-flash": ["#475569", "#8b5cf6", "M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"],
       },
       modelHelp: "Dùng chung máy chủ của trang, không cần key hay tài khoản. Tối đa 40 lượt gọi mỗi phút. Mô hình đang quá tải hoặc chưa bật thì tự chuyển sang mô hình khác.",
       extra: { thinking: { type: "enabled" } },
@@ -746,14 +815,97 @@
   if (!settings.nemotron) { settings.models.shared = "nemotron-3-ultra"; settings.nemotron = true; store.set("glm.settings", settings); }
   const cloudModel = () => settings.models[settings.provider] || PROVIDERS[settings.provider].models[0];
 
-  const modelTitle = (id, m) => PROVIDERS[id].titles[m][0];
+  const modelTitle = (id, m) => PROVIDERS[id].titles[m]?.[0] || m;
+  // Ghi chú của máy chủ dùng tên gốc của mô hình: đổi sang tên của Khuê.
+  const ORIGINAL_NAMES = { "Nemotron 3 Ultra": "nemotron-3-ultra", "Nemotron 3.5 Super VL": "nemotron-3.5-super-vl", "Nemotron 3.5 Lightning": "nemotron-3.5-lightning",
+    "Mistral Large 4": "mistral-large-4", "Laguna XS": "laguna-xs", "Step 5": "step-5", "GLM-4.7 Flash": "glm-4.7-flash", "GLM-4.5 Flash": "glm-4.5-flash", "GLM-4.6V Flash": "glm-4.6v-flash" };
+  const brandNote = (t) => Object.entries(ORIGINAL_NAMES).reduce((a, [o, id]) => a.split(o).join(modelTitle("shared", id)), String(t || ""))
+    .replace(/GLM-5\.3 Flash|GLM của Z\.ai|Z\.ai|NVIDIA_API_KEY|NVIDIA/g, (w) => (w === "NVIDIA_API_KEY" ? "khoá máy chủ" : "máy chủ dự phòng"));
+  // Biểu tượng của một mô hình (ô màu có hình vẽ).
+  const modelIcon = (m) => {
+    const [a, b, d] = PROVIDERS.shared.looks[m] || ["#64748b", "#94a3b8", "M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"];
+    return `<span class="opt-ic" style="--a:${a};--b:${b}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg></span>`;
+  };
   // Mỗi lựa chọn mô hình là một cặp nguồn:mô hình.
   const currentChoice = () => `${settings.provider}:${cloudModel()}`;
 
+  // Bốn chế độ: Tự động nhận ra loại câu hỏi; ba chế độ chuyên sâu luôn bật bộ kỹ năng riêng và lời dặn riêng.
+  const MODE_ICONS = {
+    auto: "M15 4V2M15 16v-2M8 9h2M20 9h2M17.8 11.8 19 13M15 9h.01M17.8 6.2 19 5M3 21l9-9M12.2 6.2 11 5",
+    life: "M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7Z",
+    web: "M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2ZM3 9h18M9 21V9",
+    cp: "M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.7V17c0 .6-.5 1-1 1.2C7.8 18.8 7 20.2 7 22M14 14.7V17c0 .6.5 1 1 1.2 1.2.6 2 2 2 3.8M18 2H6v7a6 6 0 0 0 12 0V2Z",
+  };
+  const MODES = {
+    auto: { name: "Tự động", sub: "Mọi câu hỏi", colors: ["#0a78d1", "#0f9f8f"], skills: [],
+      ex: ["Giải phương trình x³ − 6x² + 11x − 6 = 0 và kiểm tra lại", "Tóm tắt tin công nghệ nổi bật tuần này", "Vẽ tranh phố cổ Hội An về đêm, phong cách màu nước"],
+      desc: "Tự nhận ra bạn đang hỏi gì và dùng đúng kỹ năng: toán, code, tra cứu, vẽ ảnh, file, slide", prompt: "" },
+    life: { name: "An Nhiên", sub: "Vấn đề đời sống", colors: ["#f97316", "#ec4899"], skills: ["life", "time", "reason"],
+      ex: ["Lương 15 triệu thì nên chia tiền tiêu và tiết kiệm thế nào?", "Thủ tục làm lại căn cước bị mất cần những gì?", "Dạo này mình hay mất ngủ vì áp lực thi cử, làm sao đây?"],
+      desc: "Sức khoẻ, tiền bạc, giấy tờ thủ tục, nấu ăn, học hành, công việc, chuyện gia đình và tâm lý",
+      prompt:
+        "Chế độ An Nhiên (vấn đề đời sống). Bạn là người bạn hiểu biết, ấm áp và thực tế của người dùng ở Việt Nam.\n" +
+        "- Nắm đúng hoàn cảnh trước khi khuyên: tuổi, nơi sống, ngân sách, thời gian, sức khoẻ, ràng buộc gia đình. Thiếu thông tin quan trọng thì vẫn đưa " +
+        "lời khuyên tốt nhất theo giả định hợp lý (nói rõ giả định), rồi hỏi lại một hai câu quan trọng nhất.\n" +
+        "- Giải pháp làm được ngay: các bước theo thứ tự, chi phí bằng đồng, thời gian, nơi làm (kể cả trực tuyến), mẫu câu nói hoặc tin nhắn khi cần, " +
+        "bảng so sánh các lựa chọn, danh sách kiểm tra. Tiền bạc thì tính chính xác bằng py-run.\n" +
+        "- Chuyện tâm lý, gia đình, tình cảm, áp lực học hành và công việc: đồng cảm thật lòng, không phán xét, không giảng đạo; giúp người dùng nhìn rõ vấn đề, " +
+        "cảm xúc và các lựa chọn. Có dấu hiệu nguy hiểm (muốn tự làm hại bản thân, bạo lực) thì ưu tiên an toàn: khuyên nói ngay với người thân tin cậy, " +
+        "gọi cấp cứu 115 hoặc tổng đài bảo vệ trẻ em 111.\n" +
+        "- Giá, phí, thủ tục, luật, lịch, thời tiết thay đổi theo thời gian: tra cứu trước khi trả lời và ghi nguồn.\n" +
+        "- Giọng văn gần gũi, rõ ràng, không dài dòng; kết thúc bằng bước tiếp theo cụ thể.",
+      remind: "trả lời như người bạn thực tế: đúng hoàn cảnh, các bước làm được ngay, con số cụ thể; thông tin hay thay đổi thì tra cứu" },
+    web: { name: "Kiến Tạo", sub: "Làm website", colors: ["#8b5cf6", "#3b82f6"],
+      ex: ["Làm website bán hàng nhiều trang cho tiệm bánh, có giỏ hàng và thanh toán", "Làm ứng dụng quản lý chi tiêu có biểu đồ và xuất CSV", "Làm game rắn săn mồi chơi được trên điện thoại"], skills: ["web", "webapp", "project", "webdev", "code", "svg"],
+      desc: "Thiết kế đẹp như sản phẩm thật, tính năng chạy hết, tự chạy thử và sửa lỗi, dự án nhiều file",
+      prompt:
+        "Chế độ Kiến Tạo (làm website). Bạn là kỹ sư frontend kiêm nhà thiết kế sản phẩm hàng đầu.\n" +
+        "- Trước khi code: xác định mục tiêu của trang, người dùng, nội dung chính và phong cách; yêu cầu mơ hồ thì tự chọn hướng hợp lý nhất và nói ngắn gọn đã chọn gì.\n" +
+        "- Trang hoặc ứng dụng một màn hình: một file HTML hoàn chỉnh. Website nhiều trang, ứng dụng lớn hoặc khi người dùng muốn tách file: dự án nhiều file đúng định dạng dự án.\n" +
+        "- Chất lượng như sản phẩm thật: thiết kế có hệ thống, nội dung thật, mọi tính năng chạy được, đẹp trên điện thoại, có chế độ tối, dùng được bằng bàn phím, không lỗi console.\n" +
+        "- Câu hỏi về web (giải thích, gỡ lỗi, chọn công nghệ, triển khai) thì trả lời như chuyên gia, kèm code chạy được.",
+      remind: "làm như sản phẩm thật: thiết kế có hệ thống, mọi tính năng chạy được, responsive, chế độ tối; website nhiều trang thì theo định dạng dự án nhiều file" },
+    cp: { name: "Đấu Trường", sub: "Lập trình thi đấu", colors: ["#f59e0b", "#ef4444"], skills: ["ioi", "code", "math"],
+      ex: ["Giải thích Segment Tree lazy propagation kèm code C++", "Đếm số dãy con có tổng chia hết cho k, n ≤ 2·10⁵", "Code của mình bị TLE, giúp tối ưu (dán code vào đây)"],
+      desc: "IOI, ICPC, Codeforces, HSG: thuật toán, C++17, kiểm thử với lời giải trâu trước khi nộp",
+      prompt:
+        "Chế độ Đấu Trường (lập trình thi đấu). Bạn là huấn luyện viên đội tuyển IOI và ICPC.\n" +
+        "- Bài toán: tóm tắt đề, đọc ràng buộc để suy ra độ phức tạp cần đạt, đi từ ý tưởng trâu tới tối ưu, lập luận tính đúng, viết C++17 sạch và nhanh, " +
+        "kiểm tra bằng cpp-run (so với lời giải trâu trên test ngẫu nhiên, thêm test lớn nhất để đo thời gian) trước khi nộp.\n" +
+        "- Câu hỏi lý thuyết (thuật toán, cấu trúc dữ liệu, kỹ thuật): giải thích trực quan, ví dụ nhỏ chạy tay, code mẫu, độ phức tạp, " +
+        "bài luyện tập gợi ý (VNOJ, Codeforces, AtCoder, CSES).\n" +
+        "- Code của người dùng bị WA, TLE, RE, MLE: tìm test phản ví dụ bằng cpp-run, chỉ ra đúng dòng sai, giải thích vì sao và sửa.",
+      remind: "bài lập trình thi đấu: suy ra độ phức tạp từ ràng buộc, lập luận tính đúng, C++17, kiểm tra bằng cpp-run với lời giải trâu trước khi nộp" },
+  };
+  const modeIcon = (k) => {
+    const [a, b] = MODES[k].colors;
+    return `<span class="opt-ic" style="--a:${a};--b:${b}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${MODE_ICONS[k]}"/></svg></span>`;
+  };
+  delete settings.persona; // bỏ tính năng nhân vật cũ
+  if (!MODES[settings.mode]) settings.mode = "auto";
+  const currentMode = () => MODES[settings.mode] || MODES.auto;
   function paintProvider() {
-    const persona = currentPersona();
-    $("chipTitle").textContent = modelTitle(settings.provider, cloudModel()) + (persona.id === "default" ? "" : ` · ${persona.name}`);
-    $("footnote").textContent = `Tin nhắn được gửi tới máy chủ của ${PROVIDERS[settings.provider].name}. Mô hình có thể trả lời sai, hãy kiểm tra thông tin quan trọng.`;
+    $("chipTitle").textContent = modelTitle(settings.provider, cloudModel());
+    $("chipIcon").innerHTML = modelIcon(cloudModel());
+    $("modeTitle").textContent = currentMode().name;
+    $("modeIcon").innerHTML = modeIcon(settings.mode);
+    $("modeChip").title = `Chế độ: ${currentMode().name} (${currentMode().sub})`;
+    $("footnote").textContent = "Khuê có thể trả lời sai, hãy kiểm tra thông tin quan trọng.";
+    paintModeCards();
+  }
+  function chooseMode(k) {
+    settings.mode = k;
+    store.set("glm.settings", settings);
+    paintProvider();
+  }
+  // Thẻ chọn chế độ ở màn hình chào.
+  function paintModeCards() {
+    const box = $("modeCards");
+    if (!box) return;
+    box.innerHTML = Object.entries(MODES).map(([k, m]) => `<button type="button" class="mode-card${k === settings.mode ? " on" : ""}" data-mode="${k}" aria-pressed="${k === settings.mode}">` +
+      `${modeIcon(k)}<b>${m.name}</b><small>${m.sub}</small></button>`).join("");
+    $("heroSub").textContent = currentMode().desc + ".";
+    $("modeEx").innerHTML = currentMode().ex.map((t) => `<button type="button" class="mode-ex" data-ex>${esc(t)}</button>`).join("");
   }
   function chooseModel(key) {
     const [id, m] = key.split(/:(.*)/);
@@ -772,24 +924,31 @@
     if (menuAnchor) menuAnchor.setAttribute("aria-expanded", "false");
     if (!anchor || anchor === menuAnchor) { menu.hidden = true; menuAnchor = null; return; }
     let html = "";
-    for (const id of Object.keys(PROVIDERS)) {
-      let group = "";
-      for (const m of PROVIDERS[id].models) {
-        const g = m.startsWith("glm") ? "GLM" : "Mô hình mạnh";
-        if (g !== group) { html += `<div class="group">${g}</div>`; group = g; }
-        const [title, desc] = PROVIDERS[id].titles[m];
-        html += `<button role="menuitemradio" data-key="${id}:${m}" aria-checked="${`${id}:${m}` === currentChoice()}"><span><b>${title}<em class="st" data-st="${m}"></em></b><small>${desc}</small></span>${TICK}</button>`;
+    menu.classList.toggle("modes", anchor.id === "modeChip");
+    if (anchor.id === "modeChip") {
+      html = `<div class="menu-head"><b>Chế độ</b><small>Mỗi chế độ bật sẵn bộ kỹ năng riêng</small></div><div class="mode-grid">`;
+      for (const [k, m] of Object.entries(MODES)) {
+        html += `<button role="menuitemradio" class="opt" data-mode="${k}" aria-checked="${k === settings.mode}">${modeIcon(k)}` +
+          `<span class="opt-tx"><b>${m.name}</b><small class="opt-sub">${m.sub}</small><small>${m.desc}</small></span>${TICK}</button>`;
+      }
+      html += `</div>`;
+    } else {
+      html = `<div class="menu-head"><b>Mô hình của Khuê</b><small>Đều dùng cách suy nghĩ, công cụ và quy trình kiểm tra của Khuê</small></div>`;
+      for (const id of Object.keys(PROVIDERS)) {
+        let group = "";
+        for (const m of PROVIDERS[id].models) {
+          const g = m.startsWith("glm") ? "Nhanh và ổn định" : "Mạnh nhất";
+          if (g !== group) { html += `<div class="group">${g}</div>`; group = g; }
+          const [title, desc] = PROVIDERS[id].titles[m];
+          html += `<button role="menuitemradio" class="opt" data-key="${id}:${m}" aria-checked="${`${id}:${m}` === currentChoice()}">${modelIcon(m)}` +
+            `<span class="opt-tx"><b>${title}<em class="st" data-st="${m}"></em></b><small>${desc}</small></span>${TICK}</button>`;
+        }
       }
     }
-    html += `<div class="group">Nhân vật</div>`;
-    for (const p of allPersonas()) {
-      html += `<button role="menuitemradio" data-persona="${p.id}" aria-checked="${p.id === currentPersona().id}"><span><b>${esc(p.name)}</b><small>${esc(p.desc)}</small></span>${TICK}</button>`;
-    }
-    html += `<button data-persona-new><span><b>+ Tạo nhân vật mới</b><small>Trong Cài đặt</small></span></button>`;
     menu.innerHTML = html;
     menu.hidden = false;
     menuAnchor = anchor;
-    paintModelStatus();
+    if (anchor.id !== "modeChip") paintModelStatus();
     anchor.setAttribute("aria-expanded", "true");
     // Nút ở đầu trang thì mở xuống dưới, nút trong khung chat thì mở lên trên.
     const r = anchor.getBoundingClientRect(), w = menu.offsetWidth, h = menu.offsetHeight;
@@ -803,14 +962,14 @@
       for (const el of document.querySelectorAll("#modelMenu [data-st]")) {
         const st = modelStatus?.models?.[el.dataset.st];
         if (!PROVIDERS.shared.nvidia.includes(el.dataset.st) || !modelStatus) { el.className = "st"; el.textContent = ""; continue; }
-        if (!modelStatus.enabled) { el.className = "st busy"; el.textContent = "Chưa bật"; el.title = "Máy chủ chưa có NVIDIA_API_KEY"; continue; }
+        if (!modelStatus.enabled) { el.className = "st busy"; el.textContent = "Chưa bật"; el.title = "Máy chủ chưa bật mô hình này"; continue; }
         // Đã có kết quả mà không có mô hình này (máy chủ bản cũ chưa kiểm tra nó): không hiện nhãn.
         if (!st) { el.className = "st" + (statusAt ? "" : " wait"); el.textContent = statusAt ? "" : "Đang kiểm tra…"; continue; }
         // NVIDIA báo mô hình không còn (404): ẩn khỏi menu, trừ khi đang được chọn.
         el.closest("button").style.display = st.gone && !el.closest("button").matches('[aria-checked="true"]') ? "none" : "";
         el.className = "st " + (st.ok ? "ok" : "busy");
         el.textContent = st.ok ? "Sẵn sàng" : "Đang quá tải";
-        el.title = st.ok ? `Trả lời sau ${(st.ms / 1000).toFixed(1)} giây` : `${st.note || ""}. Chọn vẫn được: khi bận, máy chủ tự trả lời bằng GLM-4.7 Flash.`;
+        el.title = st.ok ? `Trả lời sau ${(st.ms / 1000).toFixed(1)} giây` : `${brandNote(st.note)}. Chọn vẫn được: khi bận, máy chủ tự trả lời bằng ${modelTitle("shared", "glm-4.7-flash")}.`;
       }
     };
     if (Date.now() - statusAt < 90_000) { paint(); return; }
@@ -839,12 +998,23 @@
     return COUNCIL_ORDER.filter((m) => m !== cur && PROVIDERS.shared.models.includes(m) && modelStatus?.models?.[m]?.ok !== false).slice(0, n);
   }
   $("modelChip").onclick = (e) => { e.stopPropagation(); toggleModelMenu(e.currentTarget); };
+  $("modeChip").onclick = (e) => { e.stopPropagation(); toggleModelMenu(e.currentTarget); };
   $("modelMenu").onclick = (e) => {
     const b = e.target.closest("[data-key]");
     if (b) { chooseModel(b.dataset.key); toggleModelMenu(null); }
-    const pb = e.target.closest("[data-persona]");
-    if (pb) { settings.persona = pb.dataset.persona; store.set("glm.settings", settings); paintProvider(); toggleModelMenu(null); }
-    if (e.target.closest("[data-persona-new]")) { toggleModelMenu(null); $("openSettings").click(); setTimeout(() => $("personaName").focus(), 50); }
+    const mb = e.target.closest("[data-mode]");
+    if (mb) { chooseMode(mb.dataset.mode); toggleModelMenu(null); }
+  };
+  $("modeEx").onclick = (e) => {
+    const b = e.target.closest("[data-ex]");
+    if (!b) return;
+    els.input.value = b.textContent;
+    els.input.dispatchEvent(new Event("input", { bubbles: true }));
+    els.input.focus();
+  };
+  $("modeCards").onclick = (e) => {
+    const mb = e.target.closest("[data-mode]");
+    if (mb) { chooseMode(mb.dataset.mode); els.input.focus(); }
   };
   document.addEventListener("click", (e) => { if (!e.target.closest("#modelMenu")) toggleModelMenu(null); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") toggleModelMenu(null); });
@@ -1002,8 +1172,11 @@
     while (i < lines.length) {
       const line = lines[i];
       let m;
-      if ((m = line.match(/^\s*```\s*([\w+#.-]*)/))) {
-        const lang = m[1]; const buf = []; i++;
+      if ((m = line.match(/^\s*```\s*([\w+#.-]*)[\s:]*(.*)$/))) {
+        // Dòng mở khối có thể kèm tên file (```css css/style.css, ```js:js/app.js, ```index.html): hiện tên file ở đầu khối.
+        const fi = fenceInfo(m[1] + " " + m[2]), path = fi.path;
+        let lang = fi.path && m[1].includes(".") ? fi.lang : m[1] === "htm" ? "html" : m[1];
+        const buf = []; i++;
         // Dấu đóng khối là ``` đứng riêng; mô hình đôi khi viết dính chữ phía sau (```Đã xong…): vẫn coi là đóng khối,
         // phần chữ phía sau được đọc tiếp như một dòng thường.
         const closes = (l) => /^\s*```\s*$/.test(l) || /^\s*```(?![\w+#.-]*\s*$)/.test(l);
@@ -1019,7 +1192,8 @@
         if (kind === "svg" && /<\/svg>\s*$/.test(code)) html += `<div class="svg-preview"><img alt="Hình do mô hình vẽ" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(code)}"></div>`;
         const preview = kind === "html" || kind === "svg"
           ? `<button type="button" data-preview>${ICON_PLAY}Xem trước</button><button type="button" data-download>${ICON_DOWN}Tải về</button>` : "";
-        html += `<div class="codeblock"${preview ? ` data-kind="${kind}"` : ""}><div class="code-head"><span>${esc(CODE_LABELS[lang] || lang || "code")}</span>` +
+        html += `<div class="codeblock"${preview ? ` data-kind="${kind}"` : ""}${path ? ` data-path="${esc(path)}"` : ""}><div class="code-head">` +
+          `<span>${esc(CODE_LABELS[lang] || lang || "code")}${path ? ` · <b class="code-path">${esc(path)}</b>` : ""}</span>` +
           `<span class="code-btns">${preview}<button type="button" data-copy>${ICON_COPY}Sao chép</button></span></div>` +
           `<pre><code${HL_LANG[lang] ? ` class="language-${HL_LANG[lang]}"` : ""}>${esc(code)}</code></pre></div>`;
         continue;
@@ -1239,8 +1413,15 @@
     }
     if (m.kb?.length) html += `<div class="memo">${ICON_BOOK}Dùng kho kiến thức: ${esc(m.kb.join(", "))}</div>`;
     if (m.remembered) html += m.remembered.map((t) => `<div class="memo">${ICON_CHECK}Đã ghi nhớ: ${esc(t)}</div>`).join("");
+    // Câu trả lời có nhiều file (cùng các file ở câu trả lời trước): hiện thẻ dự án để chạy thử và tải .zip.
+    node._project = null;
+    if (!streaming) {
+      const chat = [genChat, currentChat()].find((c) => c?.messages.includes(m));
+      const files = chat && projectAt(chat, chat.messages.indexOf(m));
+      if (files) { node._project = files; html += projectCard(files, chat); }
+    }
     if (m.webCheck) html += `<div class="memo">${ICON_CHECK}${esc(m.webCheck)}</div>`;
-    if (m.cutWarning && !streaming) html += `<div class="error">Code ở cuối có vẻ chưa viết xong. <button type="button" class="btn" data-act="continue">Viết tiếp</button></div>`;
+    if (m.cutWarning && !streaming) html += `<div class="error">${esc(m.cutWarning === true ? "Code ở cuối có vẻ chưa viết xong." : m.cutWarning)} <button type="button" class="btn" data-act="continue">Viết tiếp</button></div>`;
     if (m.error) html += `<div class="error">${esc(m.error)}</div>`;
     else if (m.truncated && !streaming) html += `<div class="error">Câu trả lời quá dài nên vẫn chưa viết hết sau ${CONTINUE_LIMIT} lần viết tiếp. Bấm Tạo lại hoặc nhắn "viết tiếp".</div>`;
     if (!streaming) {
@@ -1374,6 +1555,65 @@
     "(Vòng trao đổi thứ hai. Lời giải của bạn là lời giải {L}. Các lời giải sau vòng trước:\n\n{S}\n\nCác điểm còn bất đồng:\n{D}\n\n" +
     "Tập trung đúng vào các điểm bất đồng: kiểm chứng bằng code, vét cạn trường hợp nhỏ hoặc tra cứu để xác định bên đúng, và thừa nhận nếu bạn sai. " +
     "Cuối cùng viết lại LỜI GIẢI HOÀN CHỈNH của bạn cho câu hỏi ban đầu; code trong đó phải đã chạy thử.)";
+  // ---------- Mức Ultra cho việc xây dựng phần mềm: làm như một lập trình viên chuyên nghiệp ----------
+  // Yêu cầu làm web, app, game, công cụ… (không phải câu hỏi hay bài lập trình thi đấu).
+  const BUILD_RE = /(làm|tạo|viết|xây dựng|xây|code|lập trình|thiết kế|phát triển|dựng|build|make|create|develop|implement)\s.{0,60}(web|website|trang|app|ứng dụng|game|trò chơi|tool|công cụ|phần mềm|hệ thống|chương trình|bot|api|server|backend|extension|tiện ích|dự án|project|dashboard|landing|portfolio|cửa hàng|shop|quản lý|cli)/i;
+  const isDevTask = (chat) => {
+    const q = chat.messages.filter((m) => m.role === "user").at(-1)?.content || "";
+    return BUILD_RE.test(q) && !activeSkills(chat, true).some((k) => k.id === "ioi");
+  };
+  const PLAN_PROMPT =
+    "(Bước lên kế hoạch. CHƯA viết code. Hãy làm như một kỹ sư phần mềm cấp cao: viết bản kế hoạch dạng Markdown, ngắn gọn mà cụ thể, gồm:\n" +
+    "# <tên dự án>\n" +
+    "## Mục tiêu: sản phẩm dùng cho ai, giải quyết việc gì, thế nào là thành công.\n" +
+    "## Yêu cầu: tính năng chính (đầy đủ như sản phẩm thật, không chỉ bản demo), yêu cầu phi chức năng (giao diện, responsive, hiệu năng, trợ năng, bảo mật), " +
+    "ràng buộc; chỗ đề chưa rõ thì ghi giả định hợp lý.\n" +
+    "## Công nghệ: chọn gì và vì sao (ưu tiên chạy được ngay trong trình duyệt: HTML, CSS, JS thuần, thư viện qua CDN có phiên bản).\n" +
+    "## Kiến trúc: các thành phần (state, lớp dữ liệu hoặc API, giao diện, điều hướng, tiện ích), luồng dữ liệu, mô hình dữ liệu (các trường, kiểu).\n" +
+    "## Cấu trúc thư mục: cây file và vai trò từng file.\n" +
+    "## Kế hoạch theo giai đoạn: 2 đến 4 giai đoạn, mỗi giai đoạn một mục `### Giai đoạn N: <tên>` gồm các việc, các file tạo hoặc sửa, " +
+    "và tiêu chí hoàn thành kiểm tra được. Giai đoạn 1 dựng khung chạy được (cấu trúc, giao diện cơ bản, dữ liệu mẫu); các giai đoạn sau thêm tính năng; " +
+    "giai đoạn cuối hoàn thiện (trạng thái trống, lỗi, đang tải, chế độ tối, responsive, trợ năng, README). Việc nhỏ thì 1 đến 2 giai đoạn.\n" +
+    "## Kiểm thử: cách kiểm từng tính năng và các trường hợp biên.\n" +
+    "## Rủi ro: chỗ dễ sai và cách phòng.)";
+  const PLAN_REVIEW_PROMPT =
+    "Hãy phản biện bản kế hoạch phần mềm vừa rồi như một kỹ sư trưởng: thiếu tính năng nào mà người dùng chắc chắn cần, kiến trúc có chỗ nào dễ gây lỗi " +
+    "hoặc khó mở rộng, mô hình dữ liệu có thiếu trường không, chia giai đoạn có hợp lý không, kiểm thử có bỏ sót trường hợp biên quan trọng không. " +
+    "Không viết code, không viết lại kế hoạch. Liệt kê ngắn từng góp ý cụ thể. Nếu kế hoạch đã tốt thì chỉ ghi: KHÔNG CÓ LỖI.";
+  const PLAN_FIX_PROMPT =
+    "Góp ý của kỹ sư trưởng cho bản kế hoạch:\n\n<gop_y>\n{C}\n</gop_y>\n\n" +
+    "Cân nhắc từng góp ý (không bắt buộc theo nếu không hợp lý) rồi viết lại TRỌN bản kế hoạch Markdown đã cải tiến, cùng cấu trúc các mục. Chưa viết code.";
+  const PHASE_PROMPT =
+    "Kế hoạch của dự án:\n\n<ke_hoach>\n{P}\n</ke_hoach>\n\n{F}" +
+    "Bây giờ thực hiện **Giai đoạn {N}/{T}: {G}**. Viết code thật, chạy được, chất lượng như sản phẩm thật:\n" +
+    "- Mỗi file một khối code có đường dẫn ở dòng mở khối (ví dụ ```js js/app.js); viết TRỌN mỗi file tạo mới hoặc thay đổi trong giai đoạn này " +
+    "(file đã có mà sửa thì viết lại trọn file đó); file không đổi thì không viết lại.\n" +
+    "- Giữ đúng kiến trúc, tên file, tên hàm, id, class, mô hình dữ liệu trong kế hoạch và trong các file đã có.\n" +
+    "- Logic phức tạp (tính toán, xử lý dữ liệu, luật chơi) thì chạy thử bằng js-run hoặc py-run trước khi đưa vào file.\n" +
+    "- Không để TODO, chức năng giả hay nút không làm gì cho phần thuộc giai đoạn này.\n" +
+    "Cuối cùng ghi ngắn: đã làm gì, đã đạt tiêu chí hoàn thành chưa.";
+  const PHASE_FIX_PROMPT =
+    "Chạy thử tự động sau giai đoạn vừa rồi (khung điện thoại 390px, bấm thử mọi nút) gặp lỗi:\n{E}\n\n" +
+    "Tìm đúng nguyên nhân và sửa. Chỉ viết lại TRỌN những file cần sửa, mỗi file một khối code có đường dẫn ở dòng mở khối.";
+  const CODE_REVIEW_PROMPT =
+    "Hãy rà soát (code review) toàn bộ dự án trên như một kỹ sư cấp cao khó tính. KHÔNG viết lại code. Kiểm tra:\n" +
+    "1) Đúng và đủ: mọi tính năng trong kế hoạch và yêu cầu ban đầu đã có và chạy thật chưa; luồng dữ liệu, state, sự kiện có lỗi logic không.\n" +
+    "2) Lỗi tiềm ẩn: biến hoặc phần tử không tồn tại, id/class không khớp giữa HTML, CSS, JS, đường dẫn file sai, thứ tự nạp script, " +
+    "lỗi bất đồng bộ, trường hợp biên (dữ liệu rỗng, rất dài, ký tự đặc biệt, bấm liên tục), localStorage hỏng dữ liệu.\n" +
+    "3) Bảo mật: chèn HTML từ dữ liệu người dùng (XSS), lộ bí mật. 4) Giao diện: responsive, chế độ tối, trợ năng, trạng thái trống, lỗi, đang tải.\n" +
+    "5) Chất lượng code: trùng lặp, hàm quá dài, tên khó hiểu.\n" +
+    "Liệt kê từng vấn đề kèm file, vị trí, mức độ (nghiêm trọng hoặc nhỏ) và cách sửa. Nếu đã soát kỹ mà không thấy lỗi thì chỉ ghi: KHÔNG CÓ LỖI.";
+  const CODE_FIX_PROMPT =
+    "Kết quả rà soát code của các kỹ sư khác (họ cũng có thể sai, hãy tự kiểm chứng từng ý):\n\n{C}\n\n" +
+    "Sửa các vấn đề có thật. Chỉ viết lại TRỌN những file cần sửa, mỗi file một khối code có đường dẫn ở dòng mở khối; cuối cùng ghi ngắn đã sửa gì.";
+  const TEST_PROMPT =
+    "Hãy kiểm thử dự án trên như một kỹ sư QA: viết và chạy kiểm thử cho các hàm và luồng quan trọng bằng js-run, py-run hoặc cpp-run " +
+    "(trường hợp bình thường, biên, sai đầu vào). Kiểm thử nào sai thì sửa code rồi chạy lại. Cuối cùng chỉ viết lại TRỌN những file đã sửa " +
+    "(mỗi file một khối có đường dẫn) và một danh sách ngắn các kiểm thử đã chạy cùng kết quả.";
+  const DEV_SUMMARY_PROMPT =
+    "Dựa vào kế hoạch và các file trên, viết phần mở đầu ngắn cho câu trả lời gửi người dùng (KHÔNG viết code, không chép lại file): " +
+    "một câu giới thiệu sản phẩm, danh sách tính năng chính, cách chạy (mở index.html hoặc lệnh chạy) và cách đưa lên mạng, " +
+    "những gì đã được kiểm tra. Dùng Markdown, ngắn gọn.";
   const CRITIC_PROMPT =
     "Hãy đóng vai người chấm bài khó tính và soát câu trả lời vừa rồi. KHÔNG viết lại lời giải. " +
     "Kiểm tra từng bước lập luận, từng phép tính, từng dòng code: chạy code để kiểm chứng phép tính và đáp số (câu trả lời có code C++ thì chạy " +
@@ -1432,18 +1672,30 @@
     "6) Với câu hỏi mở (phân tích, đánh giá, dự đoán, tư vấn): xét nhiều góc nhìn và giả thuyết, phân biệt tương quan với nhân quả, " +
     "cân nhắc bằng chứng ủng hộ và phản bác, nêu đánh đổi, rồi đưa ra kết luận có lập luận chứ không chỉ liệt kê.\n" +
     "7) Trả lời: kết luận rõ ràng trước, rồi các bước hoặc lý do chính; với điều chưa chắc thì nói mức độ chắc chắn và vì sao.\n" +
+    "Chiến lược theo loại câu hỏi:\n" +
+    "- Toán, logic, đố mẹo: đặt ẩn và viết hết điều kiện, giải, thay ngược vào đề; đếm, xác suất, số lớn thì kiểm bằng code (vét cạn với số nhỏ).\n" +
+    "- Code: nắm rõ input, output, ràng buộc; nghĩ trường hợp biên trước khi viết; chạy thử với ví dụ; gỡ lỗi thì tìm nguyên nhân gốc, không vá triệu chứng.\n" +
+    "- Sự thật, tin tức, số liệu, giá cả: tra cứu; việc quan trọng thì đối chiếu ít nhất hai nguồn và ghi nguồn.\n" +
+    "- Lời khuyên, kế hoạch, quyết định: làm rõ mục tiêu và ràng buộc, đưa phương án cụ thể theo thứ tự ưu tiên, nêu rủi ro và cách giảm rủi ro.\n" +
+    "- Viết, dịch, tóm tắt: xác định người đọc, giọng văn, độ dài; viết xong đọc lại một lượt để sửa câu chữ.\n" +
+    "Tự soát trước khi gửi: đã trả lời đúng câu được hỏi chưa; mọi con số, tên, đơn vị khớp với đề và với phần suy nghĩ; kết luận cuối khớp với lời giải; " +
+    "không có bước nhảy cóc; đủ ý mà không lan man; code và file được viết trọn, không bỏ dở.\n" +
     "Không bịa thông tin, số liệu, trích dẫn hay đường dẫn; không chắc thì tra cứu hoặc nói rõ. Trả lời bằng ngôn ngữ của người dùng.";
   // Lời dặn riêng cho các mô hình GLM Flash, nhắm vào lỗi chúng hay mắc: dừng nghĩ khi vừa có đáp án đầu tiên,
   // tính nhẩm sai, đoán thông tin, chen chữ Hán vào câu trả lời tiếng Việt.
   const GLM_PROMPT =
-    "Lưu ý riêng cho bạn:\n" +
-    "- Với câu khó, phần suy nghĩ đi đủ bốn bước: Đề bài (viết lại yêu cầu, dữ kiện, điều kiện) → Kế hoạch (ít nhất hai cách, chọn cách chắc nhất) → " +
-    "Giải (từng bước) → Kiểm tra (bằng cách khác với cách đã giải). Không bỏ bước Kiểm tra.\n" +
-    "- Có đáp án đầu tiên rồi thì chưa dừng: thử phản bác nó ít nhất một lần (phản ví dụ, trường hợp biên, đọc lại đề tìm bẫy).\n" +
-    "- Phép tính quá hai bước, số có hơn ba chữ số, đếm, xác suất: bắt buộc tính bằng py-run, không tính nhẩm.\n" +
+    "Lưu ý riêng cho bạn (đây là những lỗi bạn hay mắc, hãy chủ động tránh):\n" +
+    "- Với câu khó, phần suy nghĩ viết theo khung: [Đề] viết lại yêu cầu, dữ kiện, điều kiện, đơn vị → [Bẫy] những chữ dễ đọc sai (không, ít nhất, trừ, phân biệt, " +
+    "thứ tự, đơn vị, mốc thời gian) → [Cách 1] → [Cách 2] (khác hẳn cách 1, hoặc thay ngược, thử số nhỏ, vét cạn bằng code) → [Đối chiếu] → [Kết luận]. " +
+    "Không bỏ bước Cách 2 và Đối chiếu.\n" +
+    "- Hai cách ra kết quả khác nhau thì KHÔNG được chọn đại: tìm chỗ sai, sửa, rồi đối chiếu lại.\n" +
+    "- Có đáp án đầu tiên rồi thì chưa dừng: thử phản bác nó ít nhất một lần (phản ví dụ, trường hợp biên, đọc lại đề từng chữ).\n" +
+    "- Phép tính quá hai bước, số có hơn ba chữ số, đếm, xác suất, ngày tháng: bắt buộc tính bằng py-run, không tính nhẩm. " +
+    "Đọc kỹ kết quả công cụ trước khi kết luận; code báo lỗi thì sửa và chạy lại, không bỏ qua.\n" +
     "- Sự thật, số liệu, tên người, ngày tháng mà bạn không chắc chắn: tra cứu, không đoán.\n" +
+    "- Đã kiểm tra xong thì dừng suy nghĩ và viết câu trả lời; không lặp lại cùng một vòng suy nghĩ.\n" +
     "- Chỉ dùng ngôn ngữ của người dùng; không bao giờ chen chữ Hán hay câu tiếng Trung vào câu trả lời.\n" +
-    "- Câu trả lời cuối gọn gàng: kết luận trước, rồi các bước chính; không chép lại toàn bộ phần suy nghĩ.";
+    "- Câu trả lời cuối gọn gàng: kết luận trước, rồi các bước chính; không chép lại toàn bộ phần suy nghĩ; code và file viết trọn.";
   const TOOL_PROMPT =
     "Bạn có các công cụ sau. Mỗi lần chỉ dùng một công cụ: viết khối lệnh rồi DỪNG viết ngay sau khối đó. " +
     "Hệ thống sẽ chạy và gửi lại kết quả để bạn trả lời tiếp. Không tự đoán kết quả.\n\n" +
@@ -1525,16 +1777,18 @@
   const SKILLS = [
     {
       // Câu hỏi về thông tin thay đổi theo thời gian: mô hình hay trả lời theo kiến thức cũ, nên bắt buộc tra cứu.
-      test: /hiện nay|hiện tại|hiện giờ|bây giờ|mới nhất|gần đây|năm nay|hôm nay|tuần này|tháng này|dạo này|đương nhiệm|đang là|giá\s|tỷ giá|tỉ giá|bao nhiêu tiền|kết quả trận|tỉ số|tỷ số|lịch thi đấu|\bcurrent(ly)?\b|\blatest\b|\btoday\b|\bnow\b|\bthis (week|month|year)\b|\b20[2-3]\d\b/i,
+      id: "time", test: /hiện nay|hiện tại|hiện giờ|bây giờ|mới nhất|gần đây|năm nay|hôm nay|tuần này|tháng này|dạo này|đương nhiệm|đang là|giá\s|tỷ giá|tỉ giá|bao nhiêu tiền|kết quả trận|tỉ số|tỷ số|lịch thi đấu|\bcurrent(ly)?\b|\blatest\b|\btoday\b|\bnow\b|\bthis (week|month|year)\b|\b20[2-3]\d\b/i,
       prompt: "",
       remind: "thông tin này có thể đã thay đổi so với kiến thức của bạn, nên BẮT BUỘC tra cứu (search; news cho tin tức, sự kiện; hoặc nguồn chuyên biệt như weather, rate) trước khi trả lời, và ghi nguồn",
     },
     {
       // Chỉ bật khi người dùng muốn làm/sửa trang (câu "tìm trên web" không tính).
-      test: /\bhtml\b|\bcss\b|landing page|responsive|(làm|tạo|viết|code|thiết kế|xây dựng|sửa|lập trình)\s.{0,40}(web|trang|giao diện|game|app|ứng dụng|form|nút|menu|portfolio)/i,
+      id: "web", test: /\bhtml\b|\bcss\b|landing page|responsive|(làm|tạo|viết|code|thiết kế|xây dựng|sửa|lập trình)\s.{0,40}(web|trang|giao diện|game|app|ứng dụng|form|nút|menu|portfolio)/i,
       prompt:
         "Kỹ năng làm trang web (HTML, CSS, JavaScript):\n" +
-        "- Viết MỘT file HTML hoàn chỉnh trong một khối ```html: <!doctype html>, <meta charset=\"utf-8\">, <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">, <title>, " +
+        "- Trang đơn giản (landing page, game, công cụ, ứng dụng một màn hình): viết MỘT file HTML hoàn chỉnh trong một khối ```html như dưới đây. " +
+        "Website nhiều trang hoặc người dùng muốn tách nhiều file thì làm theo định dạng dự án nhiều file.\n" +
+        "- Một file HTML hoàn chỉnh trong một khối ```html: <!doctype html>, <meta charset=\"utf-8\">, <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">, <title>, " +
         "CSS trong <style>, JS trong <script> ở cuối <body>. Không dùng file ngoài; thư viện chỉ lấy qua CDN (cdnjs.cloudflare.com, cdn.jsdelivr.net) " +
         "với số phiên bản cụ thể và chỉ khi thật cần, còn lại dùng HTML, CSS, JS thuần.\n" +
         "- Thiết kế: chọn một phong cách rõ ràng hợp nội dung; bảng màu khai báo bằng biến CSS trong :root, có chế độ tối (prefers-color-scheme: dark); " +
@@ -1582,10 +1836,75 @@
         "- Trước khi nộp, tự soát: thẻ đóng đủ, JS không lỗi cú pháp, mọi nút và liên kết đều hoạt động, đẹp trên điện thoại, chế độ tối vẫn đọc rõ.\n" +
         "- Người dùng bấm Xem trước để chạy thử ngay, nên khi sửa luôn đưa lại TRỌN file, không chỉ đoạn thay đổi. " +
         "Sau khối code, nói ngắn gọn các tính năng chính và cách mở rộng.",
-      remind: "đưa trọn một file HTML hoàn chỉnh trong một khối ```html: thiết kế đẹp, responsive, có chế độ tối, không lỗi JS; logic phức tạp thì chạy thử bằng js-run trước",
+      remind: "trang đơn giản thì đưa trọn một file HTML hoàn chỉnh trong một khối ```html (website nhiều trang hoặc cần tách file thì theo định dạng dự án nhiều file): thiết kế đẹp, responsive, có chế độ tối, không lỗi JS; logic phức tạp thì chạy thử bằng js-run trước",
     },
     {
-      test: /slide|thuyết trình|trình chiếu|bài giảng|powerpoint|pptx?|presentation|deck/i,
+      // Website nhiều trang, dự án nhiều file (tĩnh hoặc dùng framework).
+      id: "project", test: /nhiều (file|tệp|trang)|đa trang|multi-?page|multi-?file|dự án (web|website|frontend|fullstack)|\bproject\b|cấu trúc (thư mục|dự án|file)|website (hoàn chỉnh|đầy đủ|bán hàng|công ty|doanh nghiệp|giới thiệu|cá nhân|trường|nhà hàng|khách sạn|tin tức|blog)|(tách|chia) (ra )?(thành )?(nhiều |các )?(file|tệp)|\breact\b|\bvite\b|next\.?js|\bvue\b|express|node\.?js|\.(css|js|json)\b/i,
+      prompt:
+        "Kỹ năng làm dự án web nhiều file:\n" +
+        "- Định dạng: mỗi file một khối code, dòng mở khối ghi ngôn ngữ rồi đường dẫn file, ví dụ ```html index.html, ```css css/style.css, ```js js/app.js, " +
+        "```json data/products.json, ```markdown README.md. Trang chat ghép các khối thành dự án: hiện cây thư mục, nút Chạy thử (chạy cả dự án, bấm link " +
+        "chuyển được giữa các trang, fetch đọc được file trong dự án) và nút Tải .zip. Mọi file đều phải viết trọn, không để \"...\" hay \"giữ nguyên như cũ\".\n" +
+        "- Đầu câu trả lời: một đoạn ngắn nêu cấu trúc thư mục (dạng cây trong khối ```text) và vai trò từng file; sau đó lần lượt từng file; cuối cùng là README.md.\n" +
+        "- Website tĩnh nhiều trang (chạy được ngay, không cần cài): index.html và các trang con (about.html, menu.html, contact.html…) cùng cấp gốc; " +
+        "css/style.css dùng chung (biến màu, chữ, nút, header, footer, bố cục) và có thể thêm css riêng cho từng trang; js/main.js dùng chung (menu điện thoại, " +
+        "chế độ tối, đánh dấu trang đang mở trong menu) và js riêng cho trang cần; dữ liệu (sản phẩm, bài viết, câu hỏi) để trong data/*.json và đọc bằng fetch có xử lý lỗi; " +
+        "ảnh vẽ bằng SVG trong assets/ hoặc dùng ảnh AI qua đường dẫn Pollinations.\n" +
+        "- Nạp file bằng đường dẫn tương đối (css/style.css, js/main.js, ../ khi ở thư mục con), không dùng đường dẫn bắt đầu bằng / . " +
+        "Script nạp bằng <script src=\"js/main.js\" defer><\/script> theo thứ tự phụ thuộc, các file chia sẻ hàm qua một object toàn cục (window.App); " + // <\/ để không đóng script của trang
+        "không dùng import/export giữa các file để trang mở trực tiếp bằng file:// vẫn chạy.\n" +
+        "- Mọi trang có cùng header (logo, menu với đủ liên kết tới mọi trang, nút menu trên điện thoại) và footer; mỗi trang có <title> và meta description riêng; " +
+        "liên kết nào cũng phải trỏ tới file có thật trong dự án. Trang 404.html khi hợp lý.\n" +
+        "- Dự án dùng framework (React, Vue, Vite, Next.js) hoặc có máy chủ (Node.js, Express, cơ sở dữ liệu): đủ package.json (phiên bản thư viện cụ thể, scripts dev, build, start), " +
+        "file cấu hình, src/ chia component, .env.example thay cho bí mật thật, .gitignore; README ghi lệnh cài và chạy (npm install, npm run dev) và cách triển khai. " +
+        "Nút Chạy thử chỉ chạy được trang tĩnh, nên nếu người dùng chỉ cần xem nhanh thì ưu tiên HTML, CSS, JS thuần (React qua CDN khi thật cần).\n" +
+        "- README.md: tên dự án ở dòng # đầu tiên, tính năng, cấu trúc thư mục, cách chạy (mở index.html, hoặc lệnh npx serve), cách đưa lên GitHub Pages, Netlify, Vercel hoặc Cloudflare Pages. " +
+        "Trong README không dùng khối ``` lồng bên trong (viết lệnh trên dòng riêng, thụt vào 4 dấu cách) để không làm vỡ khối README.\n" +
+        "- Khi người dùng nhờ sửa hoặc thêm tính năng cho dự án đã có: chỉ viết lại TRỌN những file thay đổi hoặc thêm mới, đúng đường dẫn cũ (trang chat tự ghép với các file cũ), " +
+        "nói rõ file nào đổi; muốn xoá file thì nói rõ để người dùng tự xoá.\n" +
+        "- Dự án sẽ được tự chạy thử từng trang trong khung điện thoại 390px và bấm thử mọi nút: không lỗi JavaScript, không thiếu file, không tràn ngang.",
+      remind: "dự án nhiều file: mỗi file một khối code có đường dẫn ở dòng mở khối (```css css/style.css), viết trọn từng file, đường dẫn tương đối, mọi trang chung header/footer và liên kết đúng file, kèm README.md",
+    },
+    {
+      // Phát triển ứng dụng web lớn: tính năng đầy đủ, kiến trúc, chất lượng như sản phẩm thật.
+      id: "webapp", test: /\bhtml\b|landing page|responsive|website|web ?app|ứng dụng web|(làm|tạo|viết|code|thiết kế|xây dựng|sửa|lập trình|phát triển)\s.{0,40}(web|trang|giao diện|game|app|ứng dụng|form|dashboard|cửa hàng|shop|quản lý|hệ thống)/i,
+      prompt:
+        "Kỹ năng phát triển ứng dụng web lớn (tính năng như sản phẩm thật):\n" +
+        "- Kiến trúc phía trình duyệt: một nguồn dữ liệu duy nhất (store chứa state, hàm cập nhật state rồi phát sự kiện thay đổi), lớp dữ liệu riêng (đọc ghi localStorage, " +
+        "IndexedDB hoặc gọi API, có phiên bản dữ liệu và chuyển đổi khi đổi cấu trúc), các thành phần giao diện vẽ lại từ state, bộ định tuyến theo hash (#/san-pham/12) " +
+        "cho ứng dụng nhiều màn hình trong một trang, tiện ích dùng chung (định dạng tiền, ngày giờ theo vi-VN, debounce, tạo id). " +
+        "Gán sự kiện theo kiểu uỷ quyền trên phần tử cha để phần tử vẽ lại vẫn chạy.\n" +
+        "- Tính năng nền tảng mà sản phẩm thật luôn có: thêm, xem chi tiết, sửa, xoá (hỏi xác nhận, có hoàn tác); tìm kiếm có debounce; lọc nhiều điều kiện; " +
+        "sắp xếp; phân trang hoặc tải thêm; trạng thái trống có hướng dẫn, đang tải (skeleton), lỗi có nút thử lại; thông báo nhỏ (toast); " +
+        "lưu lại sau khi tải lại trang; xuất và nhập dữ liệu (JSON, CSV); phím tắt cho thao tác chính; cài đặt (chế độ tối, ngôn ngữ, đơn vị).\n" +
+        "- Form chuyên nghiệp: kiểm tra từng ô khi rời ô và khi gửi, thông báo lỗi cạnh ô bằng lời dễ hiểu, giữ dữ liệu đã nhập khi lỗi, nút gửi khoá lại khi đang gửi, " +
+        "định dạng số điện thoại, email, ngày; form dài thì chia bước có thanh tiến trình và lưu nháp.\n" +
+        "- Theo loại sản phẩm, tối thiểu phải có:\n" +
+        "  · Bán hàng: danh mục có lọc theo loại, giá, đánh giá và sắp xếp; trang chi tiết (ảnh, biến thể, số lượng tồn); giỏ hàng lưu lại, sửa số lượng, mã giảm giá, " +
+        "phí giao hàng; thanh toán nhiều bước có kiểm tra dữ liệu; trang xác nhận đơn và lịch sử đơn.\n" +
+        "  · Quản trị, dashboard: thẻ số liệu, biểu đồ theo khoảng thời gian, bảng có tìm kiếm, lọc, sắp xếp, phân trang, chọn nhiều dòng để thao tác hàng loạt, " +
+        "form thêm và sửa trong hộp thoại, xuất CSV, phân quyền giao diện theo vai trò.\n" +
+        "  · Đặt lịch, đặt bàn: chọn ngày giờ còn trống (không cho chọn giờ đã qua hoặc đã kín), số người, thông tin liên hệ, xác nhận, xem và huỷ lịch đã đặt.\n" +
+        "  · Blog, tin tức: danh sách có chuyên mục, thẻ, tìm kiếm, bài chi tiết có mục lục, thời gian đọc, bài liên quan, chia sẻ.\n" +
+        "  · Học tập, quiz: ngân hàng câu hỏi, xáo trộn, đếm giờ, chấm điểm, giải thích đáp án, lưu tiến độ và lịch sử.\n" +
+        "  · Ghi chú, việc cần làm, quản lý dự án: thẻ, hạn chót, độ ưu tiên, kéo thả sắp xếp (bảng Kanban), lọc theo trạng thái, nhắc việc.\n" +
+        "  · Mạng xã hội, chat: đăng bài, thích, bình luận lồng, thông báo, hồ sơ cá nhân; tin nhắn theo thời gian thực qua WebSocket hoặc SSE khi có máy chủ.\n" +
+        "  · Đăng nhập: đăng ký, đăng nhập, quên mật khẩu, đăng xuất, đổi mật khẩu; không tự làm xác thực thật ở phía trình duyệt (dùng máy chủ hoặc dịch vụ như Supabase, Firebase); " +
+        "bản thử nghiệm thì nói rõ là giả lập.\n" +
+        "- Dữ liệu mẫu phong phú và thật (10–30 mục có tên, giá, mô tả, ảnh phù hợp) để giao diện trông như đang hoạt động.\n" +
+        "- Hiệu năng: chỉ vẽ lại phần thay đổi, danh sách rất dài thì phân trang hoặc ảo hoá, ảnh tải lười, gom thao tác DOM, tránh đọc và ghi bố cục xen kẽ, " +
+        "nạp thư viện nặng khi cần; trang tải nhanh trên điện thoại.\n" +
+        "- Trải nghiệm: phản hồi ngay khi bấm (cập nhật lạc quan rồi hoàn tác nếu lỗi), giữ vị trí cuộn và bộ lọc khi quay lại, URL phản ánh màn hình đang xem, " +
+        "nút quay lại của trình duyệt hoạt động, thao tác nguy hiểm có xác nhận, chữ và nút bằng tiếng Việt tự nhiên.\n" +
+        "- PWA khi hợp lý: manifest, service worker lưu tệp để chạy ngoại tuyến, nút cài đặt. Đa ngôn ngữ: chuỗi chữ để trong một object theo ngôn ngữ.\n" +
+        "- SEO và chia sẻ: title, meta description, Open Graph, thẻ tiêu đề theo thứ bậc, dữ liệu có cấu trúc (JSON-LD) cho doanh nghiệp, sản phẩm, bài viết.\n" +
+        "- Có máy chủ thật (Node.js, Express, cơ sở dữ liệu): API theo REST, kiểm tra dữ liệu ở máy chủ (zod, joi), lỗi trả JSON thống nhất, CORS đúng nguồn, " +
+        "biến môi trường, migration, seed dữ liệu mẫu, README có lệnh chạy; phía giao diện gọi API qua một mô-đun riêng có xử lý lỗi, thử lại và trạng thái đang tải.\n" +
+        "- Trước khi nộp, tự đi qua từng luồng chính như người dùng thật (thêm, sửa, xoá, tìm, lọc, tải lại trang, điện thoại, chế độ tối) và sửa mọi chỗ chưa chạy.",
+    },
+    {
+      id: "slides", test: /slide|thuyết trình|trình chiếu|bài giảng|powerpoint|pptx?|presentation|deck/i,
       prompt:
         "Kỹ năng làm bài trình chiếu (slide):\n" +
         "- Mặc định viết MỘT khối ```pptx theo phần Xuất file: trang tự dựng slide có thiết kế và hiệu ứng, người dùng trình chiếu ngay và tải được PowerPoint, HTML. " +
@@ -1608,7 +1927,7 @@
     },
     {
       // Chỉ bật khi người dùng muốn vẽ/tạo hình (hỏi về ảnh gửi kèm như "ảnh này là gì" không tính).
-      test: /\bsvg\b|\bdraw\b|\blogo\b|\bicon\b|vẽ|(tạo|thiết kế|làm|sinh)\s.{0,30}(hình|ảnh|biểu tượng|poster|banner|biểu đồ|minh hoạ|minh họa|hình nền|tranh)|(sửa|chỉnh|biến|đổi)\s.{0,20}(ảnh|hình|nền|tranh)|phong cách (anime|hoạt hình|ghibli|tranh)/i,
+      id: "svg", test: /\bsvg\b|\bdraw\b|\blogo\b|\bicon\b|vẽ|(tạo|thiết kế|làm|sinh)\s.{0,30}(hình|ảnh|biểu tượng|poster|banner|biểu đồ|minh hoạ|minh họa|hình nền|tranh)|(sửa|chỉnh|biến|đổi)\s.{0,20}(ảnh|hình|nền|tranh)|phong cách (anime|hoạt hình|ghibli|tranh)/i,
       prompt:
         "Kỹ năng vẽ hình: ảnh chụp, tranh vẽ, ảnh minh hoạ giàu chi tiết thì dùng công cụ image. Logo, icon, sơ đồ, biểu đồ thì vẽ bằng SVG và trang sẽ hiện ảnh ngay. " +
         "Viết một khối ```svg hoàn chỉnh (<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"...\">), " +
@@ -1618,7 +1937,7 @@
       remind: "logo/icon/biểu đồ/sơ đồ thì vẽ bằng một khối ```svg hoàn chỉnh; tranh, ảnh minh hoạ thì dùng công cụ ```image (mô tả tiếng Anh chi tiết, thêm dòng ratio khi cần); sửa ảnh có sẵn thì thêm dòng edit: yes",
     },
     {
-      test: /chứng minh|giải (phương trình|hệ|bất phương trình|bài toán)|xác suất|tổ hợp|chỉnh hợp|hoán vị|bao nhiêu cách|bao nhiêu số|chia hết|ước số|bội số|số nguyên tố|phương trình|tính (giá trị|tổng|tích|diện tích|thể tích)|câu đố|đố vui|logic|suy luận|nghịch lý|nói thật|nói dối|hiệp sĩ|đạo hàm|tích phân|giới hạn|ma trận|cực trị|\bproof\b|\bprove\b|probability|puzzle|riddle|integral|derivative/i,
+      id: "math", test: /chứng minh|giải (phương trình|hệ|bất phương trình|bài toán)|xác suất|tổ hợp|chỉnh hợp|hoán vị|bao nhiêu cách|bao nhiêu số|chia hết|ước số|bội số|số nguyên tố|phương trình|tính (giá trị|tổng|tích|diện tích|thể tích)|câu đố|đố vui|logic|suy luận|nghịch lý|nói thật|nói dối|hiệp sĩ|đạo hàm|tích phân|giới hạn|ma trận|cực trị|\bproof\b|\bprove\b|probability|puzzle|riddle|integral|derivative/i,
       prompt:
         "Kỹ năng toán và suy luận logic:\n" +
         "- Chiến lược (Polya): hiểu đề (cái đã cho, cái cần tìm, điều kiện), vẽ hình hoặc lập bảng, thử trường hợp nhỏ để tìm quy luật, " +
@@ -1643,7 +1962,7 @@
       hard: true, // câu khó: mô hình GLM tự kiểm tra lại câu trả lời một lượt
     },
     {
-      test: /excel|xlsx|bảng tính|spreadsheet|google sheets?|file word|\bdocx?\b|xuất (ra )?file|tải về|powerpoint|pptx/i,
+      id: "office", test: /excel|xlsx|bảng tính|spreadsheet|google sheets?|file word|\bdocx?\b|xuất (ra )?file|tải về|powerpoint|pptx/i,
       prompt:
         "Kỹ năng làm file văn phòng (người dùng bấm Tải về để lấy file thật):\n" +
         "- Excel (khối ```xlsx): hàng đầu là tiêu đề cột; mỗi cột một loại dữ liệu; số ghi dạng số, đơn vị ghi ở tiêu đề cột; cột tính toán và dòng tổng dùng công thức " +
@@ -1656,7 +1975,7 @@
       remind: "xuất file bằng khối ```xlsx, ```docx hoặc ```pptx đúng định dạng ở phần Xuất file (JSON hợp lệ với xlsx và pptx)",
     },
     {
-      test: /thủ tục|giấy tờ|hồ sơ|căn cước|cccd|hộ chiếu|khai sinh|kết hôn|ly hôn|cư trú|luật|nghị định|thông tư|quy định|mức phạt|vi phạm|thuế|bảo hiểm|bhxh|bhyt|lương|thai sản|hợp đồng|vay|lãi suất|tiết kiệm|đầu tư|chứng khoán|sổ đỏ|nhà đất|sức khỏe|sức khoẻ|bệnh|triệu chứng|thuốc|sơ cứu|dinh dưỡng|nấu|món ăn|công thức nấu|sửa (máy|xe|điện|nước|nhà)|máy tính|điện thoại|wifi|mạng chậm|du lịch|visa|xin việc|\bcv\b|phỏng vấn|học bổng|du học|tuyển sinh|điểm chuẩn/i,
+      id: "life", test: /thủ tục|giấy tờ|hồ sơ|căn cước|cccd|hộ chiếu|khai sinh|kết hôn|ly hôn|cư trú|luật|nghị định|thông tư|quy định|mức phạt|vi phạm|thuế|bảo hiểm|bhxh|bhyt|lương|thai sản|hợp đồng|vay|lãi suất|tiết kiệm|đầu tư|chứng khoán|sổ đỏ|nhà đất|sức khỏe|sức khoẻ|bệnh|triệu chứng|thuốc|sơ cứu|dinh dưỡng|nấu|món ăn|công thức nấu|sửa (máy|xe|điện|nước|nhà)|máy tính|điện thoại|wifi|mạng chậm|du lịch|visa|xin việc|\bcv\b|phỏng vấn|học bổng|du học|tuyển sinh|điểm chuẩn/i,
       prompt:
         "Kỹ năng kiến thức thực tế (đời sống ở Việt Nam):\n" +
         "- Trả lời cụ thể, làm được ngay: các bước theo thứ tự, giấy tờ cần mang, nơi làm (kể cả làm trực tuyến), chi phí và thời gian ước tính, lỗi hay gặp và cách tránh.\n" +
@@ -1672,7 +1991,7 @@
       remind: "đưa các bước cụ thể làm được ngay; nếu liên quan tới quy định, thủ tục, giá, thuế, phí thì tra cứu bản mới nhất và ghi rõ văn bản, ngày hiệu lực, nguồn",
     },
     {
-      test: /lập trình|viết (code|hàm|chương trình|script)|\bcode\b|\bbug\b|debug|gỡ lỗi|sửa lỗi|báo lỗi|\berror\b|exception|traceback|python|javascript|typescript|\bjava\b|c#|golang|\brust\b|\bphp\b|\bsql\b|\bapi\b|react|vue|node\.?js|django|flask|regex|refactor/i,
+      id: "code", test: /lập trình|viết (code|hàm|chương trình|script)|\bcode\b|\bbug\b|debug|gỡ lỗi|sửa lỗi|báo lỗi|\berror\b|exception|traceback|python|javascript|typescript|\bjava\b|c#|golang|\brust\b|\bphp\b|\bsql\b|\bapi\b|react|vue|node\.?js|django|flask|regex|refactor/i,
       prompt:
         "Kỹ năng lập trình:\n" +
         "- Trước khi viết: nắm rõ đầu vào, đầu ra, ràng buộc, môi trường (ngôn ngữ, phiên bản, thư viện); chưa rõ thì nêu giả định hợp lý. " +
@@ -1685,11 +2004,35 @@
         "sửa đúng gốc (không vá triệu chứng), chạy lại để xác nhận, giải thích vì sao lỗi xảy ra.\n" +
         "- An toàn và hiệu năng: tránh SQL injection (dùng tham số), không lộ mật khẩu hay key trong code, kiểm tra dữ liệu từ người dùng; " +
         "nêu độ phức tạp và chọn cấu trúc dữ liệu phù hợp.\n" +
-        "- Trình bày: code hoàn chỉnh chạy được ngay (kèm import), cách chạy hoặc cài thư viện, giải thích ngắn ý tưởng; khi sửa code của người dùng thì chỉ rõ chỗ đổi và lý do.",
+        "- Trình bày: code hoàn chỉnh chạy được ngay (kèm import), cách chạy hoặc cài thư viện, giải thích ngắn ý tưởng; khi sửa code của người dùng thì chỉ rõ chỗ đổi và lý do.\n" +
+        "Kiến thức kỹ sư phần mềm chuyên nghiệp:\n" +
+        "- Thiết kế: tách lớp rõ ràng (giao diện, logic nghiệp vụ, truy cập dữ liệu); hàm thuần cho logic để dễ kiểm thử; phụ thuộc đi một chiều; " +
+        "nguyên tắc SOLID, DRY, KISS, YAGNI; dùng mẫu thiết kế khi thật sự cần (strategy, observer, factory, adapter, repository); ưu tiên kết hợp hơn kế thừa.\n" +
+        "- Xử lý lỗi: phân biệt lỗi người dùng (báo rõ, gợi ý cách sửa) với lỗi hệ thống (ghi log, thử lại có giới hạn với backoff); kiểm tra đầu vào ở biên hệ thống; " +
+        "không bắt lỗi chung chung rồi bỏ qua; dọn tài nguyên (đóng file, kết nối, huỷ timer, AbortController).\n" +
+        "- Kiểm thử: unit test cho hàm thuần, integration test cho luồng chính, test hồi quy cho mỗi lỗi đã sửa; đặt tên test theo hành vi; " +
+        "pytest, unittest (Python), Vitest, Jest (JS/TS), JUnit (Java), GoogleTest (C++), go test.\n" +
+        "- Bất đồng bộ và đồng thời: tránh race condition (khoá, hàng đợi, thao tác nguyên tử), không chặn luồng chính, giới hạn số tác vụ song song, " +
+        "huỷ được tác vụ dài, xử lý timeout; JS: Promise.all hoặc allSettled, không quên await; Python: asyncio, threading cho I/O, multiprocessing cho CPU.\n" +
+        "- Hiệu năng: đo trước khi tối ưu; chọn đúng cấu trúc dữ liệu (Map/Set/dict cho tra cứu, heap cho ưu tiên); tránh vòng lặp lồng không cần thiết và N+1 truy vấn; " +
+        "cache có thời hạn; phân trang; xử lý luồng (stream) với dữ liệu lớn.\n" +
+        "- Cơ sở dữ liệu: chuẩn hoá vừa đủ, khoá chính và khoá ngoại, chỉ mục cho cột hay lọc hoặc JOIN, giao dịch cho thao tác nhiều bước, migration có phiên bản, " +
+        "truy vấn có tham số; chọn SQL (PostgreSQL, SQLite, MySQL) cho dữ liệu quan hệ, NoSQL khi dữ liệu dạng tài liệu linh hoạt.\n" +
+        "- API: REST với danh từ số nhiều, mã trạng thái đúng (200, 201, 204, 400, 401, 403, 404, 409, 422, 500), lỗi trả JSON có mã và thông điệp, " +
+        "phân trang, lọc, sắp xếp, idempotency cho thao tác thanh toán; xác thực bằng session cookie HttpOnly hoặc JWT ngắn hạn kèm refresh token; giới hạn tần suất.\n" +
+        "- Bảo mật (OWASP): chống injection, XSS, CSRF, SSRF; băm mật khẩu bằng bcrypt hoặc argon2; phân quyền kiểm tra ở máy chủ; bí mật để trong biến môi trường; " +
+        "cập nhật thư viện có lỗ hổng; ghi log không chứa dữ liệu nhạy cảm.\n" +
+        "- Theo ngôn ngữ: Python (type hints, dataclass, pathlib, venv, f-string, with cho tài nguyên, generator cho dữ liệu lớn); " +
+        "JavaScript/TypeScript (strict mode, const, ESM, optional chaining, kiểu chặt, không dùng any); Java/Kotlin (immutability, Optional, stream có chừng mực); " +
+        "C/C++ (RAII, smart pointer, tránh undefined behavior, -Wall -O2, sanitizer khi gỡ lỗi); Go (trả lỗi tường minh, context, goroutine kèm WaitGroup hoặc errgroup); " +
+        "Rust (ownership, Result và ?, tránh unwrap ở code thật); SQL (CTE, window function, EXPLAIN để xem kế hoạch truy vấn).\n" +
+        "- Công cụ và quy trình: Git (commit nhỏ, thông điệp rõ, nhánh tính năng, pull request), định dạng và kiểm tra code (Prettier, ESLint, Black, Ruff), " +
+        "Docker cho môi trường giống nhau, CI chạy test tự động (GitHub Actions), biến môi trường với file .env.example, ghi log có cấp độ, README đủ cách cài và chạy.\n" +
+        "- Đọc và sửa code có sẵn: hiểu luồng chính trước, thay đổi nhỏ nhất đúng chỗ, giữ phong cách code đang dùng, không đổi hành vi ngoài phạm vi yêu cầu.",
       remind: "chạy thử code bằng py-run, js-run hoặc cpp-run với ví dụ và trường hợp biên trước khi đưa code cuối",
     },
     {
-      test: /react|vue|angular|svelte|next\.?js|nuxt|tailwind|bootstrap|frontend|front-end|backend|back-end|fullstack|full-stack|\bdom\b|\bcss\b|responsive|\bseo\b|\bpwa\b|rest ?api|graphql|node\.?js|express|nestjs|database|cơ sở dữ liệu|\bsql\b|mongodb|firebase|supabase|\bcors\b|\bjwt\b|đăng nhập|xác thực|deploy|triển khai|hosting|tên miền|domain|website|trang web/i,
+      id: "webdev", test: /react|vue|angular|svelte|next\.?js|nuxt|tailwind|bootstrap|frontend|front-end|backend|back-end|fullstack|full-stack|\bdom\b|\bcss\b|responsive|\bseo\b|\bpwa\b|rest ?api|graphql|node\.?js|express|nestjs|database|cơ sở dữ liệu|\bsql\b|mongodb|firebase|supabase|\bcors\b|\bjwt\b|đăng nhập|xác thực|deploy|triển khai|hosting|tên miền|domain|website|trang web/i,
       prompt:
         "Kiến thức phát triển web:\n" +
         "- HTML: thẻ ngữ nghĩa, form có label, kiểu input đúng (email, tel, number, date), thuộc tính required, pattern, autocomplete; meta description và Open Graph cho chia sẻ.\n" +
@@ -1709,7 +2052,7 @@
         "- Trả lời câu hỏi dev: nêu cách làm chuẩn hiện nay kèm ví dụ code chạy được, chỉ ra cạm bẫy thường gặp và cách kiểm tra.",
     },
     {
-      test: /tại sao|vì sao|giải thích|phân tích|đánh giá|so sánh|có nên|nên chọn|lựa chọn|quyết định|lập luận|suy luận|nguyên nhân|hệ quả|dự đoán|dự báo|chiến lược|ưu (và|,)? ?nhược|ưu điểm|rủi ro|tranh luận|phản biện|xác suất|ước lượng|khả năng (cao|thấp)|đúng hay sai|why|should i|pros and cons|trade-?off/i,
+      id: "reason", test: /tại sao|vì sao|giải thích|phân tích|đánh giá|so sánh|có nên|nên chọn|lựa chọn|quyết định|lập luận|suy luận|nguyên nhân|hệ quả|dự đoán|dự báo|chiến lược|ưu (và|,)? ?nhược|ưu điểm|rủi ro|tranh luận|phản biện|xác suất|ước lượng|khả năng (cao|thấp)|đúng hay sai|why|should i|pros and cons|trade-?off/i,
       prompt:
         "Kỹ năng tư duy và suy luận nâng cao:\n" +
         "- Tách bạch: điều đã biết chắc (có nguồn), điều suy ra, giả định, và ý kiến. Định nghĩa rõ các khái niệm mơ hồ trước khi lập luận.\n" +
@@ -1723,7 +2066,7 @@
         "- Kết luận: trả lời thẳng câu hỏi trước, rồi các lý do chính theo thứ tự quan trọng, nêu mức độ chắc chắn và điều gì sẽ làm thay đổi kết luận.",
     },
     {
-      test: /ioi|icpc|olympic|hsg|học sinh giỏi|codeforces|atcoder|leetcode|vnoi|thi đấu|competitive|thuật toán|algorithm|độ phức tạp|c\+\+|cpp|subtask|testcase|quy hoạch động|đồ thị/i,
+      id: "ioi", test: /ioi|icpc|olympic|hsg|học sinh giỏi|codeforces|atcoder|leetcode|vnoi|thi đấu|competitive|thuật toán|algorithm|độ phức tạp|c\+\+|cpp|subtask|testcase|quy hoạch động|đồ thị/i,
       prompt:
         "Kỹ năng lập trình thi đấu (IOI, ICPC, Codeforces, VNOI, HSG Tin):\n" +
         "1) Đọc kỹ đề, tóm tắt input, output, ràng buộc và các subtask.\n" +
@@ -1760,17 +2103,25 @@
     },
   ];
 
-  const activeSkills = (chat) => {
+  // Kỹ năng đang dùng: kỹ năng khớp với câu hỏi gần đây, cộng bộ kỹ năng luôn bật của chế độ đang chọn.
+  // matchedOnly: chỉ lấy kỹ năng khớp câu hỏi (dùng cho lời nhắc ngắn cuối câu hỏi, để chế độ không nhắc những việc không liên quan).
+  const activeSkills = (chat, matchedOnly) => {
     const recent = chat.messages.filter((m) => m.role === "user").slice(-2).map((m) => m.content).join("\n");
-    return SKILLS.filter((k) => k.test.test(recent));
+    const forced = matchedOnly ? [] : currentMode().skills;
+    return SKILLS.filter((k) => k.test.test(recent) || forced.includes(k.id));
   };
 
   function systemPrompt(chat) {
     const today = new Date().toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "numeric", year: "numeric" });
-    const parts = [`Hôm nay là ${today}. Kiến thức có sẵn của bạn chỉ cập nhật đến khoảng năm 2024–2025, nên những gì xảy ra sau đó (ai đang giữ chức vụ, giá cả, phiên bản mới, kết quả thi đấu, sự kiện gần đây) bạn phải tra cứu, không được đoán.`, THINK_PROMPT];
+    const [mName, mDesc] = PROVIDERS.shared.titles[cloudModel()] || ["Bắc Đẩu", ""];
+    const identity = `Bạn là Khuê, trợ lý AI tiếng Việt, đang chạy mô hình ${mName} (${mDesc.toLowerCase()}). Khi được hỏi bạn là ai hay là mô hình gì, ` +
+      `hãy nói bạn là Khuê, mô hình ${mName}. Nếu được hỏi về công nghệ bên dưới thì nói Khuê được xây dựng trên các mô hình ngôn ngữ mở, ` +
+      "cộng với cách suy nghĩ, kỹ năng, công cụ (chạy code, tra cứu, vẽ ảnh, xuất file) và quy trình kiểm tra chéo riêng của Khuê.";
+    const parts = [identity, `Hôm nay là ${today}. Kiến thức có sẵn của bạn chỉ cập nhật đến khoảng năm 2024–2025, nên những gì xảy ra sau đó (ai đang giữ chức vụ, giá cả, phiên bản mới, kết quả thi đấu, sự kiện gần đây) bạn phải tra cứu, không được đoán.`, THINK_PROMPT];
     if (/^glm/.test(cloudModel())) parts.push(GLM_PROMPT);
     if (settings.system.trim()) parts.push(settings.system.trim());
     parts.push(TOOL_PROMPT); // công cụ (chạy code, tra cứu, tạo ảnh) luôn được bật
+    if (currentMode().prompt) parts.push(currentMode().prompt);
     for (const k of activeSkills(chat)) if (k.prompt) parts.push(k.prompt);
     let mem = MEMORY_PROMPT;
     if (memories.length) mem += "\n\nNhững điều bạn đã ghi nhớ về người dùng:\n" + memories.map((m) => "- " + m.text).join("\n");
@@ -1791,13 +2142,13 @@
     const withImages = new Set(chat.messages.filter((m) => m.images?.length).slice(-2));
     const history = chat.messages.slice(0, -1).map((m) => ({
       role: m.role,
-      content: m.role === "assistant" ? splitThink(m.content).answer.trim() : apiContent(m, withImages.has(m)),
+      content: m.role === "assistant" ? historyAnswer(m) : apiContent(m, withImages.has(m)),
     }));
     const extra = extraContext(chat);
     if (extra.kb.length) reply.kb = extra.kb;
     history.unshift({ role: "system", content: systemPrompt(chat) + extra.text });
     // Mô hình làm theo lời dặn ngay trong câu hỏi tốt hơn lời dặn chung, nên nhắc ngắn kỹ năng đang dùng (người dùng không thấy).
-    const reminds = activeSkills(chat).map((k) => k.remind).filter(Boolean);
+    const reminds = [currentMode().remind, ...activeSkills(chat, true).map((k) => k.remind)].filter(Boolean);
     if (chat.messages.filter((m) => m.role === "user").at(-1)?.refImages?.length)
       reminds.push("người dùng gửi kèm ảnh đã tạo để sửa: dùng khối ```image với dòng đầu edit: yes, rồi mô tả bằng tiếng Anh thay đổi cần làm và nói rõ phần giữ nguyên");
     const lastUser = history.findLast((m) => m.role === "user");
@@ -1826,156 +2177,261 @@
       Object.assign(reply, { content: n.content, reasoning: n.reasoning, thinkSecs: n.thinkSecs, review: false, via: undefined });
     };
     const title = (m) => modelTitle("shared", m);
+    // Mức Ultra cho việc xây dựng phần mềm: kế hoạch Markdown → phản biện kế hoạch → code theo từng giai đoạn (chạy thử và sửa sau mỗi giai đoạn)
+    // → các mô hình khác rà soát code → sửa → chạy thử toàn bộ hoặc kiểm thử → tổng hợp. Kết quả cuối có đủ mọi file (kèm PLAN.md).
+    const devRun = async (helpers) => {
+      const T = 7;
+      reply.noGaps = true; // file của giai đoạn sau chưa viết là đúng kế hoạch, không tự viết bù
+      const answerOf = () => splitThink(reply.content).answer.trim();
+      const run = async (msgs) => { await answerWithTools(msgs, reply, node); await ensureAnswer(msgs, reply, node); return answerOf(); };
+      const files = new Map();
+      const absorb = (text) => {
+        const named = filesIn(text);
+        for (const [p, c] of named) files.set(p, c);
+        // Trang HTML viết không kèm tên file: coi là index.html.
+        if (!named.some(([p]) => /\.html?$/i.test(p))) {
+          const page = [...text.matchAll(/^[ \t]*```html[ \t]*\n([\s\S]*?)\n[ \t]*```/gm)].map((m) => m[1]).filter((c) => /<(html|body)\b/i.test(c)).at(-1);
+          if (page) files.set("index.html", page);
+        }
+      };
+      const ctxNow = (plan) => [...history, { role: "assistant", content: `Kế hoạch:\n\n${plan.slice(0, 12000)}\n\nMã nguồn hiện tại:\n\n${projectDump(files).slice(0, 80000)}` }];
+      // Bước 1: kế hoạch.
+      step(`Bước 1/${T}: phân tích yêu cầu và lên kế hoạch (Markdown)`, "Đang lên kế hoạch…");
+      let plan = await run(withNote(history, PLAN_PROMPT));
+      shelve("Kế hoạch (PLAN.md)");
+      // Bước 2: kỹ sư khác phản biện kế hoạch, rồi cải tiến.
+      if (plan && helpers[0]) {
+        step(`Bước 2/${T}: ${title(helpers[0])} phản biện kế hoạch`, "Kỹ sư trưởng đang phản biện kế hoạch…");
+        const st = [];
+        const [c] = await gather([silentRun([...history, { role: "assistant", content: plan }, { role: "user", content: PLAN_REVIEW_PROMPT }], helpers[0], st)], st, 120000);
+        keep(c, "Phản biện kế hoạch");
+        if (c && !noErrors(c.answer)) {
+          step(`Bước 2/${T}: cải tiến kế hoạch theo góp ý`, undefined);
+          const better = await run([...history, { role: "assistant", content: plan }, { role: "user", content: PLAN_FIX_PROMPT.replace("{C}", c.answer.slice(0, 6000)) }]);
+          if (better.length > plan.length * 0.5) plan = better;
+          shelve("Kế hoạch đã cải tiến");
+        }
+      }
+      // Bước 3: code theo từng giai đoạn; sau mỗi giai đoạn chạy thử (web) và sửa lỗi ngay.
+      const phases = [...plan.matchAll(/^#{2,4}\s*Giai đoạn\s*(\d+)\s*[:.\-–—]?\s*(.*)$/gim)].map((m) => m[2].replace(/[*_`]/g, "").trim() || `Giai đoạn ${m[1]}`).slice(0, 5);
+      if (!phases.length) phases.push("Toàn bộ dự án");
+      for (let i = 0; i < phases.length; i++) {
+        step(`Bước 3/${T}: giai đoạn ${i + 1}/${phases.length}: ${phases[i]}`, undefined);
+        const prompt = PHASE_PROMPT.replace("{P}", plan.slice(0, 20000))
+          .replace("{F}", files.size ? `Các file đã có sau các giai đoạn trước:\n\n${projectDump(files).slice(0, 70000)}\n\n` : "")
+          .replace("{N}", i + 1).replace("{T}", phases.length).replace("{G}", phases[i]);
+        absorb(await run(withNote(history, prompt)));
+        shelve(`Giai đoạn ${i + 1}: ${phases[i]}`);
+        if ([...files.keys()].some((p) => /\.html?$/i.test(p))) {
+          // Chỉ xét lỗi khi chạy; file của các giai đoạn sau chưa có là bình thường.
+          const errs = (await checkProject(files)).filter((e) => !/dự án không có file|Không tải được/.test(e));
+          if (errs.length) {
+            step(`Bước 3/${T}: sửa lỗi chạy thử của giai đoạn ${i + 1}`, undefined);
+            absorb(await run([...ctxNow(plan), { role: "user", content: PHASE_FIX_PROMPT.replace("{E}", errs.map((x) => "- " + x).join("\n")) }]));
+            shelve(`Sửa lỗi giai đoạn ${i + 1}`);
+          }
+        }
+      }
+      if (!files.size) {
+        // Mô hình không viết file nào: lấy kết quả của giai đoạn cuối làm câu trả lời.
+        const last = notes.findLast((n) => /^Giai đoạn|^Sửa lỗi/.test(n.label));
+        if (last) restore(last);
+        delete reply.noGaps;
+        return;
+      }
+      // Bước 4–5: các mô hình khác rà soát code; có vấn đề thì sửa.
+      const reviewers = helpers.slice(0, 2).length ? helpers.slice(0, 2) : [cloudModel()], rst = [];
+      step(`Bước 4/${T}: ${reviewers.map(title).join(", ")} rà soát code`, "Đang rà soát code…");
+      const crits = (await gather(reviewers.map((m) => silentRun([...ctxNow(plan), { role: "user", content: CODE_REVIEW_PROMPT }], m, rst)), rst, 180000)).filter(Boolean);
+      crits.forEach((c) => keep(c, "Rà soát code"));
+      const problems = crits.filter((c) => !noErrors(c.answer));
+      if (problems.length) {
+        step(`Bước 5/${T}: sửa theo kết quả rà soát`, undefined);
+        absorb(await run([...ctxNow(plan), { role: "user", content: CODE_FIX_PROMPT.replace("{C}",
+          problems.map((c, i) => `<ra_soat_${i + 1} mo_hinh="${c.draft.model}">\n${c.answer.slice(0, 6000)}\n</ra_soat_${i + 1}>`).join("\n\n")) }]));
+        shelve("Sửa theo rà soát");
+      }
+      // Bước 6: trang web thì chạy thử mọi trang và sửa (tối đa 2 lượt); code khác thì viết và chạy kiểm thử.
+      if ([...files.keys()].some((p) => /\.html?$/i.test(p))) {
+        for (let r = 0; r < 2; r++) {
+          step(`Bước 6/${T}: chạy thử toàn bộ${r ? " (lượt 2)" : ""}`, "Đang chạy thử mọi trang…");
+          const errs = await checkProject(files);
+          if (!errs.length) break;
+          step(`Bước 6/${T}: sửa lỗi khi chạy thử${r ? " (lượt 2)" : ""}`, undefined);
+          absorb(await run([...ctxNow(plan), { role: "user", content: PROJECT_FIX_PROMPT.replace("{E}", errs.map((x) => "- " + x).join("\n")) }]));
+          shelve(`Sửa lỗi chạy thử${r ? " (lượt 2)" : ""}`);
+        }
+      } else {
+        step(`Bước 6/${T}: kiểm thử`, undefined);
+        absorb(await run([...ctxNow(plan), { role: "user", content: TEST_PROMPT }]));
+        shelve("Kiểm thử");
+      }
+      // Bước 7: tổng hợp câu trả lời: phần mở đầu ngắn rồi mọi file của dự án.
+      step(`Bước 7/${T}: tổng hợp`, "Đang viết phần tóm tắt…");
+      const sst = [];
+      const [s] = await gather([silentRun([...ctxNow(plan), { role: "user", content: DEV_SUMMARY_PROMPT }], cloudModel(), sst, true)], sst, 90000);
+      if (plan) files.set("PLAN.md", plan);
+      Object.assign(reply, { content: (s?.answer.trim() || "Dự án đã hoàn thành theo kế hoạch, đủ các file bên dưới.") + "\n\n" + projectDump(files),
+        reasoning: "", review: false, via: undefined });
+      delete reply.noGaps;
+    };
     try {
       const deep = level === "careful" || level === "max" || level === "ultra";
       const total = { careful: 4, max: 5, ultra: 8 }[level];
       const helpers = deep ? await councilModels({ careful: 1, max: 2, ultra: 3 }[level]) : [];
-      let base = history;
-      // Bước 1: phân tích đề (chưa giải), để bước giải đi đúng hướng và biết cách kiểm chứng.
-      if (deep) {
-        step(`Bước 1/${total}: phân tích đề`, "Đang phân tích đề…");
-        const astops = [];
-        const [a] = await gather([silentRun(withNote(history, ANALYZE_PROMPT), cloudModel(), astops, true)], astops, 60000);
-        if (a) { keep(a, "Phân tích đề"); base = withNote(history, ANALYSIS_NOTE.replace("{A}", a.answer.slice(0, 4000))); }
-      }
-      // Bước 2: giải. Mức Tối đa: hai mô hình khác giải song song (không hiện ra), mỗi mô hình một góc nhìn.
-      const solverStops = [], solverStart = Date.now();
-      const solvers = level === "max" || level === "ultra" ? helpers.map((m, i) => silentRun(withNote(base, DEEP_ANGLES[i]), m, solverStops)) : [];
-      solvers.forEach((p) => p.catch(() => {}));
-      if (deep) step(level === "ultra" ? `Bước 2/8: vòng 1, ${[cloudModel(), ...helpers].map(title).join(", ")} giải độc lập`
-        : level === "max" ? `Bước 2/5: ${[cloudModel(), ...helpers].map(title).join(", ")} giải song song` : "Bước 2/4: giải theo kế hoạch", undefined);
-      await answerWithTools(base, reply, node);
-      await ensureAnswer(base, reply, node);
-      const draft = splitThink(reply.content).answer.trim();
-
-      // Mức Cân bằng: mô hình GLM với câu khó (toán, logic, lập trình thi đấu) tự chấm lại một lượt.
-      if (draft && level === "normal" && /^glm/.test(cloudModel()) && activeSkills(chat).some((k) => k.hard)) {
-        reply.fallback = shelve("Bản nháp đầu tiên");
-        await judge([...history, { role: "assistant", content: draft }, { role: "user", content: REVIEW_PROMPT }], reply, node);
-      }
-
-      // Mức Kỹ: một mô hình khác soát lỗi (không viết lại), rồi mô hình chính sửa và viết câu trả lời cuối.
-      if (draft && level === "careful") {
-        const main = (reply.fallback = shelve("Lời giải nháp"));
-        const critic = helpers[0] || cloudModel(), stops = [];
-        step(`Bước 3/4: ${title(critic)} soát lỗi từng bước`, "Người chấm đang kiểm tra…");
-        const [c] = await gather([silentRun([...history, { role: "assistant", content: draft.slice(0, 12000) }, { role: "user", content: CRITIC_PROMPT }], critic, stops)], stops, 120000);
-        keep(c, "Nhận xét của người chấm");
-        if (c && noErrors(c.answer)) restore(main);
-        else {
-          step("Bước 4/4: sửa lỗi và viết câu trả lời cuối", undefined);
-          await judge([...history, { role: "assistant", content: draft.slice(0, 12000) },
-            { role: "user", content: c ? FIX_PROMPT.replace("{C}", c.answer.slice(0, 6000)) : REVIEW_PROMPT }], reply, node);
+      // Ultra với yêu cầu xây dựng phần mềm: quy trình của lập trình viên chuyên nghiệp (devRun).
+      if (level === "ultra" && isDevTask(chat)) await devRun(helpers);
+      else {
+        let base = history;
+        // Bước 1: phân tích đề (chưa giải), để bước giải đi đúng hướng và biết cách kiểm chứng.
+        if (deep) {
+          step(`Bước 1/${total}: phân tích đề`, "Đang phân tích đề…");
+          const astops = [];
+          const [a] = await gather([silentRun(withNote(history, ANALYZE_PROMPT), cloudModel(), astops, true)], astops, 60000);
+          if (a) { keep(a, "Phân tích đề"); base = withNote(history, ANALYSIS_NOTE.replace("{A}", a.answer.slice(0, 4000))); }
         }
-      }
+        // Bước 2: giải. Mức Tối đa: hai mô hình khác giải song song (không hiện ra), mỗi mô hình một góc nhìn.
+        const solverStops = [], solverStart = Date.now();
+        const solvers = level === "max" || level === "ultra" ? helpers.map((m, i) => silentRun(withNote(base, DEEP_ANGLES[i]), m, solverStops)) : [];
+        solvers.forEach((p) => p.catch(() => {}));
+        if (deep) step(level === "ultra" ? `Bước 2/8: vòng 1, ${[cloudModel(), ...helpers].map(title).join(", ")} giải độc lập`
+          : level === "max" ? `Bước 2/5: ${[cloudModel(), ...helpers].map(title).join(", ")} giải song song` : "Bước 2/4: giải theo kế hoạch", undefined);
+        await answerWithTools(base, reply, node);
+        await ensureAnswer(base, reply, node);
+        const draft = splitThink(reply.content).answer.trim();
 
-      // Mức Tối đa: chờ các lời giải khác, kiểm tra chéo, tổng hợp, rồi một mô hình khác kiểm tra lần cuối.
-      if (draft && level === "max") {
-        const main = (reply.fallback = shelve("Lời giải 1"));
-        step("Bước 2/5: chờ các mô hình khác giải xong", "Đang chờ các mô hình khác giải xong…");
-        // Chờ thêm tối đa 60 giây sau khi mô hình chính xong (tổng không quá khoảng 3 phút); lời giải dở dang vẫn dùng nếu đủ dài.
-        const others = (await gather(solvers, solverStops, Math.max(60000, 180000 - (Date.now() - solverStart)))).filter(Boolean);
-        others.forEach((o, i) => keep(o, `Lời giải ${i + 2}`));
-        const sols = [{ model: main.model, answer: draft }, ...others.map((o) => ({ model: o.draft.model, answer: o.answer }))];
-        const tag = (t, i, model, text) => `<${t}_${"ABCD"[i]} mo_hinh="${model}">\n${text}\n</${t}_${"ABCD"[i]}>`;
-        // Bước 3: kiểm tra chéo, mỗi mô hình soát tất cả các lời giải.
-        const checkers = [cloudModel(), ...helpers], cstops = [];
-        step(`Bước 3/5: ${checkers.map(title).join(", ")} kiểm tra chéo`, "Đang kiểm tra chéo các lời giải…");
-        const solText = sols.map((x, i) => tag("loi_giai", i, x.model, x.answer.slice(0, 6000))).join("\n\n");
-        const crits = (await gather(checkers.map((m) => silentRun(withNote(history, CROSS_PROMPT.replace("{S}", solText)), m, cstops)), cstops, 90000)).filter(Boolean);
-        crits.forEach((c) => keep(c, "Kiểm tra chéo"));
-        // Bước 4: mô hình chính tổng hợp, kiểm chứng và viết câu trả lời.
-        step("Bước 4/5: tổng hợp, kiểm chứng và viết câu trả lời", undefined);
-        const review = REVIEW_MULTI_PROMPT.replace("{N}", others.length)
-          .replace("{B}", others.length ? others.map((o, i) => tag("loi_giai", i + 1, o.draft.model, o.answer.slice(0, 6000))).join("\n\n") : "(không có)")
-          .replace("{K}", crits.length ? crits.map((c, i) => tag("kiem_tra", i, c.draft.model, c.answer.slice(0, 4000))).join("\n\n") : "(không có)");
-        await judge([...history, { role: "assistant", content: draft.slice(0, 8000) }, { role: "user", content: review }], reply, node);
-        // Bước 5: một mô hình khác kiểm tra lần cuối; còn lỗi thì sửa thêm một lượt.
-        const final1 = splitThink(reply.content).answer.trim();
-        if (final1 && !reply.judgeFailed) {
-          const first = shelve("Câu trả lời trước bước kiểm tra cuối");
-          const checker = helpers[0] || cloudModel(), fstops = [];
-          step(`Bước 5/5: ${title(checker)} kiểm tra lần cuối`, "Đang kiểm tra lần cuối…");
-          const [f] = await gather([silentRun([...history, { role: "assistant", content: final1.slice(0, 12000) }, { role: "user", content: FINAL_CHECK_PROMPT }], checker, fstops)], fstops, 90000);
-          keep(f, "Kiểm tra lần cuối");
-          if (!f || noErrors(f.answer)) restore(first);
+        // Mức Cân bằng: mô hình GLM tự chấm lại một lượt với câu khó (toán, logic, lập trình thi đấu), câu hỏi lập trình và câu cần lập luận
+        // (trừ trang web: đã có bước tự chạy thử và sửa lỗi).
+        const skillsNow = activeSkills(chat);
+        if (draft && level === "normal" && /^glm/.test(cloudModel()) && !skillsNow.some((k) => k.id === "web" || k.id === "project") &&
+          (skillsNow.some((k) => k.hard || k.id === "code" || k.id === "reason") || draft.length > 1500)) {
+          reply.fallback = shelve("Bản nháp đầu tiên");
+          await judge([...history, { role: "assistant", content: draft }, { role: "user", content: REVIEW_PROMPT }], reply, node);
+        }
+
+        // Mức Kỹ: một mô hình khác soát lỗi (không viết lại), rồi mô hình chính sửa và viết câu trả lời cuối.
+        if (draft && level === "careful") {
+          const main = (reply.fallback = shelve("Lời giải nháp"));
+          const critic = helpers[0] || cloudModel(), stops = [];
+          step(`Bước 3/4: ${title(critic)} soát lỗi từng bước`, "Người chấm đang kiểm tra…");
+          const [c] = await gather([silentRun([...history, { role: "assistant", content: draft.slice(0, 12000) }, { role: "user", content: CRITIC_PROMPT }], critic, stops)], stops, 120000);
+          keep(c, "Nhận xét của người chấm");
+          if (c && noErrors(c.answer)) restore(main);
           else {
-            reply.fallback = first;
-            step("Bước 5/5: sửa lỗi lần cuối", undefined);
-            await judge([...history, { role: "assistant", content: final1.slice(0, 12000) }, { role: "user", content: FIX_PROMPT.replace("{C}", f.answer.slice(0, 6000)) }], reply, node);
+            step("Bước 4/4: sửa lỗi và viết câu trả lời cuối", undefined);
+            await judge([...history, { role: "assistant", content: draft.slice(0, 12000) },
+              { role: "user", content: c ? FIX_PROMPT.replace("{C}", c.answer.slice(0, 6000)) : REVIEW_PROMPT }], reply, node);
           }
         }
-      }
 
-      // Mức Ultra: vòng 1 giải độc lập; vòng 2 trao đổi suy luận và sửa cho nhau; kiểm tra đồng thuận, còn bất đồng thì thêm vòng 3;
-      // giám khảo tổng hợp; các mô hình khác kiểm tra chéo; giám khảo tinh chỉnh; kiểm tra lần cuối (sửa xong thì kiểm lại thêm một lần).
-      if (draft && level === "ultra") {
-        const tag = (t, i, model, text) => `<${t}_${"ABCDE"[i]} mo_hinh="${model}">\n${text}\n</${t}_${"ABCDE"[i]}>`;
-        const listOf = (arr) => arr.map((x, i) => tag("loi_giai", i, x.name, x.answer.slice(0, 5000))).join("\n\n");
-        const main = (reply.fallback = shelve("Vòng 1: lời giải 1"));
-        step("Bước 2/8: chờ các mô hình khác giải xong vòng 1", "Đang chờ các mô hình khác giải xong…");
-        const r1 = await gather(solvers, solverStops, Math.max(60000, 210000 - (Date.now() - solverStart)));
-        let team = [{ model: cloudModel(), name: main.model, answer: draft }];
-        r1.forEach((o, i) => { if (o) { keep(o, `Vòng 1: lời giải ${team.length + 1}`); team.push({ model: helpers[i], name: o.draft.model, answer: o.answer }); } });
-        // Bước 3: trao đổi. Mỗi mô hình đọc lời giải của cả nhóm, kiểm chứng chỗ mâu thuẫn và viết lại lời giải đã cải tiến.
-        const roundOf = async (prompt, label, ms) => {
-          const st = [];
-          const res = await gather(team.map((x, i) => silentRun(withNote(base, prompt.replace("{L}", "ABCDE"[i])), x.model, st)), st, ms);
-          res.forEach((o, i) => { if (o) keep(o, `${label}: lời giải ${i + 1}`); });
-          team = team.map((x, i) => (res[i] ? { model: x.model, name: res[i].draft.model, answer: res[i].answer } : x));
-        };
-        step(`Bước 3/8: ${team.map((x) => title(x.model)).join(", ")} trao đổi suy luận và sửa lời giải`, "Các mô hình đang trao đổi và sửa lời giải cho nhau…");
-        await roundOf(DEBATE_PROMPT.replace("{S}", listOf(team)), "Vòng 2 sau trao đổi", 180000);
-        // Bước 4: so sánh kết luận; còn bất đồng thì thêm vòng 3 chỉ bàn về chỗ bất đồng.
-        if (team.length > 1) {
-          step("Bước 4/8: kiểm tra các mô hình đã thống nhất chưa", "Đang so sánh kết luận của các mô hình…");
-          const cst = [];
-          const [cons] = await gather([silentRun(withNote(history, CONSENSUS_PROMPT.replace("{S}", listOf(team))), cloudModel(), cst, true)], cst, 60000);
-          keep(cons, "So sánh kết luận");
-          const split = cons?.answer.match(/BẤT ĐỒNG\s*:?([\s\S]*)$/);
-          if (split) {
-            step("Bước 4/8: vòng 3, trao đổi tiếp về chỗ còn bất đồng", "Các mô hình đang tranh luận về chỗ còn bất đồng…");
-            await roundOf(DEBATE2_PROMPT.replace("{S}", listOf(team)).replace("{D}", (split[1].trim() || cons.answer).slice(0, 3000)), "Vòng 3", 150000);
-          }
-        }
-        // Bước 5: giám khảo (mô hình đang chọn) tổng hợp các lời giải đã cải tiến.
-        step("Bước 5/8: giám khảo tổng hợp các lời giải", undefined);
-        const [lead, ...rest] = team;
-        const review = REVIEW_MULTI_PROMPT.replace("{N}", rest.length)
-          .replace("{B}", rest.length ? rest.map((x, i) => tag("loi_giai", i + 1, x.name, x.answer.slice(0, 5000))).join("\n\n") : "(không có)")
-          .replace("{K}", "(các lời giải trên đã được các mô hình trao đổi và sửa cho nhau qua nhiều vòng)");
-        await judge([...history, { role: "assistant", content: lead.answer.slice(0, 8000) }, { role: "user", content: review }], reply, node);
-        let current = splitThink(reply.content).answer.trim();
-        if (current && !reply.judgeFailed) {
-          // Bước 6: các mô hình khác cùng soát câu trả lời của giám khảo.
-          const synth = shelve("Câu trả lời của giám khảo trước kiểm tra chéo");
-          const checkers = helpers.length ? helpers : [cloudModel()], cstops = [];
-          step(`Bước 6/8: ${checkers.map(title).join(", ")} kiểm tra chéo câu trả lời`, "Đang kiểm tra chéo…");
-          const crits = (await gather(checkers.map((m) => silentRun([...history, { role: "assistant", content: current.slice(0, 12000) },
-            { role: "user", content: CRITIC_PROMPT }], m, cstops)), cstops, 120000)).filter(Boolean);
+        // Mức Tối đa: chờ các lời giải khác, kiểm tra chéo, tổng hợp, rồi một mô hình khác kiểm tra lần cuối.
+        if (draft && level === "max") {
+          const main = (reply.fallback = shelve("Lời giải 1"));
+          step("Bước 2/5: chờ các mô hình khác giải xong", "Đang chờ các mô hình khác giải xong…");
+          // Chờ thêm tối đa 60 giây sau khi mô hình chính xong (tổng không quá khoảng 3 phút); lời giải dở dang vẫn dùng nếu đủ dài.
+          const others = (await gather(solvers, solverStops, Math.max(60000, 180000 - (Date.now() - solverStart)))).filter(Boolean);
+          others.forEach((o, i) => keep(o, `Lời giải ${i + 2}`));
+          const sols = [{ model: main.model, answer: draft }, ...others.map((o) => ({ model: o.draft.model, answer: o.answer }))];
+          const tag = (t, i, model, text) => `<${t}_${"ABCD"[i]} mo_hinh="${model}">\n${text}\n</${t}_${"ABCD"[i]}>`;
+          // Bước 3: kiểm tra chéo, mỗi mô hình soát tất cả các lời giải.
+          const checkers = [cloudModel(), ...helpers], cstops = [];
+          step(`Bước 3/5: ${checkers.map(title).join(", ")} kiểm tra chéo`, "Đang kiểm tra chéo các lời giải…");
+          const solText = sols.map((x, i) => tag("loi_giai", i, x.model, x.answer.slice(0, 6000))).join("\n\n");
+          const crits = (await gather(checkers.map((m) => silentRun(withNote(history, CROSS_PROMPT.replace("{S}", solText)), m, cstops)), cstops, 90000)).filter(Boolean);
           crits.forEach((c) => keep(c, "Kiểm tra chéo"));
-          const problems = crits.filter((c) => !noErrors(c.answer));
-          if (!problems.length) restore(synth);
-          else {
-            // Bước 7: giám khảo tinh chỉnh theo các nhận xét (tự kiểm chứng từng ý, vì người soát cũng có thể sai).
-            reply.fallback = synth;
-            step("Bước 7/8: giám khảo tinh chỉnh theo các nhận xét", undefined);
-            await judge([...history, { role: "assistant", content: current.slice(0, 12000) },
-              { role: "user", content: FIX_PROMPT.replace("{C}", problems.map((c, i) => tag("nhan_xet", i, c.draft.model, c.answer.slice(0, 4000))).join("\n\n")) }], reply, node);
+          // Bước 4: mô hình chính tổng hợp, kiểm chứng và viết câu trả lời.
+          step("Bước 4/5: tổng hợp, kiểm chứng và viết câu trả lời", undefined);
+          const review = REVIEW_MULTI_PROMPT.replace("{N}", others.length)
+            .replace("{B}", others.length ? others.map((o, i) => tag("loi_giai", i + 1, o.draft.model, o.answer.slice(0, 6000))).join("\n\n") : "(không có)")
+            .replace("{K}", crits.length ? crits.map((c, i) => tag("kiem_tra", i, c.draft.model, c.answer.slice(0, 4000))).join("\n\n") : "(không có)");
+          await judge([...history, { role: "assistant", content: draft.slice(0, 8000) }, { role: "user", content: review }], reply, node);
+          // Bước 5: một mô hình khác kiểm tra lần cuối; còn lỗi thì sửa thêm một lượt.
+          const final1 = splitThink(reply.content).answer.trim();
+          if (final1 && !reply.judgeFailed) {
+            const first = shelve("Câu trả lời trước bước kiểm tra cuối");
+            const checker = helpers[0] || cloudModel(), fstops = [];
+            step(`Bước 5/5: ${title(checker)} kiểm tra lần cuối`, "Đang kiểm tra lần cuối…");
+            const [f] = await gather([silentRun([...history, { role: "assistant", content: final1.slice(0, 12000) }, { role: "user", content: FINAL_CHECK_PROMPT }], checker, fstops)], fstops, 90000);
+            keep(f, "Kiểm tra lần cuối");
+            if (!f || noErrors(f.answer)) restore(first);
+            else {
+              reply.fallback = first;
+              step("Bước 5/5: sửa lỗi lần cuối", undefined);
+              await judge([...history, { role: "assistant", content: final1.slice(0, 12000) }, { role: "user", content: FIX_PROMPT.replace("{C}", f.answer.slice(0, 6000)) }], reply, node);
+            }
           }
-          // Bước 8: một mô hình khác kiểm tra lần cuối; còn lỗi thì sửa rồi kiểm lại (tối đa 2 lượt).
-          for (let pass = 0; pass < 2; pass++) {
-            current = splitThink(reply.content).answer.trim();
-            if (!current || reply.judgeFailed) break;
-            const before = shelve(pass ? "Câu trả lời sau lần sửa cuối" : "Câu trả lời trước bước kiểm tra cuối");
-            const checker = helpers[(helpers.length - 1 - pass + helpers.length) % Math.max(1, helpers.length)] || cloudModel(), fstops = [];
-            step(`Bước 8/8: ${title(checker)} kiểm tra lần cuối${pass ? " (lượt 2)" : ""}`, "Đang kiểm tra lần cuối…");
-            const [f] = await gather([silentRun([...history, { role: "assistant", content: current.slice(0, 12000) }, { role: "user", content: FINAL_CHECK_PROMPT }], checker, fstops)], fstops, 120000);
-            keep(f, pass ? "Kiểm tra lần cuối (lượt 2)" : "Kiểm tra lần cuối");
-            if (!f || noErrors(f.answer)) { restore(before); break; }
-            reply.fallback = before;
-            step(`Bước 8/8: sửa lỗi lần cuối${pass ? " (lượt 2)" : ""}`, undefined);
-            await judge([...history, { role: "assistant", content: current.slice(0, 12000) }, { role: "user", content: FIX_PROMPT.replace("{C}", f.answer.slice(0, 6000)) }], reply, node);
+        }
+
+        // Mức Ultra: vòng 1 giải độc lập; vòng 2 trao đổi suy luận và sửa cho nhau; kiểm tra đồng thuận, còn bất đồng thì thêm vòng 3;
+        // giám khảo tổng hợp; các mô hình khác kiểm tra chéo; giám khảo tinh chỉnh; kiểm tra lần cuối (sửa xong thì kiểm lại thêm một lần).
+        if (draft && level === "ultra") {
+          const tag = (t, i, model, text) => `<${t}_${"ABCDE"[i]} mo_hinh="${model}">\n${text}\n</${t}_${"ABCDE"[i]}>`;
+          const listOf = (arr) => arr.map((x, i) => tag("loi_giai", i, x.name, x.answer.slice(0, 5000))).join("\n\n");
+          const main = (reply.fallback = shelve("Vòng 1: lời giải 1"));
+          step("Bước 2/8: chờ các mô hình khác giải xong vòng 1", "Đang chờ các mô hình khác giải xong…");
+          const r1 = await gather(solvers, solverStops, Math.max(60000, 210000 - (Date.now() - solverStart)));
+          let team = [{ model: cloudModel(), name: main.model, answer: draft }];
+          r1.forEach((o, i) => { if (o) { keep(o, `Vòng 1: lời giải ${team.length + 1}`); team.push({ model: helpers[i], name: o.draft.model, answer: o.answer }); } });
+          // Bước 3: trao đổi. Mỗi mô hình đọc lời giải của cả nhóm, kiểm chứng chỗ mâu thuẫn và viết lại lời giải đã cải tiến.
+          const roundOf = async (prompt, label, ms) => {
+            const st = [];
+            const res = await gather(team.map((x, i) => silentRun(withNote(base, prompt.replace("{L}", "ABCDE"[i])), x.model, st)), st, ms);
+            res.forEach((o, i) => { if (o) keep(o, `${label}: lời giải ${i + 1}`); });
+            team = team.map((x, i) => (res[i] ? { model: x.model, name: res[i].draft.model, answer: res[i].answer } : x));
+          };
+          step(`Bước 3/8: ${team.map((x) => title(x.model)).join(", ")} trao đổi suy luận và sửa lời giải`, "Các mô hình đang trao đổi và sửa lời giải cho nhau…");
+          await roundOf(DEBATE_PROMPT.replace("{S}", listOf(team)), "Vòng 2 sau trao đổi", 180000);
+          // Bước 4: so sánh kết luận; còn bất đồng thì thêm vòng 3 chỉ bàn về chỗ bất đồng.
+          if (team.length > 1) {
+            step("Bước 4/8: kiểm tra các mô hình đã thống nhất chưa", "Đang so sánh kết luận của các mô hình…");
+            const cst = [];
+            const [cons] = await gather([silentRun(withNote(history, CONSENSUS_PROMPT.replace("{S}", listOf(team))), cloudModel(), cst, true)], cst, 60000);
+            keep(cons, "So sánh kết luận");
+            const split = cons?.answer.match(/BẤT ĐỒNG\s*:?([\s\S]*)$/);
+            if (split) {
+              step("Bước 4/8: vòng 3, trao đổi tiếp về chỗ còn bất đồng", "Các mô hình đang tranh luận về chỗ còn bất đồng…");
+              await roundOf(DEBATE2_PROMPT.replace("{S}", listOf(team)).replace("{D}", (split[1].trim() || cons.answer).slice(0, 3000)), "Vòng 3", 150000);
+            }
+          }
+          // Bước 5: giám khảo (mô hình đang chọn) tổng hợp các lời giải đã cải tiến.
+          step("Bước 5/8: giám khảo tổng hợp các lời giải", undefined);
+          const [lead, ...rest] = team;
+          const review = REVIEW_MULTI_PROMPT.replace("{N}", rest.length)
+            .replace("{B}", rest.length ? rest.map((x, i) => tag("loi_giai", i + 1, x.name, x.answer.slice(0, 5000))).join("\n\n") : "(không có)")
+            .replace("{K}", "(các lời giải trên đã được các mô hình trao đổi và sửa cho nhau qua nhiều vòng)");
+          await judge([...history, { role: "assistant", content: lead.answer.slice(0, 8000) }, { role: "user", content: review }], reply, node);
+          let current = splitThink(reply.content).answer.trim();
+          if (current && !reply.judgeFailed) {
+            // Bước 6: các mô hình khác cùng soát câu trả lời của giám khảo.
+            const synth = shelve("Câu trả lời của giám khảo trước kiểm tra chéo");
+            const checkers = helpers.length ? helpers : [cloudModel()], cstops = [];
+            step(`Bước 6/8: ${checkers.map(title).join(", ")} kiểm tra chéo câu trả lời`, "Đang kiểm tra chéo…");
+            const crits = (await gather(checkers.map((m) => silentRun([...history, { role: "assistant", content: current.slice(0, 12000) },
+              { role: "user", content: CRITIC_PROMPT }], m, cstops)), cstops, 120000)).filter(Boolean);
+            crits.forEach((c) => keep(c, "Kiểm tra chéo"));
+            const problems = crits.filter((c) => !noErrors(c.answer));
+            if (!problems.length) restore(synth);
+            else {
+              // Bước 7: giám khảo tinh chỉnh theo các nhận xét (tự kiểm chứng từng ý, vì người soát cũng có thể sai).
+              reply.fallback = synth;
+              step("Bước 7/8: giám khảo tinh chỉnh theo các nhận xét", undefined);
+              await judge([...history, { role: "assistant", content: current.slice(0, 12000) },
+                { role: "user", content: FIX_PROMPT.replace("{C}", problems.map((c, i) => tag("nhan_xet", i, c.draft.model, c.answer.slice(0, 4000))).join("\n\n")) }], reply, node);
+            }
+            // Bước 8: một mô hình khác kiểm tra lần cuối; còn lỗi thì sửa rồi kiểm lại (tối đa 2 lượt).
+            for (let pass = 0; pass < 2; pass++) {
+              current = splitThink(reply.content).answer.trim();
+              if (!current || reply.judgeFailed) break;
+              const before = shelve(pass ? "Câu trả lời sau lần sửa cuối" : "Câu trả lời trước bước kiểm tra cuối");
+              const checker = helpers[(helpers.length - 1 - pass + helpers.length) % Math.max(1, helpers.length)] || cloudModel(), fstops = [];
+              step(`Bước 8/8: ${title(checker)} kiểm tra lần cuối${pass ? " (lượt 2)" : ""}`, "Đang kiểm tra lần cuối…");
+              const [f] = await gather([silentRun([...history, { role: "assistant", content: current.slice(0, 12000) }, { role: "user", content: FINAL_CHECK_PROMPT }], checker, fstops)], fstops, 120000);
+              keep(f, pass ? "Kiểm tra lần cuối (lượt 2)" : "Kiểm tra lần cuối");
+              if (!f || noErrors(f.answer)) { restore(before); break; }
+              reply.fallback = before;
+              step(`Bước 8/8: sửa lỗi lần cuối${pass ? " (lượt 2)" : ""}`, undefined);
+              await judge([...history, { role: "assistant", content: current.slice(0, 12000) }, { role: "user", content: FIX_PROMPT.replace("{C}", f.answer.slice(0, 6000)) }], reply, node);
+            }
           }
         }
       }
@@ -1996,8 +2452,8 @@
     } finally {
       controller?.abort(); // dừng các lời giải của hội đồng còn đang chạy
       controller = null;
-      delete reply.notice; delete reply.stage; delete reply.fallback; delete reply.judgeFailed;
-      reply.cutWarning = !reply.error && !!codeCut(splitThink(reply.content).answer.trim()) || undefined;
+      delete reply.notice; delete reply.stage; delete reply.fallback; delete reply.judgeFailed; delete reply.noGaps;
+      reply.cutWarning = unfinished(reply, chat);
       saveRemembered(reply, chat.messages.at(-2)?.content || "");
       setBusy(false);
       chat.updated = Date.now();
@@ -2044,6 +2500,17 @@
     if (!reply.drafts.length) delete reply.drafts;
   }
 
+  // Toàn bộ file của dự án thành các khối code có tên file (để mô hình thấy đủ dự án khi sửa).
+  // Khối ``` lồng trong file Markdown (README, PLAN) đổi thành ~~~ để không làm vỡ khối của file.
+  const projectDump = (files) => [...files].map(([p, c]) => "```" + (extOf(p) === "md" ? "markdown" : extOf(p)) + " " + p + "\n" +
+    (extOf(p) === "md" ? c.replace(/^([ \t]*)```/gm, "$1~~~") : c) + "\n```").join("\n\n");
+  // Câu trả lời gửi lại cho mô hình: bản tự sửa của dự án nhiều file chỉ có các file đã đổi, nên kèm bản đầu để mô hình thấy đủ dự án.
+  function historyAnswer(m) {
+    const answer = splitThink(m.content).answer.trim();
+    const first = (m.drafts || []).find((d) => /^Bản đầu/.test(d.label || ""));
+    if (!first || !filesIn(answer).length || filesIn(splitThink(first.content).answer).length < 2) return answer;
+    return splitThink(first.content).answer.trim() + "\n\n(Sau khi tự chạy thử, đã sửa các file sau:)\n\n" + answer;
+  }
   // Tự chạy thử trang web trong một khung ẩn khổ điện thoại (390px): bắt lỗi JavaScript và lỗi tải tài nguyên, bấm thử mọi nút,
   // kiểm tra trang có bị tràn ngang không. Khung có sandbox (không đọc được dữ liệu của trang chat).
   function checkWebPage(code) {
@@ -2068,7 +2535,7 @@
       };
       const timer = setTimeout(() => finish(0), 8000);
       addEventListener("message", onMsg);
-      frame.srcdoc = /<head[^>]*>/i.test(code) ? code.replace(/<head[^>]*>/i, (h) => h + probe) : probe + code;
+      frame.srcdoc = withShim(code, storageShim() + probe);
       document.body.append(frame);
     });
   }
@@ -2076,32 +2543,68 @@
     "Trang web trong câu trả lời vừa rồi được chạy thử tự động (khung điện thoại 390px, bấm thử mọi nút) và gặp lỗi:\n{E}\n\n" +
     "Hãy tìm đúng nguyên nhân từng lỗi và sửa, giữ nguyên các phần đang đúng và đủ mọi tính năng. Viết lại TRỌN câu trả lời với file HTML hoàn chỉnh " +
     "đã sửa trong một khối ```html (không chỉ đoạn sửa), kèm một dòng ngắn nói đã sửa gì.";
+  const PROJECT_FIX_PROMPT =
+    "Dự án web nhiều file trong các câu trả lời vừa rồi được chạy thử tự động (khung điện thoại 390px, bấm thử mọi nút trên từng trang) và gặp lỗi:\n{E}\n\n" +
+    "Hãy tìm đúng nguyên nhân từng lỗi và sửa, giữ nguyên các phần đang đúng. Chỉ viết lại TRỌN những file cần sửa, mỗi file một khối code có tên file " +
+    "ở dòng mở khối (ví dụ ```js js/app.js), đúng đường dẫn cũ; file không đổi thì không viết lại. Kèm một dòng ngắn nói đã sửa gì.";
+  // Chạy thử mọi trang của dự án (tối đa 4 trang), gộp lỗi kèm tên trang.
+  async function checkProject(files) {
+    const problems = [];
+    const pages = [...files.keys()].filter((p) => /\.html?$/i.test(p)).sort((a, b) => (a === mainPage(files) ? -1 : b === mainPage(files) ? 1 : 0)).slice(0, 4);
+    for (const p of pages) {
+      const r = await checkWebPage(bundlePage(files, p));
+      for (const e of r.errors) problems.push(`${p}: ${e}`);
+      if (r.overflow) problems.push(`${p}: trên điện thoại (khung 390px) trang bị tràn ngang, rộng ${r.overflow}px.`);
+    }
+    // Trang dẫn tới file không có trong dự án.
+    for (const p of pages) {
+      const dir = p.includes("/") ? p.slice(0, p.lastIndexOf("/") + 1) : "";
+      for (const [, ref] of files.get(p).matchAll(/\b(?:href|src)\s*=\s*["']([^"'#?]+)["']/gi)) {
+        if (/^([a-z][\w+.-]*:|\/\/|data:)/i.test(ref) || /\$\{|\{\{/.test(ref)) continue;
+        const target = cleanPath((ref.startsWith("/") ? "" : dir) + ref);
+        if (target && !files.has(target) && /\.(html?|css|js|json|svg)$/i.test(target)) problems.push(`${p}: dẫn tới file ${ref} nhưng dự án không có file ${target}.`);
+      }
+    }
+    return [...new Set(problems)].slice(0, 15);
+  }
   async function autoFixWeb(history, reply, node) {
+    // Câu trả lời chưa viết xong (code bị ngắt, dự án thiếu file) thì chưa chạy thử: nút Viết tiếp sẽ viết nốt rồi chạy thử sau.
+    if (unfinished(reply, genChat)) return;
     for (let round = 0; round < 3; round++) {
       const answer = splitThink(reply.content).answer;
-      const html = [...answer.matchAll(/```html[^\n]*\n([\s\S]*?)\n[ \t]*```/g)].map((m) => m[1]).filter((c) => /<(html|body)\b/i.test(c)).at(-1);
-      if (!html) return;
-      reply.notice = round ? "Đang chạy thử lại trang web đã sửa…" : "Đang chạy thử trang web…";
+      const chat = genChat?.messages.includes(reply) ? genChat : null;
+      const files = chat && projectAt(chat, chat.messages.indexOf(reply));
+      const html = files ? null : [...answer.matchAll(/```html[^\n]*\n([\s\S]*?)\n[ \t]*```/g)].map((m) => m[1]).filter((c) => /<(html|body)\b/i.test(c)).at(-1);
+      if (!html && !files) return;
+      const what = files ? "dự án web" : "trang web";
+      reply.notice = round ? `Đang chạy thử lại ${what} đã sửa…` : `Đang chạy thử ${what}…`;
       paintAssistant(node, reply, true);
-      const r = await checkWebPage(html);
+      let problems;
+      if (files) problems = await checkProject(files);
+      else {
+        const r = await checkWebPage(html);
+        problems = [...r.errors, ...(r.overflow ? [`Trên điện thoại (khung 390px) trang bị tràn ngang, rộng ${r.overflow}px: có phần tử rộng cố định hoặc thiếu max-width, flex-wrap.`] : [])];
+      }
       delete reply.notice;
-      const problems = [...r.errors, ...(r.overflow ? [`Trên điện thoại (khung 390px) trang bị tràn ngang, rộng ${r.overflow}px: có phần tử rộng cố định hoặc thiếu max-width, flex-wrap.`] : [])];
       if (!problems.length) {
-        reply.webCheck = round ? "Đã tự sửa lỗi và chạy thử lại trang web: không còn lỗi" : "Đã tự chạy thử trang web: không có lỗi JavaScript, các nút bấm được, không tràn ngang trên điện thoại";
+        reply.webCheck = round ? `Đã tự sửa lỗi và chạy thử lại ${what}: không còn lỗi`
+          : files ? `Đã tự chạy thử dự án (${files.size} file): các trang không có lỗi JavaScript, các nút bấm được, không thiếu file, không tràn ngang trên điện thoại`
+          : "Đã tự chạy thử trang web: không có lỗi JavaScript, các nút bấm được, không tràn ngang trên điện thoại";
         return;
       }
       if (round === 2) { reply.webCheck = "Đã tự sửa 2 lần nhưng trang còn lỗi: " + problems.slice(0, 3).join("; "); return; }
       const old = { content: reply.content, reasoning: reply.reasoning, thinkSecs: reply.thinkSecs, model: reply.drafter, label: round ? "Bản sửa lần 1 (vẫn còn lỗi)" : "Bản đầu (có lỗi khi chạy thử)" };
       reply.drafts = [...(reply.drafts || []), old];
       Object.assign(reply, { content: "", reasoning: "", thinkSecs: null, tps: null, review: true, via: undefined, notice: "Trang có lỗi khi chạy thử, đang tự sửa…" });
-      await answerWithTools([...history, { role: "assistant", content: answer.slice(0, 30000) },
-        { role: "user", content: WEB_FIX_PROMPT.replace("{E}", problems.map((x) => "- " + x).join("\n")) }], reply, node);
+      await answerWithTools([...history, { role: "assistant", content: (files ? projectDump(files) : answer).slice(0, 60000) },
+        { role: "user", content: (files ? PROJECT_FIX_PROMPT : WEB_FIX_PROMPT).replace("{E}", problems.map((x) => "- " + x).join("\n")) }], reply, node);
       delete reply.notice;
-      if (!splitThink(reply.content).answer.includes("```html")) {
+      const fixed = splitThink(reply.content).answer;
+      if (files ? !filesIn(fixed).length : !fixed.includes("```html")) {
         // Bản sửa không có trang web: giữ bản trước.
         Object.assign(reply, { content: old.content, reasoning: old.reasoning, thinkSecs: old.thinkSecs });
         reply.drafts.pop();
-        reply.webCheck = "Trang còn lỗi khi chạy thử: " + problems.slice(0, 3).join("; ");
+        reply.webCheck = (files ? "Dự án" : "Trang") + " còn lỗi khi chạy thử: " + problems.slice(0, 3).join("; ");
         return;
       }
     }
@@ -2145,25 +2648,301 @@
   // Trả lời, và mỗi khi mô hình viết khối ```js-run hoặc ```search thì chạy công cụ rồi cho nó viết tiếp với kết quả (tối đa 5 lần).
   const TOOL_ROUNDS = 8;
   const MAX_OUTPUT = 131072; // xin độ dài tối đa; máy chủ tự hạ xuống mức mỗi mô hình cho phép
-  const CONTINUE_LIMIT = 8; // số lần tự viết tiếp tối đa khi câu trả lời chạm giới hạn độ dài hoặc dừng giữa khối code
+  const CONTINUE_LIMIT = 16; // số lần tự viết tiếp tối đa cho một câu trả lời (code bị ngắt, chạm giới hạn độ dài, dự án còn thiếu file)
   // Còn khối code mở mà chưa đóng (số dòng bắt đầu bằng ``` là số lẻ).
   const unclosedFence = (text) => (text.match(/^\s*```/gm) || []).length % 2 === 1;
-  // Câu trả lời kết thúc bằng một khối code chưa viết xong. "open": khối chưa đóng. "closed": khối đã đóng nhưng code chưa trọn
-  // (trang HTML thiếu </html>, hoặc code thiếu dấu } đóng), tức mô hình hoặc luồng dừng giữa chừng. "": không thấy dấu hiệu bị cắt.
-  // Chỉ xét khối ở cuối câu trả lời (sau khối không còn chữ), nên câu trả lời có giải thích phía sau không bị coi là cắt.
-  const BRACE_LANGS = /^(c|cpp|c\+\+|cc|h|hpp|java|javascript|js|jsx|ts|tsx|typescript|css|scss|json|cs|csharp|go|golang|rust|rs|kotlin|kt|swift|php|dart|scala|js-run|cpp-run)$/;
+  // Ngôn ngữ và tên file ở dòng mở khối: ```css css/style.css, ```js:js/app.js, ```index.html, ```html title="about.html".
+  function fenceInfo(info) {
+    const m = String(info || "").match(/^\s*([\w+#.-]*)[\s:]*(.*)$/) || ["", "", ""];
+    let lang = m[1], path = (m[2].replace(/^(title|file|filename|path|name)\s*=\s*/i, "").replace(/["']/g, "").trim().match(/^\S+\.[A-Za-z0-9]{1,8}$/) || [""])[0];
+    if (!path && /\.[A-Za-z0-9]{1,8}$/.test(lang) && lang.includes(".") && !NOT_FILES.test(lang)) { path = lang; lang = extOf(lang); }
+    if (lang === "htm") lang = "html";
+    return { lang: lang.toLowerCase(), path: path ? cleanPath(path) : "" };
+  }
+  const BRACE_LANGS = /^(c|cpp|c\+\+|cc|h|hpp|java|javascript|js|mjs|cjs|jsx|ts|tsx|typescript|css|scss|less|json|cs|csharp|go|golang|rust|rs|kotlin|kt|swift|php|dart|scala|js-run|cpp-run)$/;
+  const JS_LANGS = /^(javascript|js|mjs|cjs|jsx|ts|tsx|typescript|js-run)$/;
+  // Code đã trọn chưa: trang HTML có thẻ đóng html hoặc body và đủ thẻ đóng script; code có ngoặc nhọn thì số { và } bằng nhau
+  // (bỏ chuỗi, chú thích và regex của JS trước khi đếm, vì {3} trong regex hay { trong chuỗi không phải ngoặc khối).
+  function codeComplete(lang, code) {
+    if (lang === "html" || lang === "htm") {
+      if (/<(html|body)\b/i.test(code) && !/<\/(html|body)>/i.test(code)) return false;
+      if ((code.match(/<script\b/gi) || []).length > (code.match(/<\/script>/gi) || []).length) return false;
+      return true;
+    }
+    if (!BRACE_LANGS.test(lang)) return true;
+    let bare = code.replace(/"(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|`(?:\\.|[^`\\])*`|\/\*[\s\S]*?\*\/|(^|[^:\\])\/\/[^\n]*/g, "$1");
+    if (JS_LANGS.test(lang)) bare = bare.replace(/(^|[=(,:;!&|?{}[\n]|return)\s*\/(?![*/\s])(?:\\.|\[(?:\\.|[^\]\\\n])*\]|[^/\\\n])+\/[a-z]*/g, "$1");
+    return (bare.match(/\{/g) || []).length <= (bare.match(/\}/g) || []).length;
+  }
+  // Câu trả lời kết thúc bằng một khối code chưa viết xong. "open": khối chưa đóng. "closed": khối đã đóng nhưng code chưa trọn,
+  // tức mô hình hoặc luồng dừng giữa chừng. "": không thấy dấu hiệu bị cắt. Chỉ xét khối ở cuối câu trả lời (sau khối không còn chữ).
   function codeCut(text) {
     if (unclosedFence(text)) return "open";
-    const m = text.match(/```([\w+#.-]*)[^\n]*\n([\s\S]*?)\n[ \t]*```[ \t]*$/);
+    const m = text.match(/```([^\n`]*)\n([\s\S]*?)\n[ \t]*```[ \t]*$/);
     if (!m) return "";
-    const lang = m[1].toLowerCase(), code = m[2];
-    if (lang === "html" && /<(html|body)\b/i.test(code) && !/<\/html>/i.test(code)) return "closed";
-    if (BRACE_LANGS.test(lang)) {
-      // Bỏ chuỗi và chú thích trước khi đếm ngoặc, để dấu { trong chuỗi không làm sai.
-      const bare = code.replace(/"(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'|`(?:\\.|[^`\\])*`|\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, "");
-      if ((bare.match(/\{/g) || []).length > (bare.match(/\}/g) || []).length) return "closed";
+    return codeComplete(fenceInfo(m[1]).lang, m[2]) ? "" : "closed";
+  }
+
+  // ---------- Viết cho xong câu trả lời ----------
+  // File của dự án đã có trước câu trả lời này: các câu trả lời trước trong đoạn chat và các bản đầu đã được tự sửa.
+  function baseFiles(reply, chat = genChat) {
+    const files = new Map();
+    if (!chat) return files;
+    const add = (text) => { for (const [p, c] of filesIn(splitThink(text || "").answer)) files.set(p, c); };
+    const i = chat.messages.indexOf(reply);
+    chat.messages.slice(0, i >= 0 ? i : chat.messages.length - 1).forEach((m) => { if (m.role === "assistant") add(m.content); });
+    if (i >= 0) for (const d of reply.drafts || []) if (/^Bản (đầu|sửa)/.test(d.label || "")) add(d.content);
+    return files;
+  }
+  const TEXT_FILE = /\.(html?|css|scss|less|m?js|cjs|jsx|tsx?|vue|svelte|json|md|txt|svg|csv|xml|py|toml|ya?ml|sql|sh|example)$/i;
+  const SKIP_FILE = /(^|\/)(node_modules|dist|build|out|coverage|\.git|\.next|\.nuxt|vendor|public\/assets\/img)\/|(^|\/)(package-lock\.json|yarn\.lock|pnpm-lock\.yaml|\.env|\.DS_Store|favicon\.svg)$/i;
+  // Các file được liệt kê trong sơ đồ thư mục (khối ```text có ├── └── hoặc thư mục kết thúc bằng /).
+  function treeFiles(text) {
+    const lists = [];
+    for (const m of String(text).matchAll(/^[ \t]*```(?:text|txt|plaintext|tree|bash|sh|)[ \t]*\n([\s\S]*?)\n[ \t]*```/gm)) {
+      if (!/[├└│]|^\s*[\w.-]+\/\s*$/m.test(m[1])) continue;
+      const stack = [], paths = [];
+      for (const raw of m[1].split("\n")) {
+        const line = raw.replace(/\s+(#|←|<-|--|\/\/|—|–).*$/, "").replace(/\s+$/, "");
+        const col = line.search(/[^\s│├└─|`+\-]/);
+        if (col < 0) continue;
+        const name = line.slice(col).trim();
+        if (!/^[\w@.()[\]-]+\/?$/.test(name)) continue;
+        while (stack.length && stack.at(-1).col >= col) stack.pop();
+        if (name.endsWith("/")) stack.push({ col, name: name.slice(0, -1) });
+        else if (/\.[A-Za-z0-9]{1,8}$/.test(name) || /^\.env\./.test(name)) paths.push([...stack.map((s) => s.name), name].join("/"));
+      }
+      if (paths.length) lists.push(paths);
     }
-    return "";
+    return lists;
+  }
+  // Dự án nhiều file còn thiếu gì: file được trang dẫn tới (link, script, fetch) hoặc có trong sơ đồ thư mục mà chưa viết,
+  // và file đã viết nhưng chưa trọn (trang thiếu thẻ đóng, CSS/JS thiếu ngoặc, JSON không hợp lệ).
+  function projectGaps(text, base) {
+    const own = filesIn(text);
+    if (!own.length) return null;
+    const files = new Map([...base, ...own]);
+    if (files.size < 2 || ![...files.keys()].some((p) => /\.html?$/i.test(p))) return null;
+    const missing = new Set(), broken = new Set();
+    const want = (t) => t && !files.has(t) && TEXT_FILE.test(t) && !SKIP_FILE.test(t);
+    const local = (ref) => ref && !/^([a-z][\w+.-]*:|\/\/|#|data:)/i.test(ref) && !/[${}<>\s]/.test(ref);
+    const ownMap = new Map(own);
+    for (const [p, c] of ownMap) {
+      const dir = p.includes("/") ? p.slice(0, p.lastIndexOf("/") + 1) : "";
+      if (/\.html?$/i.test(p)) {
+        for (const m of c.matchAll(/<(?:link|script|a|iframe|img|source)\b[^>]*?\b(?:href|src)\s*=\s*["']([^"'#?]+)/gi)) {
+          if (!local(m[1])) continue;
+          const t = cleanPath((m[1].startsWith("/") ? "" : dir) + m[1]);
+          if (want(t)) missing.add(t);
+        }
+      }
+      // fetch("data/x.json") tính theo vị trí trang (thường ở gốc), không theo vị trí file JS.
+      for (const m of c.matchAll(/\bfetch\(\s*["'`]([^"'`$#?]+)["'`]/g)) {
+        if (!local(m[1]) || !/\.(json|csv|txt|md|xml|svg)$/i.test(m[1])) continue;
+        const a = cleanPath(m[1]), b = cleanPath(dir + m[1]);
+        if (!files.has(a) && !files.has(b) && want(a)) missing.add(a);
+      }
+      const lang = extOf(p);
+      if (lang === "json") { try { JSON.parse(c); } catch { broken.add(p); } }
+      else if (!codeComplete(lang === "htm" ? "html" : lang, c)) broken.add(p);
+    }
+    for (let paths of treeFiles(text)) {
+      // Thư mục gốc của sơ đồ (may-cafe/) không phải một phần đường dẫn.
+      const first = paths[0].split("/")[0];
+      if (paths.every((p) => p.startsWith(first + "/")) && ![...files.keys()].some((p) => p.startsWith(first + "/"))) paths = paths.map((p) => p.slice(first.length + 1));
+      for (const p of paths) if (want(cleanPath(p))) missing.add(cleanPath(p));
+    }
+    return { missing: [...missing].slice(0, 30), broken: [...broken] };
+  }
+  // Ghép phần viết tiếp vào chỗ code bị ngắt: bỏ dòng mở khối thừa, bỏ đoạn lặp lại phần cuối đã có (theo dòng và theo ký tự),
+  // và nếu mô hình viết lại khối từ đầu thì thay cả khối dở bằng khối mới.
+  function joinCode(prev, add, blockStart) {
+    const open = add.match(/^\s*```[^\n]*\n/);
+    if (open) {
+      const rest = add.slice(open[0].length);
+      const old = prev.slice(blockStart).replace(/^[^\n]*\n/, "");
+      const head = (s) => s.replace(/\s+/g, " ").trim().slice(0, 160);
+      if (old.trim().length > 80 && head(rest).length >= 40 && head(old).startsWith(head(rest).slice(0, Math.min(160, head(old).length)))) {
+        return prev.slice(0, blockStart).replace(/\s*$/, "\n") + add.replace(/^\s*/, "");
+      }
+      add = rest;
+    }
+    const P = prev.split("\n"), A = add.replace(/^\n/, "").split("\n"), t = (s) => s.trim();
+    for (let s = Math.max(0, P.length - 150); s < P.length; s++) {
+      const n = P.length - s;
+      if (n > A.length) continue;
+      let ok = true;
+      for (let i = 0; i < n && ok; i++) ok = i === n - 1 ? t(A[i]).startsWith(t(P[s + i])) : t(A[i]) === t(P[s + i]);
+      const len = P.slice(s).join("\n").trim().length;
+      if (ok && (len >= 40 || (n === 1 && len >= 6 && !/\n$/.test(prev)))) return P.slice(0, s).join("\n") + (s ? "\n" : "") + A.join("\n");
+    }
+    return joinText(prev, add);
+  }
+  // Nối phần viết tiếp, bỏ đoạn mở đầu trùng với phần cuối đã có.
+  function joinText(prev, add) {
+    const tail = prev.slice(-3000);
+    for (let n = Math.min(tail.length, add.length, 3000); n >= 12; n--) if (tail.endsWith(add.slice(0, n))) return prev + add.slice(n);
+    return prev + add;
+  }
+  // Phần câu trả lời gửi lại cho mô hình khi nhờ viết tiếp: câu trả lời dài thì giữ đầu khối đang dở và phần cuối.
+  function continueContext(so, blockStart) {
+    if (so.length <= 60000) return so;
+    const done = filesIn(so.slice(0, blockStart ?? so.length)).map(([p]) => p);
+    const note = done.length ? `(Phần trước đã viết xong các file: ${done.join(", ")}.)\n\n` : "(Phần đầu câu trả lời đã lược bớt.)\n\n";
+    if (blockStart != null && so.length - blockStart <= 56000) return note + so.slice(blockStart);
+    if (blockStart != null) return note + so.slice(blockStart, blockStart + 6000) + "\n…\n" + so.slice(-48000).replace(/^[^\n]*\n/, "");
+    return note + so.slice(-56000).replace(/^[^\n]*\n/, "");
+  }
+  // Viết cho xong câu trả lời: code bị ngắt giữa khối thì viết tiếp đúng chỗ dở; chạm giới hạn độ dài thì viết tiếp;
+  // dự án nhiều file còn thiếu file hoặc có file chưa trọn thì viết nốt. Lần viết tiếp nào không thêm được gì thì đổi cách
+  // (gửi phần cuối ngắn hơn, rồi nhờ viết lại trọn file đang dở), chỉ dừng khi đã đủ hoặc thật sự không tiến thêm được.
+  async function completeAnswer(messages, reply, node, start, allowTool) {
+    const stopOn = allowTool ? (text) => RUN_BLOCK.test(text.slice(start)) : null;
+    const base = baseFiles(reply);
+    const rewritten = new Set();
+    let stuck = 0, lastFiles = "", lastKind = "";
+    for (let k = 0; k < CONTINUE_LIMIT; k++) {
+      const sofar = reply.content.slice(start);
+      if (!sofar.trim() || (stopOn && RUN_BLOCK.test(sofar))) return;
+      const cut = reply.cutOk === reply.content.length ? "" : codeCut(sofar);
+      const kind = cut ? "code" : reply.truncated ? "text" : "files";
+      if (kind !== lastKind) { stuck = 0; lastKind = kind; }
+      let gaps = null;
+      if (!cut && !reply.truncated) {
+        if (reply.noGaps) return;
+        gaps = projectGaps(splitThink(reply.content).answer, base);
+        if (!gaps || (!gaps.missing.length && !gaps.broken.length)) return;
+        const key = [...gaps.missing, "|", ...gaps.broken].join(",");
+        if (key !== lastFiles) stuck = 0;
+        lastFiles = key;
+      }
+      const inside = cut === "open" || cut === "closed";
+      if (cut === "closed") reply.content = reply.content.replace(/\n[ \t]*```[ \t]*$/, "\n");
+      const so = reply.content.slice(start);
+      // Vị trí dòng mở của khối đang dở (trong so) và tên file của nó.
+      let blockStart = null, path = "";
+      if (inside) {
+        const fences = [...so.matchAll(/^[ \t]*```([^\n]*)$/gm)];
+        const f = fences.at(-1);
+        if (f) { blockStart = f.index; path = fenceInfo(f[1]).path; }
+      }
+      const lastLines = so.trimEnd().split("\n").slice(-3).join("\n").slice(-300);
+      let prompt, ctx = continueContext(so, blockStart), rewrite = false, beforeRewrite = null;
+      if (inside && stuck >= 2 && path && !rewritten.has(path)) {
+        // Viết tiếp hai lần không được: bỏ khối dở, nhờ viết lại trọn file đó (file mới thay file cũ cùng đường dẫn).
+        rewrite = true; rewritten.add(path); beforeRewrite = reply.content;
+        reply.content = reply.content.slice(0, start + blockStart).replace(/\s*$/, "\n\n");
+        ctx = continueContext(reply.content.slice(start));
+        prompt = `File ${path} ở cuối câu trả lời bị ngắt giữa chừng và chưa viết tiếp được. Viết lại TRỌN file ${path} từ dòng đầu tới dòng cuối ` +
+          `trong một khối code có đường dẫn ở dòng mở khối (\`\`\`${extOf(path) === "md" ? "markdown" : extOf(path)} ${path}), khớp với các file đã có; ` +
+          "viết gọn hơn nếu cần để không bị ngắt. Sau đó viết tiếp các file còn lại của dự án nếu chưa viết. Không chào, không giải thích dài.";
+      } else if (inside) {
+        if (stuck === 1) ctx = so.slice(Math.max(0, so.length - 16000)).replace(/^[^\n]*\n/, "");
+        prompt = `Code trong khối cuối cùng${path ? ` (file ${path})` : ""} bị ngắt giữa chừng, chưa viết xong. Đoạn cuối đã viết là:\n«${lastLines}»\n\n` +
+          "Viết tiếp ĐÚNG từ chỗ đang dở: chỉ phần còn thiếu, không mở khối code mới, không lặp lại phần đã có, không chào hay giải thích. " +
+          "Viết xong code thì đóng khối bằng ``` " + (gapsLikely(so) ? "rồi viết tiếp các file còn lại của dự án (mỗi file một khối có đường dẫn), " : "rồi ") +
+          "mới viết phần giải thích (nếu cần).";
+      } else if (gaps) {
+        const list = (a) => a.map((p) => "- " + p).join("\n");
+        prompt = "Dự án chưa đủ file." +
+          (gaps.missing.length ? `\nCòn thiếu các file sau (được các trang dẫn tới hoặc có trong sơ đồ thư mục):\n${list(gaps.missing)}` : "") +
+          (gaps.broken.length ? `\nCác file sau bị ngắt hoặc không hợp lệ, cần viết lại trọn:\n${list(gaps.broken)}` : "") +
+          "\n\nViết ngay TRỌN từng file đó, mỗi file một khối code có đường dẫn ở dòng mở khối (ví dụ ```js js/app.js), khớp với các file đã có " +
+          "(tên class, id, hàm, đường dẫn, dữ liệu). Không viết lại các file khác, không chào, không giải thích dài.";
+        ctx = continueContext(so);
+      } else {
+        prompt = "Câu trả lời của bạn bị ngắt giữa chừng. Viết tiếp ĐÚNG từ chỗ dừng, không lặp lại phần đã viết, không chào hay giải thích lại.";
+      }
+      reply.notice = gaps ? `Dự án còn thiếu ${gaps.missing.length + gaps.broken.length} file, đang viết nốt: ${[...gaps.missing, ...gaps.broken].slice(0, 4).join(", ")}…`
+        : rewrite ? `Đang viết lại trọn file ${path}…` : `Câu trả lời bị ngắt giữa chừng, đang viết tiếp${path ? " " + path : ""}…`;
+      paintAssistant(node, reply, true);
+      const before = reply.content.length;
+      let failed = false;
+      try {
+        await runPass([...messages, { role: "assistant", content: ctx }, { role: "user", content: prompt }], reply, node, stopOn);
+      } catch (e) {
+        if (e.name !== "TypeError") throw e;
+        failed = true; // mất kết nối hoặc mô hình ngừng gửi: giữ phần đã viết được, thử lại
+      }
+      delete reply.notice;
+      let add = reply.content.slice(before);
+      reply.content = reply.content.slice(0, before);
+      if (inside && !rewrite) {
+        // Mô hình đóng khối ngay: nó cho rằng code đã xong (thường do đếm ngoặc nhầm), nên tin theo.
+        if (/^\s*```[ \t]*(\n|$)/.test(add) && !failed) {
+          reply.content = reply.content.replace(/\s*$/, "\n") + add.replace(/^\s*/, "");
+          reply.cutOk = reply.content.length;
+          stuck = 0;
+          continue;
+        }
+        const merged = joinCode(reply.content, add, start + blockStart);
+        const grew = merged.length > reply.content.length + 2;
+        reply.content = merged;
+        if (!grew || !add.trim()) {
+          stuck++;
+          if (stuck >= 3 || (stuck >= 2 && (!path || rewritten.has(path)))) {
+            if (cut === "closed") reply.content = reply.content.replace(/\s*$/, "\n```");
+            return;
+          }
+        } else stuck = 0;
+      } else if (rewrite) {
+        // Viết lại không được thì giữ bản dở (vẫn hơn mất cả file).
+        if (add.trim()) reply.content = reply.content.replace(/\s*$/, "\n\n") + add.replace(/^\s*/, "");
+        else { reply.content = beforeRewrite; if (cut === "closed") reply.content = reply.content.replace(/\s*$/, "\n```"); return; }
+      } else if (gaps) {
+        // Chỉ giữ lượt viết nốt nếu nó làm giảm số file còn thiếu (tránh lặp lại các file đã có).
+        const was = reply.content, count = (g) => (g ? g.missing.length + g.broken.length : 0);
+        if (add.trim()) reply.content = reply.content.replace(/\s*$/, "\n\n") + add.replace(/^\s*/, "");
+        const now = projectGaps(splitThink(reply.content).answer, base);
+        if (!add.trim() || (count(now) >= count(gaps) && !codeCut(reply.content.slice(start)))) {
+          reply.content = was;
+          if (++stuck >= 2) return;
+        }
+      } else {
+        const merged = add.trim() ? joinText(reply.content, add) : reply.content;
+        if (merged.length > reply.content.length + 2) stuck = 0; else if (++stuck >= 2) { reply.content = merged; return; }
+        reply.content = merged;
+      }
+    }
+  }
+  // Câu trả lời đang có khối code mang đường dẫn file (đang làm dự án nhiều file).
+  const gapsLikely = (text) => filesIn(text).length >= 1 || /^[ \t]*```[\w+#.-]*[ \t:]+[\w./-]+\.[A-Za-z0-9]{1,8}[ \t]*$/m.test(text);
+  // Câu trả lời đã xong mà vẫn còn thiếu: trả về lời nhắc để hiện cạnh nút Viết tiếp.
+  function unfinished(reply, chat) {
+    if (reply.error) return undefined;
+    const answer = splitThink(reply.content).answer.trim();
+    if (reply.cutOk !== reply.content.length && codeCut(answer)) return "Code ở cuối có vẻ chưa viết xong.";
+    const g = projectGaps(answer, baseFiles(reply, chat));
+    if (g?.missing.length) return `Dự án còn thiếu file: ${g.missing.slice(0, 6).join(", ")}${g.missing.length > 6 ? "…" : ""}.`;
+    if (g?.broken.length) return `File chưa viết xong: ${g.broken.slice(0, 6).join(", ")}.`;
+    return undefined;
+  }
+  // Nút Viết tiếp: viết nốt ngay trong câu trả lời đó (không gửi tin nhắn mới).
+  async function resumeReply(chat, idx) {
+    const reply = chat.messages[idx], node = els.thread.querySelector(`.msg[data-idx="${idx}"]`);
+    if (!reply || !node) return;
+    genChat = chat;
+    controller = new AbortController();
+    setBusy(true);
+    delete reply.cutWarning; delete reply.cutOk;
+    const history = [{ role: "system", content: systemPrompt(chat) },
+      ...chat.messages.slice(0, idx).map((m) => ({ role: m.role, content: m.role === "assistant" ? historyAnswer(m) : apiContent(m, false) }))];
+    try {
+      await completeAnswer(history, reply, node, 0, false);
+      // Chạy thử lại trang hoặc dự án đã viết nốt.
+      delete reply.webCheck;
+      await autoFixWeb(history, reply, node);
+    } catch (e) {
+      if (e.name !== "AbortError") reply.error = e.message;
+    } finally {
+      controller = null;
+      delete reply.notice;
+      reply.cutWarning = unfinished(reply, chat);
+      setBusy(false);
+      chat.updated = Date.now();
+      saveChats();
+      paintAssistant(node, reply, false);
+    }
   }
   async function answerWithTools(messages, reply, node) {
     for (let round = 0; ; round++) {
@@ -2177,36 +2956,8 @@
           : messages;
         try {
           await runPass(pass, reply, node, allowTool ? (text) => RUN_BLOCK.test(text.slice(start)) : null);
-          // Chạm giới hạn độ dài khi đang viết câu trả lời: tự yêu cầu viết tiếp đúng từ chỗ dừng và nối vào,
-          // cho tới khi xong. (Chạm giới hạn khi mới suy nghĩ, chưa viết gì thì ensureAnswer xử lý.)
-          // Cũng viết tiếp khi còn khối code mở mà chưa đóng: mô hình đôi khi dừng sớm hoặc luồng bị ngắt mà máy chủ vẫn báo đã xong.
-          // Code bị cắt (codeCut) thì viết tiếp tối đa 4 lần; lần viết tiếp nào không thêm được gì thì dừng.
-          // Khối code đã bị đóng sai thì bỏ dấu đóng để phần viết tiếp nằm đúng trong khối.
-          for (let k = 0, cutTries = 0; k < CONTINUE_LIMIT; k++) {
-            const sofar = reply.content.slice(start);
-            const cut = codeCut(sofar);
-            if (!sofar.trim() || (allowTool && RUN_BLOCK.test(sofar))) break;
-            if (!reply.truncated && (!cut || cutTries++ >= 4)) break;
-            const inside = cut === "open" || cut === "closed";
-            if (cut === "closed") reply.content = reply.content.replace(/\n[ \t]*```[ \t]*$/, "\n");
-            const before = reply.content.length, so = reply.content.slice(start);
-            reply.notice = "Câu trả lời bị ngắt giữa chừng, đang viết tiếp…";
-            paintAssistant(node, reply, true);
-            await runPass([...messages, { role: "assistant", content: so },
-              { role: "user", content: inside
-                ? "Code trong khối cuối cùng bị ngắt giữa chừng, chưa viết xong. Viết tiếp ĐÚNG từ dòng đang dở: chỉ phần còn thiếu, " +
-                  "không mở khối code mới, không lặp lại phần đã có, không chào hay giải thích. Viết xong code thì đóng khối bằng ``` rồi mới viết phần giải thích (nếu cần)."
-                : "Câu trả lời của bạn bị ngắt giữa chừng. Viết tiếp ĐÚNG từ chỗ dừng, không lặp lại phần đã viết, không chào hay giải thích lại." }],
-              reply, node, allowTool ? (text) => RUN_BLOCK.test(text.slice(start)) : null);
-            delete reply.notice;
-            // Dọn phần viết tiếp: bỏ dòng mở khối thừa và đoạn lặp lại phần cuối đã có.
-            let add = reply.content.slice(before);
-            if (inside) add = add.replace(/^\s*```[\w+#.-]*[^\n]*\n/, "");
-            const tail = reply.content.slice(Math.max(start, before - 400), before);
-            for (let n = Math.min(tail.length, add.length, 400); n >= 12; n--) if (tail.endsWith(add.slice(0, n))) { add = add.slice(n); break; }
-            reply.content = reply.content.slice(0, before) + add;
-            if (!add.trim()) break;
-          }
+          // Viết cho xong: code bị ngắt, chạm giới hạn độ dài, dự án còn thiếu file (xem completeAnswer).
+          await completeAnswer(messages, reply, node, start, allowTool);
           break;
         } catch (e) {
           if (e.name !== "TypeError" || retry >= 2) throw e;
@@ -2799,10 +3550,10 @@
       await res?.body?.cancel();
       show(`${modelTitle(id, m)} đang quá tải, chuyển sang ${modelTitle(...order[i + 1])}…`);
     }
-    if (!res) throw new Error("Máy chủ GLM không phản hồi. Đợi một lúc rồi thử lại.");
+    if (!res) throw new Error("Máy chủ của Khuê không phản hồi. Đợi một lúc rồi thử lại.");
     if (vision && [429, 502, 503, 504, 524].includes(res.status)) {
       await res.body?.cancel();
-      throw new Error("Mô hình đọc ảnh (GLM-4.6V Flash, bản miễn phí) đang quá tải. Đợi khoảng một phút rồi bấm Tạo lại.");
+      throw new Error(`Mô hình đọc ảnh (${modelTitle("shared", model)}) đang quá tải. Đợi khoảng một phút rồi bấm Tạo lại.`);
     }
     reply.notice = notice;
     if (!res.ok) throw new Error(await apiError(res));
@@ -2816,7 +3567,7 @@
     else if (used !== settings.provider || model !== chosen) {
       // Máy chủ ghi lý do không dùng được GLM-5.3 Flash (key sai, hết lượt, quá lâu…) trong X-GLM-Note.
       let note = "";
-      try { note = decodeURIComponent(res.headers.get("X-GLM-Note") || ""); } catch {}
+      try { note = brandNote(decodeURIComponent(res.headers.get("X-GLM-Note") || "")); } catch {}
       reply.via = `${modelTitle(used, model)} vì ` + (note || `${modelTitle(used, asked === model ? chosen : asked)} đang ${onNvidia(asked) && real !== asked ? "bận hoặc chưa bật" : "quá tải"}`);
     }
     setStatus("ok", `${PROVIDERS[used].name} · ${modelTitle(used, model)}`);
@@ -2867,7 +3618,7 @@
         const att = [...(m.files || []).map((f) => f.name), ...(m.images?.length ? [`${m.images.length} ảnh`] : [])];
         md += `## Bạn\n\n${att.length ? `*Đính kèm: ${att.join(", ")}*\n\n` : ""}${m.content}\n\n`;
       } else {
-        md += `## GLM\n\n${splitThink(m.content).answer.replace(MEMO_TAG, "").trim()}\n\n`;
+        md += `## Khuê\n\n${splitThink(m.content).answer.replace(MEMO_TAG, "").trim()}\n\n`;
       }
     }
     const a = document.createElement("a");
@@ -2908,50 +3659,6 @@
       mic.classList.add("on"); mic.title = "Bấm để dừng ghi âm";
     };
   }
-
-  // ---------- Nhân vật ----------
-  // Mỗi nhân vật là một lời dặn thêm vào lời nhắc hệ thống. Có sẵn vài nhân vật, người dùng tạo thêm trong Cài đặt.
-  const BUILTIN_PERSONAS = [
-    { id: "default", name: "Mặc định", desc: "Trợ lý đa năng", prompt: "" },
-    { id: "math", name: "Thầy dạy Toán", desc: "Giảng từng bước, dễ hiểu",
-      prompt: "Bạn là một thầy giáo dạy Toán tận tâm. Giải thích từng bước, nêu rõ công thức và lý do của mỗi bước, dùng ví dụ số cụ thể. Nếu người dùng gửi bài tập, hỏi họ đã thử cách nào trước khi đưa lời giải đầy đủ chỉ khi họ muốn tự làm; còn không thì giải chi tiết rồi gợi ý một bài tương tự để luyện thêm." },
-    { id: "ioi", name: "Huấn luyện viên IOI", desc: "Lập trình thi đấu, C++",
-      prompt: "Bạn là huấn luyện viên đội tuyển tin học (IOI, ICPC). Với mỗi bài: phân tích ràng buộc, đưa ra từ ý tưởng ngây thơ đến tối ưu, giải thích độ phức tạp, viết C++17 sạch, chỉ ra lỗi hay gặp, và gợi ý bài luyện tập liên quan trên VNOI hoặc Codeforces." },
-    { id: "translate", name: "Dịch giả Anh–Việt", desc: "Dịch tự nhiên, giữ ý",
-      prompt: "Bạn là dịch giả Anh–Việt chuyên nghiệp. Người dùng gửi tiếng Việt thì dịch sang tiếng Anh, gửi tiếng Anh (hoặc ngôn ngữ khác) thì dịch sang tiếng Việt. Dịch tự nhiên như người bản xứ viết, giữ đúng ý và giọng văn, giữ nguyên thuật ngữ chuyên ngành khi cần. Chỉ đưa bản dịch, sau đó ghi chú ngắn những chỗ có nhiều cách hiểu." },
-    { id: "english", name: "Gia sư tiếng Anh", desc: "Sửa lỗi, luyện hội thoại",
-      prompt: "Bạn là gia sư tiếng Anh thân thiện. Trò chuyện với người dùng bằng tiếng Anh đơn giản; sau mỗi tin nhắn của họ, sửa lỗi ngữ pháp và từ vựng (giải thích ngắn bằng tiếng Việt), gợi ý cách nói tự nhiên hơn, rồi tiếp tục cuộc trò chuyện bằng một câu hỏi." },
-    { id: "writer", name: "Trợ lý viết văn", desc: "Văn, bài luận, email",
-      prompt: "Bạn là trợ lý viết văn. Giúp người dùng lập dàn ý, viết, sửa và nâng cấp bài văn, bài luận, email, bài đăng. Viết mạch lạc, giàu hình ảnh, đúng chính tả tiếng Việt; khi sửa bài thì chỉ ra chỗ đã sửa và lý do." },
-  ];
-  let customPersonas = store.get("glm.personas", []);
-  const allPersonas = () => [...BUILTIN_PERSONAS, ...customPersonas];
-  const currentPersona = () => allPersonas().find((p) => p.id === settings.persona) || BUILTIN_PERSONAS[0];
-  function savePersonas() { store.set("glm.personas", customPersonas); markSynced("personas"); }
-
-  function renderPersonas() {
-    const list = $("personaList");
-    list.innerHTML = customPersonas.length ? "" : '<li class="empty-mem">Chưa có nhân vật tự tạo.</li>';
-    for (const p of customPersonas) {
-      const li = document.createElement("li");
-      const text = document.createElement("span"); text.textContent = p.name;
-      const del = document.createElement("button");
-      del.type = "button"; del.className = "icon-btn"; del.title = "Xoá"; del.innerHTML = ICON_TRASH;
-      del.onclick = () => {
-        customPersonas = customPersonas.filter((x) => x.id !== p.id);
-        if (settings.persona === p.id) { settings.persona = "default"; store.set("glm.settings", settings); paintProvider(); }
-        savePersonas(); renderPersonas();
-      };
-      li.append(text, del); list.append(li);
-    }
-  }
-  $("personaAdd").onclick = () => {
-    const name = $("personaName").value.trim(), prompt = $("personaPrompt").value.trim();
-    if (!name || !prompt) { alert("Hãy nhập cả tên và lời dặn cho nhân vật."); return; }
-    customPersonas.push({ id: "p" + Date.now().toString(36), name: name.slice(0, 40), desc: "Nhân vật của bạn", prompt });
-    $("personaName").value = $("personaPrompt").value = "";
-    savePersonas(); renderPersonas();
-  };
 
   // ---------- Tìm đoạn văn liên quan (BM25) ----------
   // Dùng chung cho kho kiến thức và cho các câu trả lời đã thích. Bỏ dấu tiếng Việt để "phuong trinh" vẫn khớp "phương trình".
@@ -3065,12 +3772,10 @@
   }
   kbLoad();
 
-  // Phần lời nhắc thêm cho từng câu hỏi: nhân vật, câu trả lời mẫu đã thích, đoạn tài liệu liên quan.
+  // Phần lời nhắc thêm cho từng câu hỏi: câu trả lời mẫu đã thích, đoạn tài liệu liên quan.
   function extraContext(chat) {
     const q = chat.messages.filter((m) => m.role === "user").at(-1)?.content || "";
     const parts = [], kb = [];
-    const persona = currentPersona();
-    if (persona.prompt) parts.push(`Vai trò của bạn (${persona.name}): ${persona.prompt}`);
     const liked = likedExamples(q, chat);
     if (liked.length) {
       parts.push("Người dùng đã đánh giá cao những câu trả lời sau cho câu hỏi tương tự. Hãy học văn phong, độ chi tiết và cách trình bày của chúng (không chép nguyên văn nếu câu hỏi khác):\n\n" +
@@ -3263,9 +3968,9 @@
       const changes = [];
       for (const c of chats) if (syncState.pushed["chat:" + c.id] !== c.updated) changes.push({ id: "chat:" + c.id, updated: c.updated, data: stripChat(c) });
       for (const [id, t] of Object.entries(syncState.deleted)) if (syncState.pushed["chat:" + id] !== -t) changes.push({ id: "chat:" + id, updated: t, data: null });
-      for (const id of ["memory", "personas"]) {
+      for (const id of ["memory"]) {
         const t = syncState.meta[id];
-        if (t && syncState.pushed[id] !== t) changes.push({ id, updated: t, data: id === "memory" ? memories : customPersonas });
+        if (t && syncState.pushed[id] !== t) changes.push({ id, updated: t, data: memories });
       }
       const res = await fetch(SHARED_URL.replace(/\/$/, "") + "/sync", {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -3296,10 +4001,9 @@
             delete syncState.deleted[id];
             syncState.pushed[it.id] = it.updated; changed = true;
           } else if (it.updated === local.updated) syncState.pushed[it.id] = it.updated;
-        } else if (it.id === "memory" || it.id === "personas") {
+        } else if (it.id === "memory") {
           if (!(it.updated > (syncState.meta[it.id] || 0))) continue;
-          if (it.id === "memory") { memories = it.data || []; store.set("glm.memory", memories); }
-          else { customPersonas = it.data || []; store.set("glm.personas", customPersonas); }
+          memories = it.data || []; store.set("glm.memory", memories);
           syncState.meta[it.id] = syncState.pushed[it.id] = it.updated;
         }
       }
@@ -3321,7 +4025,7 @@
   // Máy tạo mã mới đẩy bộ nhớ và nhân vật của mình lên; máy nhập mã thì nhận bản trên máy chủ.
   function startSync(code, fresh) {
     const t = Date.now();
-    syncState = { code, since: 0, pushed: {}, deleted: {}, meta: fresh ? { memory: t, personas: t } : {} };
+    syncState = { code, since: 0, pushed: {}, deleted: {}, meta: fresh ? { memory: t } : {} };
     saveSync(); paintSync("Đang kết nối…"); syncNow();
   }
   $("syncNew").onclick = () => {
@@ -3394,6 +4098,164 @@
     document.head.append(sc);
   }));
   const CDN = "https://cdnjs.cloudflare.com/ajax/libs/";
+
+  // ---------- Dự án web nhiều file ----------
+  // Mỗi file là một khối code có tên file ở dòng mở khối: ```html index.html, ```css css/style.css, ```js:js/app.js, ```index.html,
+  // hoặc dòng đầu là chú thích tên file (<!-- about.html -->, // js/app.js, /* css/style.css */).
+  // Dự án gộp các file của mọi câu trả lời trong đoạn chat (bản mới nhất của mỗi file thắng), nên có thể sửa dần từng file.
+  const NOT_FILES = /^(js-run|py-run|python-run|cpp-run|output|search|wiki|web|news|research|read|weather|rate|papers|dev|dict|image|pptx|xlsx|docx|svg)$/i;
+  const FILE_EXT = /^[\w@()[\] .-]+(\/[\w@()[\] .-]+)*\.[A-Za-z0-9]{1,8}$/;
+  function cleanPath(p) {
+    const parts = [];
+    for (const seg of String(p).replace(/\\/g, "/").replace(/^\.?\//, "").split("/")) {
+      if (!seg || seg === ".") continue;
+      if (seg === "..") parts.pop(); else parts.push(seg);
+    }
+    return parts.join("/");
+  }
+  function filesIn(text) {
+    const out = [];
+    for (const m of String(text || "").matchAll(/^[ \t]*```([^\n`]*)\n([\s\S]*?)\n[ \t]*```/gm)) {
+      const info = m[1].replace(/\b(title|file|filename|path|name)\s*=\s*["']?([^"'\s]+)["']?/i, " $2").trim();
+      const lang = (info.match(/^[\w+#.-]+/) || [""])[0];
+      if (NOT_FILES.test(lang)) continue;
+      let body = m[2];
+      let path = info.split(/[\s:]+/).find((t) => FILE_EXT.test(t) && /\.[A-Za-z0-9]+$/.test(t) && !/^(\w+)$/.test(t));
+      if (!path) {
+        const first = body.match(/^\s*(?:<!--|\/\/|\/\*|#)\s*(?:file:?\s*)?([\w@()[\] ./-]+\.[A-Za-z0-9]{1,8})\s*(?:-->|\*\/)?\s*$/m);
+        if (first && first.index < 3) { path = first[1].trim(); body = body.slice(first.index + first[0].length).replace(/^\n/, ""); }
+      }
+      if (path) out.push([cleanPath(path), body]);
+    }
+    return out;
+  }
+  // Dự án tính tới câu trả lời thứ idx: file của các câu trả lời trước, các bản đã tự sửa của câu này, rồi chính câu này.
+  function projectAt(chat, idx) {
+    const files = new Map();
+    const add = (text) => { for (const [p, c] of filesIn(splitThink(text || "").answer)) files.set(p, c); };
+    chat.messages.slice(0, idx + 1).forEach((m, i) => {
+      if (m.role !== "assistant") return;
+      if (i === idx) for (const d of m.drafts || []) if (/^Bản (đầu|sửa)/.test(d.label || "")) add(d.content);
+      add(m.content);
+    });
+    const own = filesIn(splitThink(chat.messages[idx]?.content || "").answer).length;
+    return own && files.size >= 2 && [...files.keys()].some((p) => /\.html?$/i.test(p)) ? files : null;
+  }
+  const MIME = { html: "text/html", htm: "text/html", css: "text/css", js: "text/javascript", mjs: "text/javascript", json: "application/json",
+    svg: "image/svg+xml", txt: "text/plain", md: "text/markdown", csv: "text/csv", xml: "application/xml" };
+  const extOf = (p) => (p.match(/\.([A-Za-z0-9]+)$/) || ["", ""])[1].toLowerCase();
+  const mainPage = (files) => (files.has("index.html") ? "index.html" : [...files.keys()].find((p) => /(^|\/)index\.html?$/i.test(p)) || [...files.keys()].find((p) => /\.html?$/i.test(p)));
+  // Khung xem trước có sandbox (không có allow-same-origin) nên localStorage, sessionStorage báo lỗi SecurityError:
+  // thay bằng bộ nhớ tạm để trang vẫn chạy. Với dự án, dữ liệu localStorage được gửi về trang chat để giữ lại khi chuyển trang.
+  const storageShim = (init, navId) => `<script>(()=>{const S=${JSON.stringify(init || {}).replace(/<\//g, "<\\/")};` +
+    `for(const k of["localStorage","sessionStorage"]){try{window[k].getItem("_");continue}catch(e){}` +
+    `const m=new Map(k==="localStorage"?Object.entries(S):[]),save=()=>{if(k==="localStorage")try{parent.postMessage({proj:${JSON.stringify(navId || "")},store:Object.fromEntries(m)},"*")}catch(e){}};` +
+    `const s={getItem:x=>m.has(String(x))?m.get(String(x)):null,setItem:(x,v)=>{m.set(String(x),String(v));save()},removeItem:x=>{m.delete(String(x));save()},` +
+    `clear:()=>{m.clear();save()},key:i=>[...m.keys()][i]??null,get length(){return m.size}};` +
+    `try{Object.defineProperty(window,k,{value:s,configurable:true})}catch(e){}}})()<\/script>`;
+  const withShim = (html, shim) => (/<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, (h) => h + shim) : shim + html);
+  // Dựng một trang của dự án thành một file HTML chạy được trong khung xem trước: chèn CSS, JS, ảnh SVG vào thẳng trang,
+  // giả lập fetch() cho các file dữ liệu (JSON, CSV…), và bắt sự kiện bấm link sang trang khác để khung xem trước tự chuyển trang.
+  function bundlePage(files, path, navId, store) {
+    const dir = path.includes("/") ? path.slice(0, path.lastIndexOf("/") + 1) : "";
+    const local = (ref) => (ref && !/^([a-z][\w+.-]*:|\/\/|#)/i.test(ref) ? cleanPath((ref.startsWith("/") ? "" : dir) + ref.split(/[?#]/)[0]) : null);
+    const dataUrl = (p) => `data:${MIME[extOf(p)] || "text/plain"};charset=utf-8,${encodeURIComponent(files.get(p))}`;
+    const cssUrls = (css, base) => css.replace(/url\(\s*["']?([^"')]+)["']?\s*\)/g, (all, ref) => {
+      const d = base.includes("/") ? base.slice(0, base.lastIndexOf("/") + 1) : "";
+      const p = ref && !/^([a-z][\w+.-]*:|\/\/|#)/i.test(ref) ? cleanPath(d + ref) : null;
+      return p && files.has(p) ? `url("${dataUrl(p)}")` : all;
+    });
+    let html = files.get(path) ?? "";
+    html = html.replace(/<link\b[^>]*>/gi, (tag) => {
+      if (!/rel\s*=\s*["']?stylesheet/i.test(tag)) return tag;
+      const p = local(tag.match(/href\s*=\s*["']([^"']+)["']/i)?.[1]);
+      return p && files.has(p) ? `<style data-file="${p}">${cssUrls(files.get(p), p)}</style>` : tag;
+    });
+    // Script có defer hoặc type=module chạy sau khi trang dựng xong: đưa xuống cuối trang để giữ đúng thứ tự đó.
+    const later = [];
+    html = html.replace(/<script\b([^>]*)\bsrc\s*=\s*["']([^"']+)["']([^>]*)>\s*<\/script>/gi, (tag, a, src, b) => {
+      const p = local(src);
+      if (!p || !files.has(p)) return tag;
+      const attrs = (a + b).replace(/\s(defer|async)\b(=["']?[^"'\s>]*["']?)?/gi, "");
+      const code = `<script${attrs} data-file="${p}">${files.get(p).replace(/<\/script/gi, "<\\/script")}<\/script>`;
+      if (/\bdefer\b|type\s*=\s*["']?module/i.test(a + b)) { later.push(code); return ""; }
+      return code;
+    });
+    html = html.replace(/\b(src|href)\s*=\s*["']([^"']+)["']/gi, (all, attr, ref) => {
+      const p = local(ref);
+      return p && files.has(p) && !/\.html?$/i.test(p) ? `${attr}="${dataUrl(p)}"` : all;
+    });
+    if (later.length) html = /<\/body>/i.test(html) ? html.replace(/<\/body>/i, later.join("") + "</bo" + "dy>") : html + later.join("");
+    const data = {};
+    for (const [p, c] of files) if (!/\.(html?|css|js|mjs)$/i.test(p)) data[p] = c;
+    const helper = `<script>(()=>{const F=${JSON.stringify(data).replace(/<\//g, "<\\/")},D=${JSON.stringify(dir)},T=${JSON.stringify(MIME)};` +
+      `const norm=r=>{const s=[];for(const x of((r.startsWith("/")?"":D)+r.split(/[?#]/)[0]).split("/")){if(!x||x===".")continue;x===".."?s.pop():s.push(x)}return s.join("/")};` +
+      `const of=window.fetch&&window.fetch.bind(window);window.fetch=(u,o)=>{const r=String(u&&u.url||u);if(!/^([a-z][\\w+.-]*:|\\/\\/)/i.test(r)){const p=norm(r);` +
+      `if(p in F)return Promise.resolve(new Response(F[p],{status:200,headers:{"Content-Type":T[(p.split(".").pop()||"").toLowerCase()]||"text/plain"}}));}return of(u,o)};` +
+      `addEventListener("click",e=>{const a=e.target.closest&&e.target.closest("a[href]");if(!a)return;const h=a.getAttribute("href");` +
+      `if(!h||/^([a-z][\\w+.-]*:|\\/\\/|#)/i.test(h)||!/\\.html?($|[?#])/i.test(h))return;e.preventDefault();parent.postMessage({proj:${JSON.stringify(navId || "")},go:norm(h)},"*")},true)})()<\/script>`;
+    return withShim(html, storageShim(store, navId) + helper);
+  }
+  // Cây thư mục để hiện trong thẻ dự án.
+  function projectTree(files) {
+    const lines = [], seen = new Set();
+    for (const p of [...files.keys()].sort((a, b) => a.split("/").length - b.split("/").length || a.localeCompare(b))) {
+      const parts = p.split("/");
+      parts.forEach((seg, i) => {
+        const key = parts.slice(0, i + 1).join("/");
+        if (seen.has(key)) return;
+        seen.add(key);
+        lines.push({ key, text: "  ".repeat(i) + (i === parts.length - 1 ? seg : seg + "/") });
+      });
+    }
+    return lines.sort((a, b) => a.key.localeCompare(b.key)).map((l) => l.text).join("\n");
+  }
+  function projectCard(files, chat) {
+    const readme = files.get("README.md") || files.get("PLAN.md") || "";
+    const name = (readme.match(/^#\s+(.+)$/m)?.[1] || chat?.title || "Dự án web").replace(/[*_`]/g, "").trim();
+    const htmlPages = [...files.keys()].filter((p) => /\.html?$/i.test(p)).length;
+    return `<div class="file-card proj"><div class="file-head"><span class="file-badge proj">WEB</span>` +
+      `<span class="file-name"><b>${esc(name)}</b><small>Dự án · ${files.size} file · ${htmlPages} trang</small></span>` +
+      `<span class="file-btns"><button type="button" class="btn primary" data-proj-run>${ICON_PLAY}Chạy thử</button>` +
+      `<button type="button" class="btn" data-proj-zip>${ICON_DOWN}Tải .zip</button></span></div>` +
+      `<details><summary>Cấu trúc thư mục</summary><pre class="tree">${esc(projectTree(files))}</pre></details></div>`;
+  }
+  // Chạy thử dự án ngay dưới thẻ: chọn trang, đổi khổ thiết bị; bấm link sang trang khác thì khung tự chuyển trang.
+  function runProject(files, after, page) {
+    const next = after.nextElementSibling;
+    if (next?.classList.contains("proj-preview")) { next.remove(); return false; }
+    const navId = Math.random().toString(36).slice(2);
+    const pages = [...files.keys()].filter((p) => /\.html?$/i.test(p));
+    const box = document.createElement("div");
+    box.className = "preview proj-preview";
+    box.innerHTML = `<div class="preview-bar"><select aria-label="Chọn trang">${pages.map((p) => `<option>${esc(p)}</option>`).join("")}</select>` +
+      `<span class="sizes"><button type="button" data-size="390">Điện thoại</button><button type="button" data-size="768">Máy tính bảng</button>` +
+      `<button type="button" data-size="" class="on">Máy tính</button></span><button type="button" data-full>${ICON_FULL}Toàn màn hình</button></div>`;
+    const frame = document.createElement("iframe");
+    frame.sandbox = "allow-scripts allow-modals allow-forms allow-pointer-lock";
+    frame.allow = "fullscreen";
+    const select = box.querySelector("select");
+    let store = {};
+    const show = (p) => { if (!files.has(p)) return; select.value = p; frame.srcdoc = bundlePage(files, p, navId, store); };
+    select.onchange = () => show(select.value);
+    const onMsg = (e) => {
+      if (!box.isConnected) { removeEventListener("message", onMsg); return; }
+      if (e.source !== frame.contentWindow || e.data?.proj !== navId) return;
+      if (e.data.store) store = e.data.store;
+      if (e.data.go) show(e.data.go);
+    };
+    addEventListener("message", onMsg);
+    box.append(frame);
+    after.after(box);
+    show(page && files.has(page) ? page : mainPage(files));
+    return true;
+  }
+  async function zipProject(files, name) {
+    if (!window.JSZip) await loadScript(CDN + "jszip/3.10.1/jszip.min.js");
+    const zip = new JSZip();
+    for (const [p, c] of files) zip.file(p, c);
+    saveBlob(await zip.generateAsync({ type: "blob" }), fileName(name || "du-an-web") + ".zip");
+  }
 
   // ---------- Xuất file PowerPoint, Excel, Word ----------
   // Mô hình viết nội dung (JSON cho pptx và xlsx, Markdown cho docx), trang tạo file thật ngay trong trình duyệt.
@@ -4049,7 +4911,8 @@ go((parseInt(location.hash.slice(1))||1)-1);setTimeout(()=>{const h=document.que
     careful: ["Kỹ", "Phân tích đề → giải → mô hình khác soát lỗi → sửa. Mất khoảng 1–3 phút"],
     max: ["Tối đa", "Phân tích đề → 3 mô hình giải song song → kiểm tra chéo → tổng hợp → kiểm tra lần cuối. Mất 3–8 phút"],
     ultra: ["Ultra", "Hết công suất: 4 mô hình giải, trao đổi suy luận nhiều vòng tới khi thống nhất → giám khảo tổng hợp → kiểm tra chéo → tinh chỉnh → kiểm tra lần cuối. " +
-      "Lưu ý: chạy RẤT LÂU (khoảng 6–20 phút), chỉ dùng cho bài khó hoặc việc lớn"],
+      "Việc lập trình (làm web, app, game, công cụ) thì làm như lập trình viên chuyên nghiệp: kế hoạch Markdown → phản biện → code theo từng giai đoạn, chạy thử sau mỗi giai đoạn → " +
+      "rà soát code chéo → sửa → chạy thử toàn bộ. Lưu ý: chạy RẤT LÂU (khoảng 6–30 phút), chỉ dùng cho bài khó hoặc việc lớn"],
   };
   // Cài đặt cũ chỉ có nút Nghĩ kỹ bật/tắt: đang bật thì chuyển thành mức Tối đa.
   if ("deep" in settings) { if (settings.deep) settings.level = "max"; delete settings.deep; store.set("glm.settings", settings); }
@@ -4065,6 +4928,8 @@ go((parseInt(location.hash.slice(1))||1)-1);setTimeout(()=>{const h=document.que
     $("lpInput").value = i;
     $("lpInput").setAttribute("aria-valuetext", name);
     $("lpRange").style.setProperty("--f", i / (LEVEL_KEYS.length - 1));
+    $("lpRange").classList.toggle("hot", settings.level === "ultra");
+    $("lpLabels").innerHTML = LEVEL_KEYS.map((k, j) => `<button type="button" data-lv="${k}" class="${j === i ? "on" : ""}">${LEVELS[k][0]}</button>`).join("");
     deepBtn.title = `Mức suy nghĩ: ${name}`;
     deepBtn.classList.toggle("on", ["careful", "max", "ultra"].includes(settings.level));
     if (!levelPop.hidden) placeLevels(); // mô tả dài ngắn khác nhau nên căn lại vị trí
@@ -4089,6 +4954,10 @@ go((parseInt(location.hash.slice(1))||1)-1);setTimeout(()=>{const h=document.que
     settings.level = LEVEL_KEYS[Number(e.target.value)];
     store.set("glm.settings", settings);
     paintDeep();
+  };
+  $("lpLabels").onclick = (e) => {
+    const b = e.target.closest("[data-lv]");
+    if (b) { settings.level = b.dataset.lv; store.set("glm.settings", settings); paintDeep(); }
   };
   // Bấm vào tên mức: hiện hoặc ẩn giải thích của cả 4 mức.
   $("lpTitle").onclick = () => {
@@ -4119,6 +4988,15 @@ go((parseInt(location.hash.slice(1))||1)-1);setTimeout(()=>{const h=document.que
     if (htmlBtn) {
       const card = htmlBtn.closest(".file-card"), spec = parseLoose(card.querySelector(".file-src").textContent);
       loadDeckIcons(spec).then(() => saveBlob(new Blob([deckHtml(spec)], { type: "text/html" }), fileName(spec.file || spec.title || "bai-trinh-chieu") + ".html"));
+      return;
+    }
+    const projBtn = e.target.closest("[data-proj-run], [data-proj-zip]");
+    if (projBtn) {
+      const node = projBtn.closest(".msg"), card = projBtn.closest(".file-card"), files = node?._project;
+      if (!files) return;
+      if (projBtn.matches("[data-proj-zip]")) {
+        zipProject(files, card.querySelector(".file-name b").textContent).catch((err) => alert("Không tạo được file .zip: " + err.message));
+      } else projBtn.innerHTML = `${ICON_PLAY}${runProject(files, card) ? "Đóng chạy thử" : "Chạy thử"}`;
       return;
     }
     // Đổi khổ xem trước: điện thoại, máy tính bảng, máy tính.
@@ -4153,8 +5031,8 @@ go((parseInt(location.hash.slice(1))||1)-1);setTimeout(()=>{const h=document.que
       chat.messages.splice(idx);
       generate(chat);
     } else if (act.dataset.act === "continue" && !controller) {
-      // Nhờ viết nốt phần code còn thiếu của câu trả lời này.
-      send("Code ở cuối câu trả lời trước chưa viết xong. Hãy viết tiếp đúng phần còn thiếu (bắt đầu từ dòng đang dở), rồi đưa lại đoạn đó trong một khối code.");
+      // Viết nốt ngay trong câu trả lời này.
+      resumeReply(chat, idx);
     } else if (act.dataset.act === "speak") {
       speak(act, splitThink(chat.messages[idx].content).answer);
     }
@@ -4255,7 +5133,10 @@ go((parseInt(location.hash.slice(1))||1)-1);setTimeout(()=>{const h=document.que
     const frame = document.createElement("iframe");
     frame.sandbox = "allow-scripts allow-modals allow-forms allow-pointer-lock";
     frame.allow = "fullscreen";
-    frame.srcdoc = kind === "svg" ? `<body style="margin:0;display:grid;place-items:center;min-height:100vh">${code}` : code;
+    // Trang HTML thuộc một dự án nhiều file: xem cùng CSS, JS, dữ liệu của dự án.
+    const files = block.closest(".msg")?._project, path = block.dataset.path;
+    frame.srcdoc = kind === "svg" ? `<body style="margin:0;display:grid;place-items:center;min-height:100vh">${code}`
+      : files?.has(path) ? bundlePage(files, path) : withShim(code, storageShim());
     frame.onload = () => frame.focus();
     box.append(frame);
     block.after(box);
@@ -4272,7 +5153,7 @@ go((parseInt(location.hash.slice(1))||1)-1);setTimeout(()=>{const h=document.que
     $("setThink").value = settings.think;
     renderMemories();
     $("trainCount").value = `${trainingExamples().length} câu trả lời đã được thích`;
-    renderPersonas(); renderKb(); paintSync();
+    renderKb(); paintSync();
     els.settings.showModal();
   };
   els.settings.addEventListener("close", () => {
