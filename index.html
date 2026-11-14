@@ -287,7 +287,68 @@
   .content table { border-collapse: collapse; margin: 0 0 12px; font-size: 14px; display: block; overflow-x: auto; }
   .content th, .content td { border: 1px solid var(--border); padding: 6px 12px; text-align: left; }
   .content th { background: var(--surface); font-weight: 600; }
-  .code-btns { display: inline-flex; gap: 12px; }
+  /* Trình xem code kiểu VS Code (luôn nền tối, màu cú pháp Dark+). */
+  .ide { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; background: #1e1e1e; color: #cccccc;
+    font-size: 13px; --hl-kw: #569cd6; --hl-str: #ce9178; --hl-num: #b5cea8; --hl-fn: #dcdcaa; --hl-type: #4ec9b0; --hl-meta: #9cdcfe; animation: menu-in .16s ease-out both; }
+  .ide .hljs-comment, .ide .hljs-quote { color: #6a9955; }
+  .ide .hljs-tag, .ide .hljs-name { color: #569cd6; } .ide .hljs-attr { color: #9cdcfe; } .ide .hljs-selector-class, .ide .hljs-selector-id { color: #d7ba7d; }
+  .ide-bar { display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 8px 0 12px; background: #323233; border-bottom: 1px solid #252526; flex: none; }
+  .ide-title { flex: 1; min-width: 0; font-weight: 600; color: #e7e7e7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ide-acts { display: flex; gap: 6px; }
+  .ide-btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 6px; color: #cccccc; font-size: 12.5px; white-space: nowrap; }
+  .ide-btn:hover { background: #45494e; color: #fff; }
+  .ide-btn:focus-visible { outline: 1px solid #007fd4; outline-offset: 1px; }
+  .ide-btn svg { width: 14px; height: 14px; }
+  .ide-x { font-size: 20px; line-height: 1; padding: 2px 10px; }
+  .ide-menu { display: none; font-size: 16px; }
+  .ide-body { flex: 1; display: flex; min-height: 0; }
+  .ide-side { width: 250px; flex: none; display: flex; flex-direction: column; background: #252526; border-right: 1px solid #1e1e1e; min-height: 0; }
+  .ide-side-h { padding: 10px 14px 6px; font-size: 11px; font-weight: 600; letter-spacing: .08em; color: #bbbbbb; }
+  .ide-side-h small { font-weight: 400; letter-spacing: 0; color: #8b8b8b; margin-left: 4px; }
+  .ide-filter { margin: 2px 10px 8px; padding: 5px 8px; border-radius: 4px; border: 1px solid #3c3c3c; background: #3c3c3c; color: #cccccc; font: inherit; font-size: 12.5px; }
+  .ide-filter:focus { outline: none; border-color: #007fd4; }
+  .ide-tree { flex: 1; overflow: auto; padding-bottom: 12px; }
+  .ide-node { display: flex; align-items: center; gap: 6px; width: 100%; padding: 3px 8px 3px calc(12px + var(--d) * 14px); color: #cccccc; text-align: left; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; font-size: 13px; border-radius: 0; }
+  .ide-node:hover { background: #2a2d2e; }
+  .ide-node.on { background: #37373d; color: #fff; }
+  .ide-node:focus-visible { outline: 1px solid #007fd4; outline-offset: -1px; }
+  .ide-node .chev { width: 12px; flex: none; color: #c5c5c5; font-size: 11px; }
+  .ide-ico { flex: none; min-width: 22px; padding: 0 3px; height: 15px; border-radius: 3px; display: inline-grid; place-items: center; font-size: 8.5px; font-weight: 700;
+    text-transform: uppercase; color: #1e1e1e; background: var(--c); }
+  .ide-empty { padding: 12px 14px; color: #8b8b8b; }
+  .ide-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  .ide-tabs { display: flex; background: #252526; overflow-x: auto; flex: none; scrollbar-width: thin; min-height: 35px; }
+  .ide-tab { display: flex; align-items: center; background: #2d2d2d; border-right: 1px solid #252526; color: #969696; flex: none; }
+  .ide-tab.on { background: #1e1e1e; color: #ffffff; box-shadow: inset 0 1px 0 #007fd4; }
+  .ide-tab > button:first-child { display: flex; align-items: center; gap: 6px; padding: 8px 4px 8px 12px; color: inherit; }
+  .ide-tab .tx { padding: 2px 8px; color: inherit; opacity: .7; font-size: 15px; }
+  .ide-tab .tx:hover { opacity: 1; }
+  .ide-crumb { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 3px 8px 3px 14px; color: #a9a9a9; font-size: 12px; border-bottom: 1px solid #2b2b2b; flex: none; }
+  .ide-path { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ide-path i { font-style: normal; margin: 0 6px; color: #6f6f6f; }
+  .ide-fileacts { display: flex; gap: 4px; flex: none; }
+  .ide-ed { flex: 1; display: flex; overflow: auto; min-height: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; line-height: 1.55; }
+  .ide-ed:focus { outline: none; }
+  .ide-gutter { position: sticky; left: 0; margin: 0; padding: 10px 14px 24px 12px; text-align: right; color: #6e7681; background: #1e1e1e; user-select: none; flex: none; min-width: 48px; z-index: 1; font: inherit; }
+  .ide-code { margin: 0; padding: 10px 24px 24px 8px; flex: 1; font: inherit; color: #d4d4d4; white-space: pre; tab-size: 2; }
+  .ide-code code { font: inherit; background: none; padding: 0; }
+  .ide-status { display: flex; gap: 18px; justify-content: flex-end; height: 24px; align-items: center; padding: 0 14px; background: #007acc; color: #fff; font-size: 12px; flex: none; }
+  @media (max-width: 720px) {
+    .ide-menu { display: inline-flex; }
+    .ide-side { position: absolute; top: 42px; bottom: 24px; left: 0; z-index: 3; width: min(280px, 82vw); box-shadow: 8px 0 24px rgba(0,0,0,.4); transform: translateX(-102%); transition: transform .18s; }
+    .ide.side-open .ide-side { transform: none; }
+    .ide-acts .ide-btn span { display: none; }
+    .ide-fileacts .ide-btn { font-size: 0; gap: 0; padding: 5px 7px; }
+    .ide-status span:nth-child(3) { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { .ide, .ide-side { animation: none; transition: none; } }
+  .code-btns { display: inline-flex; gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
+  .code-btns button[disabled] { opacity: .5; }
+  .run-out { margin: -8px 0 16px; border: 1px solid var(--border); border-top: 0; border-radius: 0 0 12px 12px; background: var(--surface); overflow: hidden; }
+  .run-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 12px; font-size: 12px; color: var(--muted); border-bottom: 1px solid var(--border); }
+  .run-head button { font-size: 18px; line-height: 1; color: var(--muted); padding: 0 4px; }
+  .run-out pre { margin: 0; padding: 10px 12px; max-height: 320px; overflow: auto; font-size: 13px; white-space: pre-wrap; word-break: break-word; }
   .svg-preview { margin: 0 0 8px; padding: 12px; border: 1px solid var(--border); border-radius: 12px; background: #fff; text-align: center; }
   .svg-preview img { max-width: 100%; max-height: 480px; }
   .preview { margin: -4px 0 12px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
@@ -761,6 +822,7 @@
   const ICON_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
   const ICON_REDO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>';
   const ICON_THUMB = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>';
+  const ICON_CODE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg>';
   const ICON_PLAY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16l13-8z"/></svg>';
   const ICON_DOWN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12M6 10l6 6 6-6M5 20h14"/></svg>';
   const ICON_FULL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
@@ -795,10 +857,10 @@
       // Phải khớp FREE_MODELS trong worker/worker.js.
       // Chỉ giữ mô hình đã kiểm tra là trả lời được (13/11/2026). DeepSeek V4.1 Flash, MiniMax M3.1 Flash vẫn có trong
       // worker/worker.js nhưng bản miễn phí của NVIDIA đang quá tải; Kimi K2.6 đã bị NVIDIA gỡ (404), nên chưa đưa vào menu.
-      models: ["glm-5.3-flash", "nemotron-3-ultra", "nemotron-3.5-super-vl", "mistral-large-4", "nemotron-3.5-lightning", "laguna-xs", "step-5",
+      models: ["glm-5.3-flash", "nemotron-3-ultra", "nemotron-3.5-super-vl", "mistral-large-4", "nemotron-3.5-lightning", "laguna-xs", "step-5", "minimax-m3.1-flash",
         "glm-4.7-flash", "glm-4.5-flash", "glm-4.6v-flash"],
       // Chạy trên NVIDIA (phải khớp NVIDIA_MODELS trong worker/worker.js); máy chủ tự dùng GLM của Z.ai khi chúng bận.
-      nvidia: ["glm-5.3-flash", "nemotron-3-ultra", "nemotron-3.5-super-vl", "mistral-large-4", "nemotron-3.5-lightning", "laguna-xs", "step-5"],
+      nvidia: ["glm-5.3-flash", "nemotron-3-ultra", "nemotron-3.5-super-vl", "mistral-large-4", "nemotron-3.5-lightning", "laguna-xs", "step-5", "minimax-m3.1-flash"],
       // Mô hình đọc được ảnh: câu hỏi có ảnh gửi tới mô hình đang chọn nếu nó đọc được ảnh, không thì tới visionNvidia,
       // máy chủ lỗi thì tới vision (GLM-4.6V Flash của Z.ai).
       visionNvidia: "nemotron-3.5-super-vl",
@@ -814,6 +876,7 @@
         "nemotron-3.5-lightning": ["Titan 3.5 Lightning", "Giải thích dễ hiểu bằng ví dụ đời thường"],
         "laguna-xs": ["Forge XS", "Chuyên viết code, trả lời rất nhanh và gọn"],
         "step-5": ["Atlas 5", "Suy luận nhiều bước rất kỹ, trả lời chậm hơn"],
+        "minimax-m3.1-flash": ["Nova 5 Prime", "Mạnh nhất dòng Nova: suy luận nhanh và chắc, toán, code, việc nhiều bước"],
         "glm-4.7-flash": ["Nova 4.7", "Ổn định, suy luận và viết code tốt"],
         "glm-4.5-flash": ["Nova 4.5", "Nhanh nhất, hợp câu hỏi ngắn và trò chuyện"],
         "glm-4.6v-flash": ["Nova 4.6 Vision", "Đọc ảnh: ảnh chụp, tài liệu, biểu đồ"],
@@ -827,6 +890,7 @@
         "nemotron-3.5-lightning": ["#f59e0b", "#ef4444", "M13 2.5 4.5 13.5H12l-1 8 8.5-11H12l1-8Z"],
         "laguna-xs": ["#7c3aed", "#ec4899", "M4 17l6-5-6-5M12 19h8"],
         "step-5": ["#1e3a8a", "#06b6d4", "M12 12c-2-2.7-4-4-6-4a4 4 0 0 0 0 8c2 0 4-1.3 6-4Zm0 0c2 2.7 4 4 6 4a4 4 0 0 0 0-8c-2 0-4 1.3-6 4Z"],
+        "minimax-m3.1-flash": ["#e11d48", "#f59e0b", "M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8M12 8.5l1.1 2.4 2.4 1.1-2.4 1.1-1.1 2.4-1.1-2.4-2.4-1.1 2.4-1.1Z"],
         "glm-4.7-flash": ["#ea580c", "#facc15", "M4.5 16.5c-1.5 1.3-2 5-2 5s3.7-.5 5-2c.7-.8.7-2.1-.1-2.9a2.2 2.2 0 0 0-2.9-.1ZM12 15l-3-3a22 22 0 0 1 2-4A13 13 0 0 1 22 2c0 2.7-.8 7.5-6 11a22 22 0 0 1-4 2ZM9 12H4s.6-3 2-4c1.6-1.1 5 0 5 0M12 15v5s3-.6 4-2c1.1-1.6 0-5 0-5"],
         "glm-4.5-flash": ["#0284c7", "#22d3ee", "M17.7 7.7A2.5 2.5 0 1 1 19.5 12H2M9.6 4.6A2 2 0 1 1 11 8H2M12.6 19.4A2 2 0 1 0 14 16H2"],
         "glm-4.6v-flash": ["#475569", "#a855f7", "M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M12 10.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3ZM6.5 12S8.5 8.5 12 8.5s5.5 3.5 5.5 3.5-2 3.5-5.5 3.5S6.5 12 6.5 12Z"],
@@ -854,7 +918,7 @@
   const modelTitle = (id, m) => PROVIDERS[id].titles[m]?.[0] || m;
   // Ghi chú của máy chủ dùng tên gốc của mô hình: đổi sang tên của Astra.
   const ORIGINAL_NAMES = { "GLM-5.3 Flash": "glm-5.3-flash", "Nemotron 3 Ultra": "nemotron-3-ultra", "Nemotron 3.5 Super VL": "nemotron-3.5-super-vl", "Nemotron 3.5 Lightning": "nemotron-3.5-lightning",
-    "Mistral Large 4": "mistral-large-4", "Laguna XS": "laguna-xs", "Step 5": "step-5", "GLM-4.7 Flash": "glm-4.7-flash", "GLM-4.5 Flash": "glm-4.5-flash", "GLM-4.6V Flash": "glm-4.6v-flash" };
+    "Mistral Large 4": "mistral-large-4", "Laguna XS": "laguna-xs", "Step 5": "step-5", "MiniMax M3.1 Flash": "minimax-m3.1-flash", "GLM-4.7 Flash": "glm-4.7-flash", "GLM-4.5 Flash": "glm-4.5-flash", "GLM-4.6V Flash": "glm-4.6v-flash" };
   const brandNote = (t) => Object.entries(ORIGINAL_NAMES).reduce((a, [o, id]) => a.split(o).join(modelTitle("shared", id)), String(t || ""))
     .replace(/GLM của Z\.ai|Z\.ai|NVIDIA_API_KEY|NVIDIA/g, (w) => (w === "NVIDIA_API_KEY" ? "khoá máy chủ" : "máy chủ dự phòng"));
   // Biểu tượng của một mô hình (ô màu có hình vẽ).
@@ -1028,7 +1092,7 @@
   // Mô hình giải cùng trong chế độ Nghĩ kỹ: các mô hình mạnh khác mô hình đang chọn, ưu tiên khác họ nhau,
   // bỏ mô hình đã biết là đang lỗi (chưa có kết quả kiểm tra thì cứ thử; máy chủ vẫn tự chuyển sang GLM nếu lỗi).
   // Ưu tiên mô hình mạnh mà trả lời nhanh (GLM của Z.ai hay nghĩ rất lâu khi đông nên xếp sau).
-  const COUNCIL_ORDER = ["nemotron-3-ultra", "mistral-large-4", "nemotron-3.5-super-vl", "glm-4.7-flash", "nemotron-3.5-lightning", "laguna-xs", "glm-4.5-flash"];
+  const COUNCIL_ORDER = ["nemotron-3-ultra", "mistral-large-4", "minimax-m3.1-flash", "nemotron-3.5-super-vl", "glm-4.7-flash", "nemotron-3.5-lightning", "laguna-xs", "glm-4.5-flash"];
   async function councilModels(n = 2) {
     const cur = cloudModel();
     await Promise.race([loadModelStatus(), new Promise((ok) => setTimeout(ok, 4000))]);
@@ -1229,9 +1293,12 @@
         if (kind === "svg" && /<\/svg>\s*$/.test(code)) html += `<div class="svg-preview"><img alt="Hình do mô hình vẽ" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(code)}"></div>`;
         const preview = kind === "html" || kind === "svg"
           ? `<button type="button" data-preview>${ICON_PLAY}Xem trước</button><button type="button" data-download>${ICON_DOWN}Tải về</button>` : "";
+        // Code Python, JavaScript, C++ (không phải khối công cụ) có nút Chạy ngay trong câu trả lời; khối có tên file có nút Tải file.
+        const runner = RUNNABLE[kind] && !preview ? `<button type="button" data-run="${RUNNABLE[kind]}">${ICON_PLAY}Chạy</button>` : "";
+        const fileBtn = path && !preview ? `<button type="button" data-dlfile>${ICON_DOWN}Tải file</button>` : "";
         html += `<div class="codeblock"${preview ? ` data-kind="${kind}"` : ""}${path ? ` data-path="${esc(path)}"` : ""}><div class="code-head">` +
           `<span>${esc(CODE_LABELS[lang] || lang || "code")}${path ? ` · <b class="code-path">${esc(path)}</b>` : ""}</span>` +
-          `<span class="code-btns">${preview}<button type="button" data-copy>${ICON_COPY}Sao chép</button></span></div>` +
+          `<span class="code-btns">${preview}${runner}${fileBtn}<button type="button" data-copy>${ICON_COPY}Sao chép</button></span></div>` +
           `<pre><code${HL_LANG[lang] ? ` class="language-${HL_LANG[lang]}"` : ""}>${esc(code)}</code></pre></div>`;
         continue;
       }
@@ -1531,7 +1598,7 @@
     if (controller || (!text && !attached.length)) return;
     if (attached.some((a) => a.loading)) return;
     const images = attached.filter((a) => a.kind === "image").map((a) => a.url);
-    const files = attached.filter((a) => a.kind === "file").map(({ name, text, pages }) => ({ name, text, pages }));
+    const files = attached.filter((a) => a.kind === "file").map(({ name, text, pages, zip, count }) => ({ name, text, pages, ...(zip ? { zip, count } : {}) }));
     const refImages = attached.filter((a) => a.kind === "ref").map((a) => a.url);
     if (!text && refImages.length && !images.length) text = "Vẽ lại ảnh này đẹp hơn.";
     if (!text) text = images.length ? "Hãy mô tả và phân tích ảnh này." : "Hãy tóm tắt nội dung file này.";
@@ -1727,6 +1794,9 @@
     "vẽ hình hay lập bảng, đổi biến, xét phần bù, hoặc viết code thử nghiệm.\n" +
     "- Việc dài có nhiều yêu cầu: lập danh sách mọi yêu cầu ngay từ đầu, cuối cùng đối chiếu từng mục xem đã làm đủ chưa.\n" +
     "- Mức chắc chắn: với kết luận quan trọng, nói rõ chắc chắn cao, vừa hay thấp, và điều gì có thể làm kết luận thay đổi.\n" +
+    "Làm việc với công cụ: trước khi chạy code hay tra cứu, nghĩ xem kết quả mong đợi là gì; có kết quả thì so với mong đợi, khớp thì đi tiếp, " +
+    "lệch thì tìm nguyên nhân trước khi đi tiếp; không bỏ qua lỗi hay cảnh báo; kết quả tra cứu mâu thuẫn nhau thì ưu tiên nguồn chính thức và mới hơn.\n" +
+    "Việc nhiều bước: trong phần suy nghĩ giữ một danh sách trạng thái (đã xong, đang làm, còn lại) và cập nhật sau mỗi bước để không bỏ sót.\n" +
     "Tự soát trước khi gửi: đã trả lời đúng câu được hỏi chưa; mọi con số, tên, đơn vị khớp với đề và với phần suy nghĩ; kết luận cuối khớp với lời giải; " +
     "không có bước nhảy cóc; đủ ý mà không lan man; code và file được viết trọn, không bỏ dở.\n" +
     "Không bịa thông tin, số liệu, trích dẫn hay đường dẫn; không chắc thì tra cứu hoặc nói rõ. Trả lời bằng ngôn ngữ của người dùng.";
@@ -1793,6 +1863,12 @@
       "- Bài dài: cứ vài bước dừng lại kiểm tra xem còn đi đúng hướng mục tiêu ban đầu không, tránh lạc đề.\n" +
       "- Mỗi kết quả trung gian quan trọng đều kiểm bằng code hoặc thay số trước khi dùng cho bước sau, để lỗi không lan dần.\n" +
       "- Suy nghĩ kỹ nhưng câu trả lời cuối phải gọn: kết luận trước, rồi các bước chính.",
+    "minimax-m3.1-flash":
+      "Sở trường của bạn (Nova 5 Prime, mạnh nhất dòng Nova): suy luận nhanh mà chắc, toán, lập trình, dùng công cụ và làm việc nhiều bước. Hãy phát huy:\n" +
+      "- Việc nhiều bước (dự án code, nghiên cứu, kế hoạch): lập danh sách bước, làm lần lượt, dùng công cụ ở đúng bước cần, cuối cùng đối chiếu đủ mọi yêu cầu.\n" +
+      "- Toán và code: suy luận chặt, chạy thử bằng công cụ trước khi kết luận; code hoàn chỉnh, xử lý trường hợp biên.\n" +
+      "- Bạn trả lời nhanh nên dễ bỏ bước kiểm chứng: câu khó luôn kiểm lại bằng một cách độc lập trước khi chốt.\n" +
+      "- Chỉ dùng ngôn ngữ của người dùng; không chen chữ Hán hay câu tiếng Anh, tiếng Trung vào câu trả lời tiếng Việt; tiếng Việt đúng chính tả và dấu.",
     "glm-4.7-flash":
       "Sở trường của bạn (Nova 4.7): ổn định, suy luận và viết code tốt. Phát huy bằng cách luôn đi theo khung suy nghĩ ở trên và kiểm chứng bằng công cụ.",
     "glm-4.5-flash":
@@ -1801,11 +1877,44 @@
     "glm-4.6v-flash":
       "Sở trường của bạn (Nova 4.6 Vision): đọc ảnh chụp, tài liệu, biểu đồ.\n" + VISION_PROMPT,
   };
+  // Tay nghề riêng của dòng Titan (mô hình mạnh nhất): làm slide và làm web ở mức chuyên gia. Chỉ thêm khi câu hỏi đang dùng kỹ năng tương ứng.
+  const TITAN_SLIDES =
+    "Tay nghề làm slide của dòng Titan (mức cao nhất của Astra). Quy trình bắt buộc:\n" +
+    "1) Xác định khán giả, mục tiêu (sau bài họ cần hiểu, nhớ hay làm gì) và thời lượng; số slide khoảng 1 slide cho mỗi 1–2 phút nói.\n" +
+    "2) Tra cứu dữ kiện thật trước khi viết: số liệu có năm và nguồn, ví dụ cụ thể, nhân vật, sự kiện; không bịa số.\n" +
+    "3) Dàn ý theo câu chuyện: vấn đề → vì sao quan trọng → 2 đến 4 ý lớn (mỗi ý mở bằng một section) → bằng chứng, ví dụ → kết luận và lời kêu gọi. " +
+    "Đọc lần lượt các tiêu đề slide phải kể được trọn câu chuyện.\n" +
+    "4) Chọn bố cục theo nội dung, không theo thói quen: con số nổi bật → stats; xu hướng theo thời gian → chart line hoặc area; so sánh giá trị → chart bar; " +
+    "tỷ trọng tối đa 5 phần → pie hoặc doughnut; quy trình, lịch sử → timeline; các khái niệm song song → cards; ưu và nhược, trước và sau → hai cột; " +
+    "dữ liệu nhiều chiều → table tối đa 5 hàng 4 cột; câu nói đắt giá → quote. Bài 10 slide nên có ít nhất 5 kiểu bố cục khác nhau.\n" +
+    "5) Chữ trên slide viết như tiêu đề báo: cụ thể, có số, động từ mạnh, mỗi slide một thông điệp. Ví dụ, giải thích, câu chuyển ý để trong notes, " +
+    "viết như lời nói tự nhiên và có câu dẫn sang slide sau.\n" +
+    "6) Bài giảng cho học sinh: có slide câu hỏi nhanh kiểm tra hiểu bài và slide tóm tắt 3 ý. Bài thuyết trình kinh doanh: mở bằng một con số gây ấn tượng, " +
+    "có slide đề xuất và bước tiếp theo. Bài báo cáo khoa học: mục tiêu, phương pháp, kết quả (biểu đồ), kết luận, hạn chế.\n" +
+    "7) Tự soát trước khi nộp: JSON hợp lệ (dấu phẩy, ngoặc, dấu ngoặc kép trong chuỗi phải viết \\\"), mọi số liệu có nguồn ở slide cuối, " +
+    "không slide nào vượt giới hạn chữ, icon hợp nghĩa, theme hợp chủ đề và người xem.";
+  const TITAN_WEB =
+    "Tay nghề làm web của dòng Titan (kỹ sư frontend cấp cao của Astra):\n" +
+    "1) Trước khi code, nghĩ trong phần suy nghĩ: người dùng là ai, luồng chính 3–5 bước, danh sách tính năng đầy đủ như sản phẩm thật, cấu trúc dữ liệu, " +
+    "các màn hình hoặc khối giao diện, các trạng thái (trống, đang tải, lỗi, thành công).\n" +
+    "2) Thiết kế có hệ thống trước: biến CSS cho màu (nền, bề mặt, chữ, chữ phụ, viền, màu nhấn, nhấn đậm, thành công, cảnh báo, lỗi), " +
+    "thang khoảng cách 4/8/12/16/24/32/48/64, thang cỡ chữ, bo góc, bóng; một màu nhấn chủ đạo; chế độ tối dùng lại cùng các biến.\n" +
+    "3) Viết HTML ngữ nghĩa trước, rồi CSS từ điện thoại lên (breakpoint min-width), rồi JS theo lớp: state → render → sự kiện (gán theo kiểu uỷ quyền) → lưu trữ.\n" +
+    "4) Mọi tính năng chạy thật: không có nút không làm gì; dữ liệu mẫu phong phú và đúng ngữ cảnh; tìm kiếm, lọc, sắp xếp, thêm, sửa, xoá, lưu lại khi hợp lý.\n" +
+    "5) Chi tiết tạo cảm giác cao cấp: hover và focus rõ ràng, chuyển động 150–250ms, skeleton khi tải, toast khi xong, hộp thoại xác nhận khi xoá, " +
+    "icon SVG cùng một bộ, ảnh có tỉ lệ cố định và object-fit, chữ không tràn, khoảng trắng rộng rãi, căn lề thẳng hàng.\n" +
+    "6) Trước khi nộp, đi lại từng luồng như người dùng thật: bấm từng nút, nhập dữ liệu sai, tải lại trang, màn hình 360px, chế độ tối; " +
+    "kiểm tra id, class, tên hàm khớp giữa HTML, CSS và JS; không lỗi console.";
+  const TITANS = ["glm-5.3-flash", "nemotron-3-ultra", "nemotron-3.5-super-vl", "nemotron-3.5-lightning"];
   // Gắn điểm mạnh của đúng mô hình sắp nhận câu hỏi vào lời nhắc hệ thống (bản sao, không đổi lịch sử).
   function withProfile(messages, model) {
     const sys = messages[0];
     if (sys?.role !== "system" || typeof sys.content !== "string") return messages;
     const add = [MODEL_PROFILES[model]];
+    if (TITANS.includes(model)) {
+      if (sys.content.includes("Kỹ năng làm bài trình chiếu")) add.push(TITAN_SLIDES);
+      if (/Kỹ năng làm trang web|Kỹ năng làm dự án web nhiều file|Kỹ năng phát triển ứng dụng web lớn/.test(sys.content)) add.push(TITAN_WEB);
+    }
     if (/^glm/.test(model) && !sys.content.includes(GLM_PROMPT)) add.push(GLM_PROMPT);
     const text = add.filter(Boolean).join("\n\n");
     return text ? [{ ...sys, content: sys.content + "\n\n" + text }, ...messages.slice(1)] : messages;
@@ -1861,6 +1970,10 @@
     "- ```xlsx\n{JSON}\n``` : file Excel. JSON gồm file và sheets là danh sách {\"name\":…,\"rows\":[[tiêu đề cột…],[…]],\"widths\":[độ rộng cột]}. " +
     "Ô bắt đầu bằng = là công thức Excel (ví dụ \"=SUM(B2:B10)\", \"=IF(C2>=5,\\\"Đạt\\\",\\\"Chưa đạt\\\")\"); số viết dạng số, không có dấu nghìn hay đơn vị trong ô.\n" +
     "- ```docx\nnội dung Markdown\n``` : file Word, từ nội dung Markdown (tiêu đề #, ##, đoạn văn, danh sách, bảng).\n" +
+    "- Nhiều file hoặc file nén .zip (dự án code bất kỳ ngôn ngữ, bộ tài liệu, dữ liệu, cấu hình): viết mỗi file một khối code có đường dẫn ở dòng mở khối " +
+    "(ví dụ ```python src/main.py, ```markdown docs/huong-dan.md, ```json data/config.json). Trang tự gom thành thẻ dự án có trình xem code kiểu VS Code " +
+    "và nút Tải .zip, nên khi người dùng muốn file zip thì làm đúng cách này (không tự mã hoá zip). Người dùng gửi file .zip thì trang đã giải nén sẵn " +
+    "thành các khối có đường dẫn trong tin nhắn; khi sửa chỉ viết lại trọn những file thay đổi.\n" +
     "JSON phải hợp lệ (dấu ngoặc kép, không có dấu phẩy thừa). Sau khối file, nói ngắn gọn file gồm những gì.\n\n" +
     "Cách tra cứu: kiến thức của bạn có thể đã cũ, nên với thông tin có thể đã thay đổi hoặc bạn không chắc, hãy tra cứu thay vì đoán. " +
     "Chọn đúng nguồn chuyên biệt khi có (tin tức, thời tiết, tỷ giá, bài báo, lập trình, từ điển); câu hỏi phức tạp hoặc cần tổng hợp nhiều nguồn thì dùng research; còn lại dùng search. " +
@@ -2128,6 +2241,10 @@
         "- An toàn và hiệu năng: tránh SQL injection (dùng tham số), không lộ mật khẩu hay key trong code, kiểm tra dữ liệu từ người dùng; " +
         "nêu độ phức tạp và chọn cấu trúc dữ liệu phù hợp.\n" +
         "- Trình bày: code hoàn chỉnh chạy được ngay (kèm import), cách chạy hoặc cài thư viện, giải thích ngắn ý tưởng; khi sửa code của người dùng thì chỉ rõ chỗ đổi và lý do.\n" +
+        "Quy trình mỗi lần viết code: (1) nêu rõ input, output, ràng buộc và một ví dụ; (2) chọn cách làm, cấu trúc dữ liệu, nêu độ phức tạp; (3) viết code; " +
+        "(4) đọc lại từng dòng như người review: chỉ số và lỗi lệch một (off-by-one), null hoặc undefined, kiểu dữ liệu, chia cho 0, tràn số, async thiếu await, " +
+        "biến chưa khai báo hoặc trùng tên, vòng lặp không dừng, sửa danh sách khi đang duyệt, đường dẫn và tên file; (5) chạy thử bằng công cụ với ví dụ, " +
+        "trường hợp biên và dữ liệu ngẫu nhiên; (6) chỉ đưa code đã chạy qua, và nói rõ đã kiểm thử những gì.\n" +
         "Kiến thức kỹ sư phần mềm chuyên nghiệp:\n" +
         "- Thiết kế: tách lớp rõ ràng (giao diện, logic nghiệp vụ, truy cập dữ liệu); hàm thuần cho logic để dễ kiểm thử; phụ thuộc đi một chiều; " +
         "nguyên tắc SOLID, DRY, KISS, YAGNI; dùng mẫu thiết kế khi thật sự cần (strategy, observer, factory, adapter, repository); ưu tiên kết hợp hơn kế thừa.\n" +
@@ -2272,6 +2389,12 @@
     history.unshift({ role: "system", content: systemPrompt(chat) + extra.text });
     // Mô hình làm theo lời dặn ngay trong câu hỏi tốt hơn lời dặn chung, nên nhắc ngắn kỹ năng đang dùng (người dùng không thấy).
     const reminds = [currentMode().remind, ...activeSkills(chat, true).map((k) => k.remind)].filter(Boolean);
+    // Độ khó của câu hỏi quyết định độ sâu suy nghĩ: câu khó thì nghĩ đủ khung và kiểm chứng; câu xã giao ngắn thì trả lời ngay.
+    const lastQ = chat.messages.filter((m) => m.role === "user").at(-1)?.content || "";
+    if (activeSkills(chat, true).some((k) => k.hard))
+      reminds.push("đây là câu khó: suy nghĩ theo khung đầy đủ (hiểu đề, bẫy, ít nhất hai cách, đối chiếu), kiểm chứng bằng công cụ trước khi chốt, nêu mức chắc chắn");
+    else if (lastQ.length < 40 && !/[?？]|\d/.test(lastQ) && /^(chào|hi|hello|xin chào|cảm ơn|cám ơn|ok|oke|thanks|thank you|tạm biệt|bye)\b/i.test(lastQ.trim()))
+      reminds.push("câu xã giao ngắn: trả lời ngay, tự nhiên, không suy nghĩ dài");
     if (chat.messages.filter((m) => m.role === "user").at(-1)?.refImages?.length)
       reminds.push("người dùng gửi kèm ảnh đã tạo để sửa: dùng khối ```image với dòng đầu edit: yes, rồi mô tả bằng tiếng Anh thay đổi cần làm và nói rõ phần giữ nguyên");
     const lastUser = history.findLast((m) => m.role === "user");
@@ -2699,7 +2822,8 @@
     for (let round = 0; round < 3; round++) {
       const answer = splitThink(reply.content).answer;
       const chat = genChat?.messages.includes(reply) ? genChat : null;
-      const files = chat && projectAt(chat, chat.messages.indexOf(reply));
+      const all = chat && projectAt(chat, chat.messages.indexOf(reply));
+      const files = all && [...all.keys()].some((p) => /\.html?$/i.test(p)) ? all : null;
       const html = files ? null : [...answer.matchAll(/```html[^\n]*\n([\s\S]*?)\n[ \t]*```/g)].map((m) => m[1]).filter((c) => /<(html|body)\b/i.test(c)).at(-1);
       if (!html && !files) return;
       const what = files ? "dự án web" : "trang web";
@@ -2816,7 +2940,10 @@
     if (!chat) return files;
     const add = (text) => { for (const [p, c] of filesIn(splitThink(text || "").answer)) files.set(p, c); };
     const i = chat.messages.indexOf(reply);
-    chat.messages.slice(0, i >= 0 ? i : chat.messages.length - 1).forEach((m) => { if (m.role === "assistant") add(m.content); });
+    chat.messages.slice(0, i >= 0 ? i : chat.messages.length - 1).forEach((m) => {
+      if (m.role === "assistant") add(m.content);
+      else for (const f of m.files || []) if (f.zip) add(f.text);
+    });
     if (i >= 0) for (const d of reply.drafts || []) if (/^Bản (đầu|sửa)/.test(d.label || "")) add(d.content);
     return files;
   }
@@ -3512,6 +3639,28 @@
     } catch (e) { return /404/.test(e.message) ? `Không có "${word.trim()}" trong Wiktionary.` : toolError(e); }
   }
 
+  // Ngôn ngữ của khối code chạy được bằng nút Chạy (dùng lại công cụ của mô hình).
+  const RUNNABLE = { python: "py-run", py: "py-run", python3: "py-run", javascript: "js-run", js: "js-run", cpp: "cpp-run", "c++": "cpp-run", cc: "cpp-run" };
+  // Nút Chạy: chạy code của khối và hiện kết quả ngay bên dưới (bấm lần nữa để chạy lại).
+  async function runCodeBlock(btn) {
+    const block = btn.closest(".codeblock"), code = block.querySelector("code").textContent;
+    let out = block.nextElementSibling?.classList.contains("run-out") ? block.nextElementSibling : null;
+    if (!out) {
+      out = document.createElement("div");
+      out.className = "run-out";
+      out.innerHTML = `<div class="run-head"><span>Kết quả</span><button type="button" data-run-close title="Đóng">×</button></div><pre></pre>`;
+      block.after(out);
+    }
+    const pre = out.querySelector("pre");
+    pre.textContent = btn.dataset.run === "py-run" && !pyReady ? "Đang tải Python (lần đầu mất khoảng 10–20 giây)…" : TOOLS[btn.dataset.run].notice;
+    btn.disabled = true;
+    try {
+      const r = await TOOLS[btn.dataset.run].run(code);
+      const text = String((typeof r === "object" ? r.out : r) || "");
+      pre.textContent = !text.trim() || /^\(không có gì được in ra/.test(text.trim()) ? "(Chạy xong, không in ra gì. Muốn thấy kết quả thì thêm lệnh in, ví dụ print hoặc console.log.)" : text;
+    } catch (e) { pre.textContent = "Lỗi: " + e.message; }
+    btn.disabled = false;
+  }
   const TOOLS = {
     // js-run chạy trong Web Worker nên không có giao diện: báo rõ để mô hình khỏi chạy lại cả trang web nhiều lần.
     "js-run": { notice: "Đang chạy code…", run: async (c) => {
@@ -4348,16 +4497,33 @@
     return out;
   }
   // Dự án tính tới câu trả lời thứ idx: file của các câu trả lời trước, các bản đã tự sửa của câu này, rồi chính câu này.
+  // Các file của dự án trước câu trả lời thứ idx (để biết câu trả lời này sửa tiếp hay mở dự án mới).
+  function projectBefore(chat, idx) {
+    const files = new Map();
+    const add = (text) => { for (const [p, c] of filesIn(splitThink(text || "").answer)) files.set(p, c); };
+    chat.messages.slice(0, idx).forEach((m) => {
+      if (m.role === "user") { for (const f of m.files || []) if (f.zip) add(f.text); }
+      else if (m.role === "assistant") add(m.content);
+    });
+    return files;
+  }
   function projectAt(chat, idx) {
     const files = new Map();
     const add = (text) => { for (const [p, c] of filesIn(splitThink(text || "").answer)) files.set(p, c); };
     chat.messages.slice(0, idx + 1).forEach((m, i) => {
+      // Dự án người dùng gửi dạng .zip cũng là phần nền của dự án.
+      if (m.role === "user") { for (const f of m.files || []) if (f.zip) add(f.text); return; }
       if (m.role !== "assistant") return;
       if (i === idx) for (const d of m.drafts || []) if (/^Bản (đầu|sửa)/.test(d.label || "")) add(d.content);
       add(m.content);
     });
-    const own = filesIn(splitThink(chat.messages[idx]?.content || "").answer).length;
-    return own && files.size >= 2 && [...files.keys()].some((p) => /\.html?$/i.test(p)) ? files : null;
+    const ownFiles = filesIn(splitThink(chat.messages[idx]?.content || "").answer);
+    if (!ownFiles.length) return null;
+    // Câu trả lời là một dự án mới (có file khởi đầu riêng và không trùng file nào với dự án trước): không ghép với các file cũ.
+    const ownMap = new Map(ownFiles), before = projectBefore(chat, idx);
+    const entry = [...ownMap.keys()].some((p) => /^(index\.html?|main\.\w+|app\.\w+|package\.json|readme\.md|src\/(main|index|app)\.\w+|requirements\.txt|cmakelists\.txt)$/i.test(p));
+    const result = entry && before.size && ![...ownMap.keys()].some((p) => before.has(p)) ? ownMap : files;
+    return result.size >= 2 ? result : null;
   }
   const MIME = { html: "text/html", htm: "text/html", css: "text/css", js: "text/javascript", mjs: "text/javascript", json: "application/json",
     svg: "image/svg+xml", txt: "text/plain", md: "text/markdown", csv: "text/csv", xml: "application/xml" };
@@ -4430,11 +4596,13 @@
   }
   function projectCard(files, chat) {
     const readme = files.get("README.md") || files.get("PLAN.md") || "";
-    const name = (readme.match(/^#\s+(.+)$/m)?.[1] || chat?.title || "Dự án web").replace(/[*_`]/g, "").trim();
+    const name = (readme.match(/^#\s+(.+)$/m)?.[1] || chat?.title || "Dự án").replace(/[*_`]/g, "").trim();
     const htmlPages = [...files.keys()].filter((p) => /\.html?$/i.test(p)).length;
-    return `<div class="file-card proj"><div class="file-head"><span class="file-badge proj">WEB</span>` +
-      `<span class="file-name"><b>${esc(name)}</b><small>Dự án · ${files.size} file · ${htmlPages} trang</small></span>` +
-      `<span class="file-btns"><button type="button" class="btn primary" data-proj-run>${ICON_PLAY}Chạy thử</button>` +
+    // Dự án web có nút Chạy thử; dự án khác (Python, Node, C++, tài liệu…) chỉ xem code và tải .zip.
+    return `<div class="file-card proj"><div class="file-head"><span class="file-badge proj">${htmlPages ? "WEB" : "CODE"}</span>` +
+      `<span class="file-name"><b>${esc(name)}</b><small>Dự án · ${files.size} file${htmlPages ? ` · ${htmlPages} trang` : ""}</small></span>` +
+      `<span class="file-btns">${htmlPages ? `<button type="button" class="btn primary" data-proj-run>${ICON_PLAY}Chạy thử</button>` : ""}` +
+      `<button type="button" class="btn${htmlPages ? "" : " primary"}" data-proj-ide>${ICON_CODE}Xem code</button>` +
       `<button type="button" class="btn" data-proj-zip>${ICON_DOWN}Tải .zip</button></span></div>` +
       `<details><summary>Cấu trúc thư mục</summary><pre class="tree">${esc(projectTree(files))}</pre></details></div>`;
   }
@@ -4473,6 +4641,140 @@
     const zip = new JSZip();
     for (const [p, c] of files) zip.file(p, c);
     saveBlob(await zip.generateAsync({ type: "blob" }), fileName(name || "du-an-web") + ".zip");
+  }
+  // ---------- Trình xem code kiểu VS Code ----------
+  // Cây thư mục bên trái (thu gọn được, lọc theo tên), các tab file đang mở, số dòng, tô màu cú pháp, thanh trạng thái;
+  // sao chép, tải từng file, tải .zip, chạy thử dự án web. Trên điện thoại, cây thư mục mở bằng nút ☰.
+  const FILE_COLORS = { html: "#e44d26", htm: "#e44d26", css: "#42a5f5", scss: "#c6538c", less: "#2a4d80", js: "#f1e05a", mjs: "#f1e05a", cjs: "#f1e05a",
+    jsx: "#61dafb", ts: "#3178c6", tsx: "#3178c6", json: "#cbcb41", md: "#519aba", py: "#3776ab", cpp: "#f34b7d", cc: "#f34b7d", c: "#a8b9cc", h: "#a074c4",
+    java: "#b07219", kt: "#a97bff", go: "#00add8", rs: "#dea584", php: "#777bb4", rb: "#cc342d", sql: "#e38c00", svg: "#ffb13b", txt: "#9aa0a6",
+    vue: "#41b883", svelte: "#ff3e00", sh: "#89e051", yml: "#cb171e", yaml: "#cb171e", xml: "#e37933", csv: "#89e051", env: "#ecd53f", toml: "#9c4221" };
+  const HL_OF = { html: "xml", htm: "xml", svg: "xml", xml: "xml", vue: "xml", svelte: "xml", css: "css", scss: "scss", less: "less", js: "javascript", mjs: "javascript",
+    cjs: "javascript", jsx: "javascript", ts: "typescript", tsx: "typescript", json: "json", md: "markdown", py: "python", cpp: "cpp", cc: "cpp", c: "c", h: "cpp",
+    java: "java", kt: "kotlin", go: "go", rs: "rust", php: "php", rb: "ruby", sql: "sql", sh: "bash", yml: "yaml", yaml: "yaml", toml: "ini", env: "ini" };
+  const LANG_TITLE = { html: "HTML", htm: "HTML", css: "CSS", scss: "SCSS", js: "JavaScript", mjs: "JavaScript", jsx: "JavaScript JSX", ts: "TypeScript", tsx: "TypeScript JSX",
+    json: "JSON", md: "Markdown", py: "Python", cpp: "C++", cc: "C++", c: "C", h: "C/C++ Header", java: "Java", go: "Go", rs: "Rust", php: "PHP", sql: "SQL",
+    svg: "SVG", txt: "Plain Text", vue: "Vue", sh: "Shell", yml: "YAML", yaml: "YAML", xml: "XML", csv: "CSV" };
+  const fileDot = (p) => `<span class="ide-ico" style="--c:${FILE_COLORS[extOf(p)] || "#9aa0a6"}">${esc((extOf(p) || "·").slice(0, 4))}</span>`;
+  function openIde(files, name, onRun) {
+    document.querySelector(".ide")?.remove();
+    const back = document.activeElement;
+    const paths = [...files.keys()];
+    const open = [], closed = new Set();
+    let active = null, filter = "";
+    const box = document.createElement("div");
+    box.className = "ide";
+    box.setAttribute("role", "dialog");
+    box.setAttribute("aria-label", "Trình xem code: " + name);
+    box.innerHTML =
+      `<div class="ide-bar"><button type="button" class="ide-btn ide-menu" data-ide="side" aria-label="Hiện cây thư mục">☰</button>` +
+      `<span class="ide-title">${esc(name)}</span><span class="ide-acts">` +
+      (onRun ? `<button type="button" class="ide-btn" data-ide="run">${ICON_PLAY}<span>Chạy thử</span></button>` : "") +
+      `<button type="button" class="ide-btn" data-ide="zip">${ICON_DOWN}<span>Tải .zip</span></button>` +
+      `<button type="button" class="ide-btn ide-x" data-ide="close" aria-label="Đóng" title="Đóng (Esc)">×</button></span></div>` +
+      `<div class="ide-body"><aside class="ide-side"><div class="ide-side-h">EXPLORER <small>${files.size} file</small></div>` +
+      `<input class="ide-filter" type="search" placeholder="Lọc file…" aria-label="Lọc file"><div class="ide-tree" role="tree"></div></aside>` +
+      `<section class="ide-main"><div class="ide-tabs" role="tablist"></div>` +
+      `<div class="ide-crumb"><span class="ide-path"></span><span class="ide-fileacts"><button type="button" class="ide-btn" data-ide="copy">${ICON_COPY}Sao chép</button>` +
+      `<button type="button" class="ide-btn" data-ide="dl">${ICON_DOWN}Tải file</button></span></div>` +
+      `<div class="ide-ed" tabindex="0"><pre class="ide-gutter" aria-hidden="true"></pre><pre class="ide-code"><code></code></pre></div></section></div>` +
+      `<div class="ide-status"><span class="st-lang"></span><span class="st-lines"></span><span class="st-size"></span><span>UTF-8</span></div>`;
+    const $$ = (s) => box.querySelector(s);
+    // Cây thư mục: thư mục trước, rồi file, theo bảng chữ cái.
+    const tree = {};
+    for (const p of paths) {
+      let node = tree;
+      const parts = p.split("/");
+      parts.forEach((seg, i) => { if (i === parts.length - 1) node[seg] = p; else node = node[seg + "/"] = node[seg + "/"] || {}; });
+    }
+    const drawTree = () => {
+      const rows = [];
+      const walk = (node, depth, prefix) => {
+        const keys = Object.keys(node).sort((a, b) => (b.endsWith("/") - a.endsWith("/")) || a.localeCompare(b));
+        for (const k of keys) {
+          if (k.endsWith("/")) {
+            const dir = prefix + k, shut = closed.has(dir) && !filter;
+            const at = rows.length;
+            if (!shut) walk(node[k], depth + 1, dir);
+            const kids = rows.splice(at);
+            if (filter && !kids.length) continue;
+            rows.push(`<button type="button" class="ide-node dir" role="treeitem" aria-expanded="${!shut}" data-dir="${esc(dir)}" style="--d:${depth}">` +
+              `<span class="chev">${shut ? "▸" : "▾"}</span>${esc(k.slice(0, -1))}</button>`, ...kids);
+          } else {
+            const p = node[k];
+            if (filter && !p.toLowerCase().includes(filter)) continue;
+            rows.push(`<button type="button" class="ide-node${p === active ? " on" : ""}" role="treeitem" data-file="${esc(p)}" style="--d:${depth}">` +
+              `${fileDot(p)}${esc(k)}</button>`);
+          }
+        }
+      };
+      walk(tree, 0, "");
+      $$(".ide-tree").innerHTML = rows.join("") || '<div class="ide-empty">Không có file nào khớp.</div>';
+    };
+    const drawTabs = () => {
+      $$(".ide-tabs").innerHTML = open.map((p) => `<span class="ide-tab${p === active ? " on" : ""}" role="tab" aria-selected="${p === active}">` +
+        `<button type="button" data-tab="${esc(p)}" title="${esc(p)}">${fileDot(p)}${esc(p.split("/").pop())}</button>` +
+        `<button type="button" class="tx" data-close="${esc(p)}" aria-label="Đóng ${esc(p)}">×</button></span>`).join("");
+    };
+    const clearEditor = () => {
+      active = null;
+      $$(".ide-code code").textContent = ""; $$(".ide-gutter").textContent = ""; $$(".ide-path").textContent = "";
+      for (const c of [".st-lang", ".st-lines", ".st-size"]) $$(c).textContent = "";
+      drawTabs(); drawTree();
+    };
+    const show = (p) => {
+      if (!files.has(p)) return;
+      if (!open.includes(p)) open.push(p);
+      active = p;
+      const text = files.get(p), ext = extOf(p), lines = text.split("\n").length;
+      $$(".ide-gutter").textContent = Array.from({ length: lines }, (_, i) => i + 1).join("\n");
+      const code = $$(".ide-code code");
+      code.textContent = text;
+      if (text.length < 300000) {
+        loadScript("https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js").then(() => {
+          if (active !== p) return;
+          const lang = HL_OF[ext];
+          code.innerHTML = (lang && hljs.getLanguage(lang) ? hljs.highlight(text, { language: lang }) : hljs.highlightAuto(text)).value;
+        }, () => {});
+      }
+      $$(".ide-path").innerHTML = p.split("/").map((x) => `<span>${esc(x)}</span>`).join("<i>›</i>");
+      $$(".st-lang").textContent = LANG_TITLE[ext] || (ext ? ext.toUpperCase() : "Plain Text");
+      $$(".st-lines").textContent = `${lines} dòng`;
+      const bytes = new Blob([text]).size;
+      $$(".st-size").textContent = bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
+      $$(".ide-ed").scrollTo(0, 0);
+      box.classList.remove("side-open");
+      drawTabs(); drawTree();
+    };
+    const onKey = (e) => { if (e.key === "Escape" && box.isConnected) { e.stopPropagation(); close(); } };
+    const close = () => { box.remove(); removeEventListener("keydown", onKey, true); back?.focus?.(); };
+    addEventListener("keydown", onKey, true);
+    box.addEventListener("click", (e) => {
+      const t = e.target.closest("[data-file],[data-dir],[data-tab],[data-close],[data-ide]");
+      if (!t) return;
+      if (t.dataset.file) show(t.dataset.file);
+      else if (t.dataset.dir) { if (closed.has(t.dataset.dir)) closed.delete(t.dataset.dir); else closed.add(t.dataset.dir); drawTree(); }
+      else if (t.dataset.tab) show(t.dataset.tab);
+      else if (t.dataset.close) {
+        const i = open.indexOf(t.dataset.close);
+        open.splice(i, 1);
+        if (active !== t.dataset.close) drawTabs();
+        else if (open.length) show(open[Math.max(0, i - 1)]);
+        else clearEditor();
+      } else {
+        const act = t.dataset.ide;
+        if (act === "close") close();
+        else if (act === "side") box.classList.toggle("side-open");
+        else if (act === "zip") zipProject(files, name).catch((err) => alert("Không tạo được file .zip: " + err.message));
+        else if (act === "run") { close(); onRun(); }
+        else if (act === "copy" && active) copy(files.get(active)).then(() => flash(t, `${ICON_CHECK}Đã chép`, `${ICON_COPY}Sao chép`));
+        else if (act === "dl" && active) saveBlob(new Blob([files.get(active)], { type: (MIME[extOf(active)] || "text/plain") + ";charset=utf-8" }), active.split("/").pop());
+      }
+    });
+    $$(".ide-filter").addEventListener("input", (e) => { filter = e.target.value.trim().toLowerCase(); drawTree(); });
+    document.body.append(box);
+    show(mainPage(files) || paths.find((p) => /(^|\/)readme\.md$/i.test(p)) || paths[0]);
+    $$(".ide-x").focus();
   }
 
   // ---------- Xuất file PowerPoint, Excel, Word ----------
@@ -5004,7 +5306,7 @@ go((parseInt(location.hash.slice(1))||1)-1);setTimeout(()=>{const h=document.que
 
   const attChip = (name, info) =>
     `<div class="att"><span class="file-ico">${ICON_FILE}</span><span class="name">${esc(name)}<small>${esc(info)}</small></span></div>`;
-  const fileInfo = (f) => (f.pages ? `${f.pages} trang · ` : "") + `${f.text.length.toLocaleString("vi-VN")} ký tự`;
+  const fileInfo = (f) => (f.zip ? `Dự án nén · ${f.count} file · ` : f.pages ? `${f.pages} trang · ` : "") + `${f.text.length.toLocaleString("vi-VN")} ký tự`;
 
   async function shrinkImage(file) {
     const bmp = await createImageBitmap(file);
@@ -5018,6 +5320,30 @@ go((parseInt(location.hash.slice(1))||1)-1);setTimeout(()=>{const h=document.que
     return c.toDataURL("image/jpeg", 0.85);
   }
 
+  // Giải nén file .zip người dùng gửi: lấy các file chữ (code, tài liệu), bỏ thư mục thư viện, file nhị phân và file quá lớn;
+  // mỗi file thành một khối có đường dẫn để mô hình đọc được cả dự án và sửa tiếp (thẻ dự án ghép với các file này).
+  async function readZip(file) {
+    if (!window.JSZip) await loadScript(CDN + "jszip/3.10.1/jszip.min.js");
+    const zip = await JSZip.loadAsync(await new Response(file).arrayBuffer()); // đọc qua Response để dữ liệu luôn đúng kiểu của trang
+    const entries = Object.values(zip.files).filter((f) => !f.dir && !/(^|\/)(__MACOSX|node_modules|\.git|dist|build|\.next|vendor|venv|\.venv|__pycache__)\//.test(f.name) &&
+      !/(^|\/)(\.DS_Store|package-lock\.json|yarn\.lock|pnpm-lock\.yaml)$/.test(f.name));
+    const files = new Map(), skipped = [];
+    let total = 0;
+    for (const f of entries.sort((a, b) => a.name.localeCompare(b.name))) {
+      const binary = /\.(png|jpe?g|gif|webp|ico|bmp|avif|pdf|zip|rar|7z|gz|tar|mp3|mp4|wav|ogg|webm|mov|woff2?|ttf|otf|eot|exe|dll|so|dylib|class|jar|pyc|o|a|wasm|psd|ai|sketch|docx?|xlsx?|pptx?)$/i.test(f.name);
+      if (binary) { skipped.push(f.name); continue; }
+      const text = await f.async("string");
+      if (/\u0000/.test(text.slice(0, 2000)) || text.length > 200000 || total + text.length > 180000) { skipped.push(f.name); continue; }
+      files.set(cleanPath(f.name), text); total += text.length;
+    }
+    if (!files.size) throw new Error("trong file nén không có file chữ hay code nào đọc được");
+    // Bỏ thư mục gốc chung (du-an/…) để đường dẫn gọn như trong dự án.
+    const first = [...files.keys()][0].split("/")[0];
+    let map = files;
+    if ([...files.keys()].every((p) => p.startsWith(first + "/"))) map = new Map([...files].map(([p, c]) => [p.slice(first.length + 1), c]));
+    const note = skipped.length ? `\n\n(Bỏ qua ${skipped.length} file nhị phân hoặc quá lớn: ${skipped.slice(0, 12).join(", ")}${skipped.length > 12 ? "…" : ""})` : "";
+    return { text: projectDump(map) + note, zip: true, count: map.size };
+  }
   async function readFileText(file) {
     const ext = file.name.split(".").pop().toLowerCase();
     if (ext === "pdf") {
@@ -5043,7 +5369,8 @@ go((parseInt(location.hash.slice(1))||1)-1);setTimeout(()=>{const h=document.que
       const wb = XLSX.read(await file.arrayBuffer());
       return { text: wb.SheetNames.map((n) => `[Trang tính ${n}]\n` + XLSX.utils.sheet_to_csv(wb.Sheets[n])).join("\n\n") };
     }
-    if (["doc", "ppt", "pptx", "zip", "rar", "exe", "mp3", "mp4"].includes(ext)) throw new Error("định dạng này chưa đọc được");
+    if (ext === "zip") return readZip(file);
+    if (["doc", "ppt", "pptx", "rar", "7z", "exe", "mp3", "mp4"].includes(ext)) throw new Error("định dạng này chưa đọc được");
     const text = await file.text();
     if (/\u0000/.test(text.slice(0, 2000))) throw new Error("định dạng này chưa đọc được");
     return { text };
@@ -5059,8 +5386,9 @@ go((parseInt(location.hash.slice(1))||1)-1);setTimeout(()=>{const h=document.que
         if (isImage) item.url = await shrinkImage(file);
         else {
           const r = await readFileText(file);
-          item.text = r.text.length > MAX_FILE_CHARS ? r.text.slice(0, MAX_FILE_CHARS) + "\n…(file quá dài, phần sau đã bị cắt)" : r.text;
+          item.text = r.zip || r.text.length <= MAX_FILE_CHARS ? r.text : r.text.slice(0, MAX_FILE_CHARS) + "\n…(file quá dài, phần sau đã bị cắt)";
           item.pages = r.pages;
+          if (r.zip) { item.zip = true; item.count = r.count; }
         }
         item.loading = false;
       } catch (e) {
@@ -5085,7 +5413,9 @@ go((parseInt(location.hash.slice(1))||1)-1);setTimeout(()=>{const h=document.que
 
   // Nội dung gửi cho mô hình: chữ của file đặt trước câu hỏi; ảnh gửi kèm theo dạng của API OpenAI.
   function apiContent(m, withImages) {
-    let text = (m.files || []).filter((f) => f.text).map((f) => `Nội dung file "${f.name}":\n\`\`\`\n${f.text}\n\`\`\`\n\n`).join("") + m.content;
+    let text = (m.files || []).filter((f) => f.text).map((f) => f.zip
+      ? `Dự án người dùng gửi (giải nén từ "${f.name}", ${f.count} file), mỗi file một khối có đường dẫn. Khi sửa, chỉ viết lại trọn những file thay đổi, đúng đường dẫn:\n\n${f.text}\n\n`
+      : `Nội dung file "${f.name}":\n\`\`\`\n${f.text}\n\`\`\`\n\n`).join("") + m.content;
     if (m.refImages?.length) text = "(Người dùng đính kèm ảnh do bạn tạo trước đó và muốn sửa ảnh này.)\n" + text;
     const n = (m.images?.length || 0) + (m.imagesDropped || 0);
     if (!withImages || !m.images?.length) return n ? `(Người dùng đã gửi ${n} ảnh ở đây.)\n${text}` : text;
@@ -5208,6 +5538,14 @@ go((parseInt(location.hash.slice(1))||1)-1);setTimeout(()=>{const h=document.que
       loadDeckIcons(spec).then(() => saveBlob(new Blob([deckHtml(spec)], { type: "text/html" }), fileName(spec.file || spec.title || "bai-trinh-chieu") + ".html"));
       return;
     }
+    const ideBtn = e.target.closest("[data-proj-ide]");
+    if (ideBtn) {
+      const node = ideBtn.closest(".msg"), card = ideBtn.closest(".file-card"), files = node?._project;
+      if (!files) return;
+      const run = card.querySelector("[data-proj-run]");
+      openIde(files, card.querySelector(".file-name b").textContent, run ? () => { if (!card.nextElementSibling?.classList.contains("proj-preview")) run.click(); } : null);
+      return;
+    }
     const projBtn = e.target.closest("[data-proj-run], [data-proj-zip]");
     if (projBtn) {
       const node = projBtn.closest(".msg"), card = projBtn.closest(".file-card"), files = node?._project;
@@ -5227,6 +5565,15 @@ go((parseInt(location.hash.slice(1))||1)-1);setTimeout(()=>{const h=document.que
     }
     const prevBtn = e.target.closest("[data-preview], [data-download], [data-full]");
     if (prevBtn) { codePreview(prevBtn); return; }
+    const runBtn = e.target.closest("[data-run]");
+    if (runBtn) { runCodeBlock(runBtn); return; }
+    if (e.target.closest("[data-run-close]")) { e.target.closest(".run-out").remove(); return; }
+    const dlBtn = e.target.closest("[data-dlfile]");
+    if (dlBtn) {
+      const block = dlBtn.closest(".codeblock"), path = block.dataset.path;
+      saveBlob(new Blob([block.querySelector("code").textContent], { type: (MIME[extOf(path)] || "text/plain") + ";charset=utf-8" }), path.split("/").pop());
+      return;
+    }
     const copyBtn = e.target.closest("[data-copy]");
     if (copyBtn) {
       const code = copyBtn.closest(".codeblock").querySelector("code").textContent;
