@@ -1,6 +1,6 @@
 // Lưu sẵn giao diện để web app mở được cả khi không có mạng.
 // Đổi VERSION mỗi khi cập nhật index.html để máy người dùng nhận bản mới.
-const VERSION = "glm-v61";
+const VERSION = "astra-v62";
 const SHELL = [
   "./",
   "./index.html",
@@ -20,7 +20,8 @@ self.addEventListener("activate", (e) => {
   e.waitUntil(
     caches.keys()
       // Chỉ xoá cache cũ của app này: các app khác cùng tên miền github.io dùng chung kho cache.
-      .then((keys) => Promise.all(keys.filter((k) => k.startsWith("glm-") && k !== VERSION).map((k) => caches.delete(k))))
+      // Cache cũ có tên "glm-…" (trước khi đổi tên thành Astra) cũng được xoá.
+      .then((keys) => Promise.all(keys.filter((k) => /^(astra|glm)-/.test(k) && k !== VERSION).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
