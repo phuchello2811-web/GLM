@@ -2096,18 +2096,85 @@
     "8) Sửa code có sẵn: đọc hiểu trước, giữ phong cách cũ, thay đổi ít nhất có thể, không làm hỏng phần khác, nói rõ đã đổi gì và vì sao.\n" +
     "9) Hiệu năng có chủ đích: ước lượng độ phức tạp theo kích thước dữ liệu thật; tối ưu đúng chỗ nóng, không tối ưu sớm làm code khó đọc.";
   const CODE_SKILLS = new Set(["code", "web", "game", "project", "webapp", "webdev", "ioi"]);
+  // Cẩm nang phát triển web cho mọi mô hình: quy trình, cấu trúc mô-đun, những lỗi làm nút bấm "chết", an toàn, trợ năng, hiệu năng, dữ liệu.
+  const WEB_PLAYBOOK =
+    "Cẩm nang phát triển web của Astra (bắt buộc làm theo):\n" +
+    "A) Quy trình: (1) đặc tả ngắn: người dùng, mục tiêu, danh sách màn hình và tính năng; (2) sơ đồ trang và luồng chính; (3) mô hình dữ liệu (các đối tượng, trường, quan hệ) " +
+    "và dữ liệu mẫu; (4) hệ thống thiết kế (biến CSS); (5) code theo lớp: dữ liệu → logic → giao diện → sự kiện; (6) tự kiểm như người dùng thật; (7) README.\n" +
+    "B) Cấu trúc ES module gợi ý: js/main.js (khởi động, nối mọi phần), js/store.js (state + subscribe/notify), js/router.js (định tuyến theo hash, mỗi route một view), " +
+    "js/services/storage.js (localStorage có khoá phiên bản {version, data} và hàm chuyển đổi; IndexedDB khi dữ liệu lớn hoặc có ảnh), js/services/api.js (fetch có timeout bằng AbortController, " +
+    "thử lại, báo lỗi dễ hiểu), js/views/*.js (mỗi màn hình một file, hàm render(container, state)), js/components/*.js (thành phần dùng lại: modal, toast, tabs, dropdown, bảng), " +
+    "js/utils/*.js (định dạng tiền và ngày bằng Intl theo vi-VN, debounce, tạo id, escapeHtml), js/data/seed.js (dữ liệu mẫu, chỉ nạp ở lần chạy đầu). CSS: css/tokens.css (biến), " +
+    "css/base.css, css/layout.css, css/components.css, css/views.css; hoặc một css/style.css chia rõ các phần.\n" +
+    "C) Những lỗi làm nút bấm KHÔNG CHẠY, phải tránh tuyệt đối:\n" +
+    "  - Dùng ES module mà viết onclick=\"tenHam()\" trong HTML: hàm trong module không phải hàm toàn cục nên bấm không chạy. Luôn gán sự kiện bằng addEventListener trong JS, " +
+    "không bao giờ dùng onclick, onchange… trong HTML.\n" +
+    "  - Gán sự kiện trước khi phần tử tồn tại, hoặc phần tử bị vẽ lại bằng innerHTML làm mất sự kiện: dùng uỷ quyền sự kiện (gắn một lần trên phần tử cha cố định, " +
+    "rồi e.target.closest(\"[data-action]\")), mỗi nút có data-action rõ ràng.\n" +
+    "  - id, class, data-* trong JS không khớp với HTML; querySelector trả về null: soát từng tên giữa HTML, CSS và JS.\n" +
+    "  - Nút nằm trong form mà không có type=\"button\" nên bấm là gửi form và tải lại trang; form phải e.preventDefault().\n" +
+    "  - Lớp phủ trong suốt (overlay, modal đã ẩn bằng opacity: 0, phần tử position: absolute) đè lên nút và chặn chuột: phần tử ẩn phải dùng hidden hoặc display: none " +
+    "hoặc pointer-events: none; kiểm tra z-index.\n" +
+    "  - Liên kết href=\"#\" không làm gì, mục menu không có màn hình tương ứng: mọi liên kết phải dẫn tới route hoặc phần có thật.\n" +
+    "  - Script chạy trước khi DOM sẵn sàng: dùng type=\"module\" hoặc defer; không đặt script không defer trong <head>.\n" +
+    "  - Lỗi JavaScript ở một chỗ làm hỏng cả trang: bọc phần khởi động trong try/catch và hiện thông báo lỗi dễ hiểu; JSON.parse và localStorage luôn trong try/catch.\n" +
+    "D) An toàn: hiển thị dữ liệu người dùng bằng textContent hoặc escapeHtml trước khi đưa vào innerHTML; không dùng eval hay new Function; liên kết target=\"_blank\" có rel=\"noopener\"; " +
+    "không để API key hay mật khẩu trong code phía trình duyệt; không tin dữ liệu từ URL.\n" +
+    "E) Trợ năng: có thẻ main, nav, header, footer; tiêu đề theo thứ bậc h1 → h2; mọi ô nhập có label; nút chỉ có biểu tượng có aria-label; thông báo dùng aria-live; " +
+    "hộp thoại dùng <dialog> (giữ focus bên trong, Esc để đóng, trả focus về nút đã mở); thành phần tự làm dùng được bằng bàn phím; chữ tương phản tối thiểu 4.5:1.\n" +
+    "F) Giao diện chắc chắn: không đặt chiều rộng cố định bằng px cho khối lớn; lưới dùng repeat(auto-fit, minmax(…, 1fr)); cỡ chữ và khoảng cách dùng clamp(); ảnh max-width: 100%; " +
+    "chữ dài không tràn (overflow-wrap: anywhere); chế độ tối bằng biến CSS theo [data-theme] và prefers-color-scheme, có nút chuyển và nhớ lựa chọn; :focus-visible rõ ràng; " +
+    "tôn trọng prefers-reduced-motion.\n" +
+    "G) Hiệu năng: ảnh loading=\"lazy\" decoding=\"async\" có width và height; module và defer cho script; chuyển động dùng transform và opacity; IntersectionObserver cho hiệu ứng khi cuộn " +
+    "và tải dần; danh sách rất dài thì phân trang hoặc ảo hoá; việc tính nặng đưa sang Web Worker; debounce ô tìm kiếm.\n" +
+    "H) Dữ liệu: lần chạy đầu nạp dữ liệu mẫu phong phú, sau đó mọi thay đổi được lưu; có xuất và nhập JSON (kiểm tra dữ liệu nhập); có nút khôi phục dữ liệu mẫu trong cài đặt; " +
+    "thao tác xoá có hoàn tác bằng toast vài giây.\n" +
+    "I) Tương tác cao cấp khi hợp lý: bảng lệnh Ctrl+K để tìm và chạy thao tác nhanh, phím tắt có bảng trợ giúp (phím ?), kéo thả có cách làm tương đương bằng bàn phím, " +
+    "cập nhật lạc quan, trạng thái tải dạng skeleton, trạng thái trống có hình minh hoạ và nút hành động.\n" +
+    "J) Biểu đồ: Chart.js qua CDN có phiên bản cụ thể (https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js) hoặc vẽ SVG; co giãn theo khung; màu đọc rõ ở cả chế độ tối.\n" +
+    "K) Tự kiểm trước khi nộp, đi qua từng tình huống: mở lần đầu (chưa có dữ liệu), tải lại trang, màn hình 360px và 1440px, chế độ tối, chỉ dùng bàn phím, nhập dữ liệu sai, " +
+    "bấm liên tục nhiều lần, mạng lỗi; bấm thử MỌI nút, liên kết, mục menu, tab, form trong đầu và chắc chắn từng cái đều có tác dụng.";
+  // Giao diện, hoạt ảnh và tính năng mức cao cấp cho web (mọi mô hình).
+  const WEB_UI =
+    "Giao diện, hoạt ảnh và tính năng mức cao cấp:\n" +
+    "Giao diện:\n" +
+    "- Chọn một hướng thẩm mỹ rõ ràng hợp chủ đề và nêu nó trong phần suy nghĩ, không dùng mẫu chung chung (ví dụ web vũ trụ: nền đêm sâu có sao, gradient tím xanh, " +
+    "chữ phát sáng nhẹ, thẻ kính mờ; web cho trẻ em: màu tươi, bo tròn lớn, minh hoạ vui; web tài chính: tối giản, số liệu nổi bật, màu trầm).\n" +
+    "- Kiểu chữ: 1–2 font hỗ trợ tốt tiếng Việt qua Google Fonts (Be Vietnam Pro, Inter; tiêu đề công nghệ có thể dùng Space Grotesk); tiêu đề lớn, đậm, letter-spacing hơi âm; " +
+    "số liệu dùng font-variant-numeric: tabular-nums.\n" +
+    "- Màu và chiều sâu: một màu nhấn chủ đạo kèm gradient có kiểm soát; các lớp bề mặt (nền, thẻ, thẻ nổi) phân biệt bằng độ sáng và bóng mềm nhiều lớp; viền mảnh 1px hơi trong suốt; " +
+    "kính mờ (backdrop-filter) cho thanh điều hướng và hộp thoại.\n" +
+    "- Bố cục: hero ấn tượng (tiêu đề lớn, mô tả ngắn, nút chính và nút phụ, minh hoạ hoặc hình động), các phần có nhịp điệu xen kẽ, lưới kiểu bento cho tính năng, " +
+    "khoảng trắng hào phóng, mỗi phần có một điểm nhấn thị giác.\n" +
+    "- Chi tiết: icon một bộ nhất quán, ảnh có tỉ lệ cố định, bo góc theo thang 8/12/16/24, hover nâng nhẹ thẻ, con trỏ và trạng thái rõ ràng.\n" +
+    "Hoạt ảnh (ưu tiên CSS, dùng JS khi cần):\n" +
+    "- Tương tác 150–300ms, xuất hiện 400–700ms; vào dùng cubic-bezier(.2,.8,.2,1), ra dùng ease-in; chỉ làm chuyển động bằng transform và opacity.\n" +
+    "- Khi cuộn tới, phần tử hiện dần và lệch thứ tự (stagger 40–80ms) bằng IntersectionObserver; tiêu đề hero có hiệu ứng chữ xuất hiện.\n" +
+    "- Vi tương tác: nút nhún nhẹ khi bấm (scale .97), công tắc trượt mượt, số đếm tăng dần khi hiện ra, thanh tiến trình, skeleton lấp lánh khi tải, toast trượt vào.\n" +
+    "- Chuyển màn hình bằng View Transitions API (document.startViewTransition) khi trình duyệt hỗ trợ, không thì mờ dần hoặc trượt bằng CSS.\n" +
+    "- Hiệu ứng nền khi hợp chủ đề: canvas hạt hoặc sao chuyển động chậm, gradient đổi màu chậm, parallax nhẹ khi cuộn; dừng khi tab bị ẩn, giảm hẳn khi prefers-reduced-motion, " +
+    "giới hạn số hạt để trang vẫn mượt trên điện thoại.\n" +
+    "- Chuỗi hoạt ảnh phức tạp mới dùng GSAP qua CDN có phiên bản (https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js); còn lại dùng CSS và element.animate().\n" +
+    "Tính năng làm web mạnh (chọn những gì hợp chủ đề, mỗi tính năng phải chạy trọn vẹn):\n" +
+    "- Tìm kiếm có gợi ý (phím / hoặc Ctrl+K), lọc nhiều điều kiện, sắp xếp, yêu thích, mục xem gần đây.\n" +
+    "- Nội dung tương tác: mô phỏng, máy tính, quiz chấm điểm có giải thích, flashcard ôn tập ngắt quãng, biểu đồ tương tác, dòng thời gian bấm được, so sánh.\n" +
+    "- Cá nhân hoá: sáng/tối, cỡ chữ, tiến độ và dữ liệu được lưu, xuất và nhập dữ liệu.\n" +
+    "- Tiện ích: chia sẻ (Web Share API, sao chép liên kết), in đẹp (@media print), tải về (CSV, JSON, ảnh), đọc to bằng speechSynthesis giọng vi-VN khi hợp, " +
+    "toàn màn hình, PWA cài được và chạy ngoại tuyến.\n" +
+    "- Ít mà xuất sắc hơn nhiều mà dở: tính năng nào cũng phải hoàn chỉnh, đẹp và không lỗi.";
   const TITANS = ["glm-5.3-flash", "nemotron-3-ultra", "nemotron-3.5-super-vl", "nemotron-3.5-lightning"];
   // Gắn điểm mạnh của đúng mô hình sắp nhận câu hỏi vào lời nhắc hệ thống (bản sao, không đổi lịch sử).
   function withProfile(messages, model) {
-    const sys = messages[0];
-    if (sys?.role !== "system" || typeof sys.content !== "string") return messages;
+    if (messages[0]?.role !== "system" || typeof messages[0].content !== "string") return messages;
+    // lite: lời nhắc đã bị rút gọn vì quá dài (xem shrinkMessages), không thêm phần dặn dò phụ. Không gửi cờ này lên máy chủ.
+    const { lite, ...sys } = messages[0];
     const add = [MODEL_PROFILES[model]];
     // Tay nghề slide và web mức chuyên gia: trước chỉ dòng Titan có, nay mọi mô hình đều được dùng.
-    if (sys.content.includes("Kỹ năng làm bài trình chiếu")) add.push(TITAN_SLIDES);
-    if (/Kỹ năng làm trang web|Kỹ năng làm dự án web nhiều file|Kỹ năng phát triển ứng dụng web lớn|Kỹ năng làm game/.test(sys.content)) add.push(TITAN_WEB);
+    if (!lite && sys.content.includes("Kỹ năng làm bài trình chiếu")) add.push(TITAN_SLIDES);
+    if (!lite && /Kỹ năng phát triển web|Kỹ năng làm dự án web nhiều file|Kỹ năng phát triển ứng dụng web lớn|Kỹ năng làm game/.test(sys.content)) add.push(TITAN_WEB, WEB_PLAYBOOK, WEB_UI);
     if (/^glm/.test(model) && !sys.content.includes(GLM_PROMPT)) add.push(GLM_PROMPT);
     const text = add.filter(Boolean).join("\n\n");
-    return text ? [{ ...sys, content: sys.content + "\n\n" + text }, ...messages.slice(1)] : messages;
+    return [text ? { ...sys, content: sys.content + "\n\n" + text } : sys, ...messages.slice(1)];
   }
   const TOOL_PROMPT =
     "Bạn có các công cụ sau. Mỗi lần chỉ dùng một công cụ: viết khối lệnh rồi DỪNG viết ngay sau khối đó. " +
@@ -2200,12 +2267,28 @@
     },
     {
       // Chỉ bật khi người dùng muốn làm/sửa trang (câu "tìm trên web" không tính).
-      id: "web", test: /\bhtml\b|\bcss\b|landing page|responsive|(làm|tạo|viết|code|thiết kế|xây dựng|sửa|lập trình)\s.{0,40}(web|trang|giao diện|game|app|ứng dụng|form|nút|menu|portfolio)/i,
+      id: "web", test: /\bhtml\b|\bcss\b|landing page|responsive|(làm|tạo|viết|code|thiết kế|xây dựng|xây|dựng|sửa|lập trình|nâng cấp|cải tiến|cải thiện|phát triển|hoàn thiện|làm lại|thêm)\s.{0,40}(web|trang|giao diện|game|app|ứng dụng|form|nút|menu|portfolio)/i,
       prompt:
-        "Kỹ năng làm trang web (HTML, CSS, JavaScript):\n" +
-        "- Trang đơn giản (landing page, game, công cụ, ứng dụng một màn hình): viết MỘT file HTML hoàn chỉnh trong một khối ```html như dưới đây. " +
-        "Website nhiều trang hoặc người dùng muốn tách nhiều file thì làm theo định dạng dự án nhiều file.\n" +
-        "- Một file HTML hoàn chỉnh trong một khối ```html: <!doctype html>, <meta charset=\"utf-8\">, <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">, <title>, " +
+        "Kỹ năng phát triển web (HTML, CSS, JavaScript):\n" +
+        "- Mặc định, mọi yêu cầu làm hoặc nâng cấp website, ứng dụng web, công cụ, dashboard, game: phát triển một SẢN PHẨM WEB HOÀN CHỈNH theo định dạng dự án nhiều file " +
+        "(index.html, css/, js/ chia mô-đun bằng ES module, data/, assets/ khi cần, README.md). Chỉ viết MỘT file HTML khi người dùng nói rõ muốn một file, " +
+        "hoặc chỉ hỏi một đoạn nhỏ, một thành phần, một ví dụ minh hoạ.\n" +
+        "- Phát triển như một đội sản phẩm giỏi, làm VƯỢT KỲ VỌNG:\n" +
+        "  1) Hiểu và mở rộng yêu cầu: trong phần suy nghĩ, liệt kê yêu cầu người dùng nói ra, rồi yêu cầu ngầm họ chắc chắn muốn (chạy trên điện thoại, lưu lại sau khi tải lại trang, " +
+        "chế độ tối, tìm kiếm và lọc khi có danh sách, xác nhận trước khi xoá, thông báo khi xong), rồi tự thêm 3–5 tính năng nổi bật hợp đúng chủ đề mà người dùng chưa nghĩ tới " +
+        "(ví dụ web học hoá học: bảng tuần hoàn bấm được, mô phỏng phản ứng tương tác, quiz chấm điểm có giải thích, cân bằng phương trình, chế độ trình chiếu; " +
+        "web bán hàng: gợi ý sản phẩm, so sánh, mã giảm giá, theo dõi đơn; web quản lý: thống kê bằng biểu đồ, xuất nhập CSV, phím tắt).\n" +
+        "  2) Mọi thứ bấm được đều làm việc thật: không có liên kết \"#\" chết, nút trang trí, mục menu không dẫn tới đâu; mỗi mục menu mở một màn hình hoặc phần có nội dung đầy đủ; " +
+        "mọi form xử lý dữ liệu thật.\n" +
+        "  3) Nội dung phong phú, chính xác, cụ thể bằng ngôn ngữ của người dùng; dữ liệu mẫu đủ nhiều (10–30 mục) để trông như sản phẩm đang hoạt động; " +
+        "kiến thức chuyên môn (khoa học, lịch sử, số liệu) phải đúng, không chắc thì tra cứu.\n" +
+        "  4) Kỹ thuật mạnh: kiến trúc mô-đun (state, render, router theo hash cho nhiều màn hình, lớp lưu trữ có phiên bản, các service), hiệu năng tốt, trợ năng, " +
+        "SEO, xử lý lỗi, đủ trạng thái đang tải, trống, lỗi; PWA (manifest, service worker) khi hợp lý.\n" +
+        "  5) Trải nghiệm cao cấp: hệ thống thiết kế nhất quán, chuyển động tinh tế, phím tắt, toast, hướng dẫn ngắn lần đầu dùng, trang cài đặt (giao diện, cỡ chữ) khi hợp lý.\n" +
+        "  6) Nâng cấp web có sẵn: giữ mọi tính năng cũ đang chạy, sửa mọi chỗ bấm không được, rồi mới thêm tính năng mới; web cũ là một file thì tách thành dự án nhiều file.\n" +
+        "  7) Phạm vi lớn nhưng TRỌN VẸN: ưu tiên tính năng chạy thật hơn số lượng; câu trả lời dài không sao vì trang tự cho viết tiếp khi bị ngắt, nên không rút gọn hay bỏ file. " +
+        "Cuối câu trả lời liệt kê ngắn các tính năng đã làm, đánh dấu những tính năng tự thêm để vượt kỳ vọng.\n" +
+        "- Khi người dùng muốn MỘT file: một file HTML hoàn chỉnh trong một khối ```html: <!doctype html>, <meta charset=\"utf-8\">, <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">, <title>, " +
         "CSS trong <style>, JS trong <script> ở cuối <body>. Không dùng file ngoài; thư viện chỉ lấy qua CDN (cdnjs.cloudflare.com, cdn.jsdelivr.net) " +
         "với số phiên bản cụ thể và chỉ khi thật cần, còn lại dùng HTML, CSS, JS thuần.\n" +
         "- Thiết kế: chọn một phong cách rõ ràng hợp nội dung; bảng màu khai báo bằng biến CSS trong :root, có chế độ tối (prefers-color-scheme: dark); " +
@@ -2251,9 +2334,9 @@
         "Không có chức năng giả, chỗ TODO, dữ liệu cứng không sửa được hay nút bấm không làm gì.\n" +
         "- Trang sẽ được tự động chạy thử trong khung điện thoại 390px và bấm thử mọi nút: phải không có lỗi JavaScript, không lỗi khi bấm bất kỳ nút nào, không tràn ngang.\n" +
         "- Trước khi nộp, tự soát: thẻ đóng đủ, JS không lỗi cú pháp, mọi nút và liên kết đều hoạt động, đẹp trên điện thoại, chế độ tối vẫn đọc rõ.\n" +
-        "- Người dùng bấm Xem trước để chạy thử ngay, nên khi sửa luôn đưa lại TRỌN file, không chỉ đoạn thay đổi. " +
-        "Sau khối code, nói ngắn gọn các tính năng chính và cách mở rộng.",
-      remind: "trang đơn giản thì đưa trọn một file HTML hoàn chỉnh trong một khối ```html (website nhiều trang hoặc cần tách file thì theo định dạng dự án nhiều file): thiết kế đẹp, responsive, có chế độ tối, không lỗi JS; logic phức tạp thì chạy thử bằng js-run trước",
+        "- Người dùng bấm Chạy thử hoặc Xem trước để dùng ngay, nên khi sửa luôn đưa lại TRỌN mọi file thay đổi, không chỉ đoạn thay đổi. " +
+        "Sau phần code, nói ngắn gọn các tính năng chính (đánh dấu tính năng tự thêm) và cách mở rộng.",
+      remind: "phát triển sản phẩm web HOÀN CHỈNH dạng dự án nhiều file (mỗi file một khối code có đường dẫn ở dòng mở khối, ES module), trừ khi người dùng nói rõ muốn một file; mọi nút, liên kết, menu, form chạy thật; tự thêm tính năng nổi bật hợp chủ đề để vượt kỳ vọng; thiết kế đẹp, responsive, chế độ tối, lưu dữ liệu, không lỗi JS",
     },
     {
       // Làm game chơi được ngay trong trình duyệt (canvas, Web Audio), một file hoặc dự án nhiều file dùng ES module.
@@ -2289,8 +2372,8 @@
         "nếu hình trên canvas đứng yên hoặc trống trơn thì bị coi là lỗi. Vì vậy màn hình bắt đầu PHẢI vào game được bằng chạm hoặc click, Enter và Space; " +
         "mọi phần tử HTML mà code gọi tới (getElementById, querySelector) phải có thật trong trang.\n" +
         "Cách tổ chức file:\n" +
-        "- Game nhỏ (rắn, pong, flappy, 2048, cờ caro…): MỘT file HTML hoàn chỉnh.\n" +
-        "- Game lớn hoặc người dùng muốn tách file: theo định dạng dự án nhiều file, cấu trúc gợi ý: index.html, css/style.css, js/main.js (khởi động), js/config.js (CONFIG), " +
+        "- Mặc định làm game HOÀN CHỈNH theo định dạng dự án nhiều file (chỉ viết một file HTML khi người dùng nói rõ muốn một file); " +
+        "tự thêm những thứ làm game hay hơn mong đợi: nhiều màn hoặc độ khó tăng dần, vật phẩm tăng sức mạnh, bảng kỷ lục, thành tích, cài đặt âm thanh, hướng dẫn chơi. Cấu trúc gợi ý: index.html, css/style.css, js/main.js (khởi động), js/config.js (CONFIG), " +
         "js/core/loop.js, js/core/input.js, js/core/audio.js, js/core/renderer.js, js/scenes/menu.js, js/scenes/play.js, js/scenes/gameover.js, " +
         "js/entities/player.js, js/entities/enemy.js, js/entities/bullet.js, js/entities/particles.js, js/utils/math.js, js/utils/storage.js, " +
         "data/levels.json khi có màn thiết kế sẵn, README.md (cách chơi, điều khiển, cấu trúc).\n" +
@@ -2298,7 +2381,7 @@
         "import bằng đường dẫn tương đối có đuôi .js (import { Player } from \"./entities/player.js\"); không import vòng tròn (dữ liệu dùng chung để trong config.js hoặc truyền qua tham số). " +
         "Trang chat chạy thử được dự án dùng module.\n" +
         "- Phaser 3 qua CDN với phiên bản cụ thể (https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js) chỉ khi game cần vật lý phức tạp hoặc bản đồ ô lớn; còn lại dùng canvas thuần.",
-      remind: "game: thiết kế vòng chơi trước; vòng lặp bước cố định, máy trạng thái cảnh (menu, chơi, tạm dừng, thua), điều khiển cả bàn phím lẫn cảm ứng, âm thanh Web Audio, hiệu ứng phản hồi, lưu kỷ lục; game lớn thì nhiều file dùng ES module, viết trọn mọi file",
+      remind: "game: thiết kế vòng chơi trước; vòng lặp bước cố định, máy trạng thái cảnh (menu, chơi, tạm dừng, thua), điều khiển cả bàn phím lẫn cảm ứng, âm thanh Web Audio, hiệu ứng phản hồi, lưu kỷ lục; mặc định là dự án nhiều file dùng ES module (trừ khi người dùng muốn một file), viết trọn mọi file, thêm tính năng làm game hay hơn mong đợi",
     },
     {
       // Website nhiều trang, dự án nhiều file (tĩnh hoặc dùng framework).
@@ -2590,7 +2673,12 @@
   const activeSkills = (chat, matchedOnly) => {
     const recent = chat.messages.filter((m) => m.role === "user").slice(-2).map((m) => m.content).join("\n");
     const forced = matchedOnly ? [] : currentMode().skills;
-    return SKILLS.filter((k) => k.test.test(recent) || forced.includes(k.id));
+    const on = SKILLS.filter((k) => k.test.test(recent) || forced.includes(k.id));
+    // Làm web hoặc game mặc định là dự án nhiều file: luôn kèm kỹ năng dự án nhiều file (định dạng file, quy trình không sót file).
+    // Người dùng nói rõ muốn một file thì thôi.
+    if (on.some((k) => ["web", "webapp", "game"].includes(k.id)) && !on.some((k) => k.id === "project") && !/m[ộo]t file|1 file|single.?file/i.test(recent))
+      on.push(SKILLS.find((k) => k.id === "project"));
+    return on;
   };
 
   function systemPrompt(chat) {
@@ -2924,6 +3012,15 @@
           }
         }
       }
+      // Mô hình chỉ suy nghĩ mà không viết câu trả lời (hết độ dài khi đang nghĩ, hoặc máy chủ trả luồng rỗng):
+      // nhờ viết lại ngay, không suy nghĩ dài; vẫn trống thì báo rõ thay vì để trống.
+      if (!splitThink(reply.content).answer.trim() && !controller?.signal.aborted) {
+        reply.notice = "Mô hình chưa viết câu trả lời, đang nhờ viết lại…";
+        paintAssistant(node, reply, true);
+        reply.fast = true;
+        try { await answerWithTools(history, reply, node); } finally { delete reply.fast; }
+        if (!splitThink(reply.content).answer.trim()) reply.error = "Mô hình đã suy nghĩ nhưng không viết được câu trả lời (có thể đang quá tải). Bấm Tạo lại hoặc chọn mô hình khác.";
+      }
       // Trang web hoàn chỉnh: tự chạy thử, có lỗi thì tự sửa (tối đa 2 lượt).
       await autoFixWeb(history, reply, node);
     } catch (e) {
@@ -3075,6 +3172,23 @@
     }
     addEventListener("load", () => setTimeout(async () => {
       if (game) { try { await playtest(); } catch (x) { send("Thử chơi game lỗi: " + x.message); } }
+      // Nút bị phần tử khác che (lớp phủ trong suốt, modal ẩn bằng opacity, phần tử position: absolute): người dùng bấm không trúng.
+      // b.click() bên dưới không phát hiện được vì gọi thẳng vào nút, nên kiểm tra điểm giữa mỗi nút đang hiện trong khung.
+      const blocked = [];
+      for (const b of [...document.querySelectorAll("button,[role=button],a[href],input[type=button],input[type=submit]")].slice(0, 60)) {
+        const r = b.getBoundingClientRect();
+        if (r.width < 4 || r.height < 4 || r.bottom < 0 || r.top > innerHeight || r.right < 0 || r.left > innerWidth) continue;
+        const st = getComputedStyle(b);
+        if (st.visibility === "hidden" || st.pointerEvents === "none" || +st.opacity === 0) continue;
+        const top = document.elementFromPoint(Math.min(innerWidth - 1, r.left + r.width / 2), Math.min(innerHeight - 1, r.top + r.height / 2));
+        if (top && top !== b && !b.contains(top) && !top.contains(b)) {
+          const label = (b.textContent || b.getAttribute("aria-label") || b.tagName).trim().replace(/\s+/g, " ").slice(0, 30);
+          const by = top.tagName.toLowerCase() + (top.id ? "#" + top.id : "") + (typeof top.className === "string" && top.className.trim() ? "." + top.className.trim().split(/\s+/)[0] : "");
+          blocked.push(`"${label}" (bị ${by} che)`);
+        }
+      }
+      if (blocked.length) send(`Nút hoặc liên kết bị phần tử khác che nên người dùng bấm không được: ${blocked.slice(0, 5).join(", ")}. ` +
+        "Kiểm tra lớp phủ, modal hay menu đang ẩn bằng opacity (phải dùng hidden, display: none hoặc pointer-events: none), z-index và position.");
       for (const b of [...document.querySelectorAll("button,[role=button],input[type=button],input[type=submit]")].slice(0, 25)) {
         try { b.click(); } catch (x) { send("Bấm nút lỗi: " + x.message); }
       }
@@ -4206,8 +4320,38 @@
     }
   }
 
-  // API kiểu OpenAI (máy chủ chung): đọc luồng SSE, trả ra từng mẩu suy nghĩ/chữ.
+  // Máy chủ báo lời nhắc quá dài (mô hình nhỏ có giới hạn ngữ cảnh thấp): rút gọn rồi gửi lại, thay vì báo lỗi.
+  // Mức 1: bỏ phần dặn dò phụ (tay nghề web, cẩm nang, tư duy lập trình, kỹ năng ứng dụng lớn) và cắt ngắn các tin nhắn cũ.
+  // Mức 2: chỉ giữ 8 tin nhắn gần nhất, cắt ngắn thêm (kể cả bản code dự án gửi kèm khi tự sửa).
+  const TOO_LONG = /max(imum)?[ _-]?(length|context|tokens?)|too long|exceeds?|context[ _-]?length|prompt.{0,24}(long|length|large)|token.{0,12}limit/i;
+  function shrinkMessages(messages, level) {
+    const cut = (t, n) => (typeof t === "string" && t.length > n ? t.slice(0, n * 0.4) + "\n\n…(đã lược bớt phần giữa cho vừa giới hạn của mô hình)…\n\n" + t.slice(-n * 0.6) : t);
+    let [sys, ...rest] = messages;
+    if (sys?.role === "system" && typeof sys.content === "string") {
+      let c = sys.content.replace(CODE_CRAFT, "");
+      for (const k of SKILLS) if (["webapp", "webdev", "reason", "svg"].includes(k.id) && k.prompt && c.includes(k.prompt)) c = c.replace(k.prompt, "");
+      sys = { ...sys, content: c.replace(/\n{3,}/g, "\n\n"), lite: true };
+    } else { rest = messages; sys = null; }
+    if (level >= 2) rest = rest.slice(-8);
+    const keepFull = level >= 2 ? 1 : 2; // tin nhắn cuối (và câu trả lời ngay trước nó ở mức 1) giữ gần như nguyên
+    rest = rest.map((m, i) => (i >= rest.length - keepFull ? { ...m, content: cut(m.content, level >= 2 ? 24000 : 60000) } : { ...m, content: cut(m.content, level >= 2 ? 3000 : 8000) }));
+    return sys ? [sys, ...rest] : rest;
+  }
   async function* apiDeltas(messages, reply, node, signal) {
+    let yielded = false;
+    for (let level = 0; ; level++) {
+      try {
+        for await (const d of apiDeltasOnce(level ? shrinkMessages(messages, level) : messages, reply, node, signal)) { yielded = true; yield d; }
+        return;
+      } catch (e) {
+        if (yielded || level >= 2 || e.name === "AbortError" || !TOO_LONG.test(String(e.message || ""))) throw e;
+        reply.notice = "Lời nhắc quá dài với mô hình này, đang rút gọn rồi gửi lại…";
+        paintAssistant(node, reply, true);
+      }
+    }
+  }
+  // API kiểu OpenAI (máy chủ chung): đọc luồng SSE, trả ra từng mẩu suy nghĩ/chữ.
+  async function* apiDeltasOnce(messages, reply, node, signal) {
     const notice = reply.notice;
     const show = (text) => { reply.notice = text; setStatus("", text); paintAssistant(node, reply, true); };
     const wait = (ms) => new Promise((ok, fail) => {
