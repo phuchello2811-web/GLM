@@ -288,61 +288,166 @@
   .content th, .content td { border: 1px solid var(--border); padding: 6px 12px; text-align: left; }
   .content th { background: var(--surface); font-weight: 600; }
   /* Trình xem code kiểu VS Code (luôn nền tối, màu cú pháp Dark+). */
-  .ide { position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; background: #1e1e1e; color: #cccccc;
-    font-size: 13px; --hl-kw: #569cd6; --hl-str: #ce9178; --hl-num: #b5cea8; --hl-fn: #dcdcaa; --hl-type: #4ec9b0; --hl-meta: #9cdcfe; animation: menu-in .16s ease-out both; }
-  .ide .hljs-comment, .ide .hljs-quote { color: #6a9955; }
+  /* Trình xem code kiểu VS Code: tối giản, theo giao diện sáng/tối của trang. */
+  .ide { --ib: #1f1f1f; --iside: #181818; --ibar: #181818; --iline: #2b2b2b; --ifg: #cccccc; --idim: #8b8b8b; --ihover: rgba(255,255,255,.06); --isel: rgba(255,255,255,.1);
+    --iacc: #0078d4; --icode: #d4d4d4; --igut: #6e7681; --icur: rgba(255,255,255,.045); --iadd: #73c991; --imod: #e2c08d; --iflash: rgba(255,200,0,.28);
+    --hl-kw: #569cd6; --hl-str: #ce9178; --hl-num: #b5cea8; --hl-fn: #dcdcaa; --hl-type: #4ec9b0; --hl-meta: #9cdcfe;
+    position: fixed; inset: 0; z-index: 60; display: flex; flex-direction: column; background: var(--ib); color: var(--ifg); font-size: 13px; color-scheme: dark;
+    animation: menu-in .16s ease-out both; }
+  .ide.light { --ib: #ffffff; --iside: #f8f8f8; --ibar: #f8f8f8; --iline: #e5e5e5; --ifg: #3b3b3b; --idim: #767676; --ihover: rgba(0,0,0,.05); --isel: rgba(0,0,0,.08);
+    --iacc: #005fb8; --icode: #1f1f1f; --igut: #9a9a9a; --icur: rgba(0,0,0,.035); --iadd: #388a34; --imod: #895503; --iflash: rgba(255,200,0,.35);
+    --hl-kw: #0000ff; --hl-str: #a31515; --hl-num: #098658; --hl-fn: #795e26; --hl-type: #267f99; --hl-meta: #001080; color-scheme: light; }
+  .ide .hljs-comment, .ide .hljs-quote { color: #6a9955; font-style: italic; }
   .ide .hljs-tag, .ide .hljs-name { color: #569cd6; } .ide .hljs-attr { color: #9cdcfe; } .ide .hljs-selector-class, .ide .hljs-selector-id { color: #d7ba7d; }
-  .ide-bar { display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 8px 0 12px; background: #323233; border-bottom: 1px solid #252526; flex: none; }
-  .ide-title { flex: 1; min-width: 0; font-weight: 600; color: #e7e7e7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .ide-acts { display: flex; gap: 6px; }
-  .ide-btn { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 6px; color: #cccccc; font-size: 12.5px; white-space: nowrap; }
-  .ide-btn:hover { background: #45494e; color: #fff; }
-  .ide-btn:focus-visible { outline: 1px solid #007fd4; outline-offset: 1px; }
-  .ide-btn svg { width: 14px; height: 14px; }
-  .ide-x { font-size: 20px; line-height: 1; padding: 2px 10px; }
-  .ide-menu { display: none; font-size: 16px; }
-  .ide-body { flex: 1; display: flex; min-height: 0; }
-  .ide-side { width: 250px; flex: none; display: flex; flex-direction: column; background: #252526; border-right: 1px solid #1e1e1e; min-height: 0; }
-  .ide-side-h { padding: 10px 14px 6px; font-size: 11px; font-weight: 600; letter-spacing: .08em; color: #bbbbbb; }
-  .ide-side-h small { font-weight: 400; letter-spacing: 0; color: #8b8b8b; margin-left: 4px; }
-  .ide-filter { margin: 2px 10px 8px; padding: 5px 8px; border-radius: 4px; border: 1px solid #3c3c3c; background: #3c3c3c; color: #cccccc; font: inherit; font-size: 12.5px; }
-  .ide-filter:focus { outline: none; border-color: #007fd4; }
-  .ide-tree { flex: 1; overflow: auto; padding-bottom: 12px; }
-  .ide-node { display: flex; align-items: center; gap: 6px; width: 100%; padding: 3px 8px 3px calc(12px + var(--d) * 14px); color: #cccccc; text-align: left; white-space: nowrap;
-    overflow: hidden; text-overflow: ellipsis; font-size: 13px; border-radius: 0; }
-  .ide-node:hover { background: #2a2d2e; }
-  .ide-node.on { background: #37373d; color: #fff; }
-  .ide-node:focus-visible { outline: 1px solid #007fd4; outline-offset: -1px; }
-  .ide-node .chev { width: 12px; flex: none; color: #c5c5c5; font-size: 11px; }
-  .ide-ico { flex: none; min-width: 22px; padding: 0 3px; height: 15px; border-radius: 3px; display: inline-grid; place-items: center; font-size: 8.5px; font-weight: 700;
-    text-transform: uppercase; color: #1e1e1e; background: var(--c); }
-  .ide-empty { padding: 12px 14px; color: #8b8b8b; }
+  .ide.light .hljs-comment, .ide.light .hljs-quote { color: #008000; } .ide.light .hljs-tag, .ide.light .hljs-name { color: #800000; }
+  .ide.light .hljs-attr { color: #e50000; } .ide.light .hljs-selector-class, .ide.light .hljs-selector-id { color: #800000; }
+  .ide button { color: inherit; }
+  .ide svg { width: 16px; height: 16px; flex: none; }
+  .ide-top { display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 6px 0 12px; background: var(--ibar); border-bottom: 1px solid var(--iline); flex: none; }
+  .ide-title { flex: 1 1 0; min-width: 0; display: flex; align-items: baseline; gap: 10px; font-weight: 600; white-space: nowrap; overflow: hidden; }
+  .ide-title small { font-weight: 400; color: var(--idim); font-size: 12px; overflow: hidden; text-overflow: ellipsis; }
+  .ide-title b { font-weight: 500; } .ide-title b.U { color: var(--iadd); } .ide-title b.M { color: var(--imod); }
+  .ide-quick { flex: 0 1 340px; display: flex; align-items: center; gap: 8px; height: 26px; padding: 0 8px; border-radius: 7px; border: 1px solid var(--iline);
+    background: var(--ib); color: var(--idim) !important; font-size: 12.5px; }
+  .ide-quick span { flex: 1; text-align: left; }
+  .ide-quick:hover { border-color: var(--idim); }
+  .ide kbd { font: 11px ui-monospace, Menlo, monospace; padding: 1px 5px; border-radius: 4px; border: 1px solid var(--iline); color: var(--idim); }
+  .ide-acts { flex: 1 1 0; display: flex; justify-content: flex-end; align-items: center; gap: 4px; }
+  .ide-ib { width: 28px; height: 28px; display: inline-grid; place-items: center; border-radius: 6px; color: var(--idim) !important; flex: none; }
+  .ide-ib:hover { background: var(--ihover); color: var(--ifg) !important; }
+  .ide-ib.on { color: var(--ifg) !important; background: var(--isel); }
+  .ide-ib:focus-visible, .ide-tb:focus-visible, .ide-node:focus-visible, .ide-hit:focus-visible, .ide-tab:focus-visible { outline: 1px solid var(--iacc); outline-offset: -1px; }
+  .ide-tb { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border-radius: 6px; font-size: 12.5px; white-space: nowrap; }
+  .ide-tb:hover { background: var(--ihover); }
+  .ide-tb.primary { background: var(--iacc); color: #fff !important; }
+  .ide-tb.primary:hover { filter: brightness(1.1); }
+  .ide-tb svg { width: 14px; height: 14px; }
+  .ide-menu { display: none; }
+  .ide-body { flex: 1; display: flex; min-height: 0; position: relative; }
+  .ide-act { width: 46px; flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px; padding-top: 6px; background: var(--iside); border-right: 1px solid var(--iline); }
+  .ide-act .ide-ib { width: 46px; height: 42px; border-radius: 0; position: relative; }
+  .ide-act .ide-ib svg { width: 21px; height: 21px; }
+  .ide-act .ide-ib.on { background: none; }
+  .ide-act .ide-ib.on::before { content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 2px; background: var(--iacc); border-radius: 2px; }
+  .ide-side { width: 252px; flex: none; display: flex; flex-direction: column; background: var(--iside); border-right: 1px solid var(--iline); min-height: 0; }
+  .ide.no-side .ide-side { display: none; }
+  .ide-stabs { display: none; gap: 2px; padding: 6px 8px 0; }
+  .ide-pane { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  .ide-pane[hidden] { display: none; }
+  .ide-sh { display: flex; align-items: center; justify-content: space-between; height: 34px; padding: 0 6px 0 16px; font-size: 11px; font-weight: 600; letter-spacing: .07em;
+    text-transform: uppercase; color: var(--idim); flex: none; }
+  .ide-sh .ide-ib { width: 24px; height: 24px; }
+  .ide-in { margin: 0 10px 8px; height: 28px; padding: 0 9px; border-radius: 6px; border: 1px solid var(--iline); background: var(--ib); color: var(--ifg); font: inherit; font-size: 12.5px; flex: none; }
+  .ide-in:focus { outline: none; border-color: var(--iacc); }
+  .ide-tree, .ide-hits { flex: 1; overflow: auto; padding-bottom: 16px; scrollbar-width: thin; }
+  .ide-node { display: flex; align-items: center; gap: 5px; width: 100%; height: 24px; padding: 0 10px 0 calc(8px + var(--d) * 12px); text-align: left; white-space: nowrap; font-size: 13px; }
+  .ide-node .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .ide-node:hover { background: var(--ihover); }
+  .ide-node.on { background: var(--isel); }
+  .ide-node .chev { width: 14px; height: 14px; color: var(--idim); transition: transform .12s; }
+  .ide-node[aria-expanded="false"] .chev { transform: rotate(-90deg); }
+  .ide-node .fold { color: #dcb67a; }
+  .ide-node .sp { width: 14px; flex: none; }
+  .ide-node .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--imod); flex: none; }
+  .ide-node.U .nm, .ide-tab.U .nm { color: var(--iadd); } .ide-node.M .nm, .ide-tab.M .nm { color: var(--imod); }
+  .ide-node .dec { font-size: 11px; font-weight: 700; width: 12px; text-align: center; } .dec.U { color: var(--iadd); } .dec.M { color: var(--imod); }
+  .ide-fi { display: inline-grid; color: var(--c); }
+  .ide-empty { padding: 8px 16px; color: var(--idim); font-size: 12.5px; }
+  .ide-hf { display: flex; align-items: center; gap: 6px; padding: 6px 12px 2px; font-weight: 600; }
+  .ide-hf small { color: var(--idim); font-weight: 400; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+  .ide-hf b { font-size: 11px; padding: 0 6px; border-radius: 9px; background: var(--isel); }
+  .ide-hit { display: block; width: 100%; text-align: left; padding: 2px 12px 2px 34px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    font: 12px/1.6 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--idim); }
+  .ide-hit:hover { background: var(--ihover); color: var(--ifg); }
+  .ide-hit .ln { display: inline-block; min-width: 30px; color: var(--igut); }
+  .ide-hit mark { background: rgba(234,92,0,.33); color: var(--ifg); border-radius: 2px; }
   .ide-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-  .ide-tabs { display: flex; background: #252526; overflow-x: auto; flex: none; scrollbar-width: thin; min-height: 35px; }
-  .ide-tab { display: flex; align-items: center; background: #2d2d2d; border-right: 1px solid #252526; color: #969696; flex: none; }
-  .ide-tab.on { background: #1e1e1e; color: #ffffff; box-shadow: inset 0 1px 0 #007fd4; }
-  .ide-tab > button:first-child { display: flex; align-items: center; gap: 6px; padding: 8px 4px 8px 12px; color: inherit; }
-  .ide-tab .tx { padding: 2px 8px; color: inherit; opacity: .7; font-size: 15px; }
-  .ide-tab .tx:hover { opacity: 1; }
-  .ide-crumb { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 3px 8px 3px 14px; color: #a9a9a9; font-size: 12px; border-bottom: 1px solid #2b2b2b; flex: none; }
-  .ide-path { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .ide-path i { font-style: normal; margin: 0 6px; color: #6f6f6f; }
-  .ide-fileacts { display: flex; gap: 4px; flex: none; }
-  .ide-ed { flex: 1; display: flex; overflow: auto; min-height: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; line-height: 1.55; }
+  .ide-tabs { display: flex; height: 36px; background: var(--iside); overflow-x: auto; flex: none; scrollbar-width: none; border-bottom: 1px solid var(--iline); }
+  .ide-tabs::-webkit-scrollbar { display: none; }
+  .ide-tab { display: flex; align-items: center; gap: 6px; padding: 0 4px 0 12px; border-right: 1px solid var(--iline); color: var(--idim); flex: none; cursor: pointer;
+    font-size: 12.5px; margin-bottom: -1px; }
+  .ide-tab:hover { color: var(--ifg); }
+  .ide-tab.on { background: var(--ib); color: var(--ifg); box-shadow: inset 0 1px 0 var(--iacc); }
+  .ide-tab .tx { width: 22px; height: 22px; border-radius: 5px; display: grid; place-items: center; opacity: 0; }
+  .ide-tab .tx svg { width: 14px; height: 14px; }
+  .ide-tab:hover .tx, .ide-tab.on .tx { opacity: .75; }
+  .ide-tab .tx:hover { opacity: 1; background: var(--ihover); }
+  .ide-crumb { display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 6px 0 16px; color: var(--idim); font-size: 12px; flex: none; }
+  .ide-path { flex: 1; min-width: 0; display: flex; align-items: center; overflow: hidden; white-space: nowrap; }
+  .ide-path i { font-style: normal; margin: 0 6px; opacity: .6; }
+  .ide-path .ide-fi { margin-right: 5px; } .ide-path .ide-fi svg { width: 14px; height: 14px; }
+  .ide-tools { display: flex; gap: 1px; flex: none; }
+  .ide-tools .ide-ib { width: 26px; height: 26px; }
+  .ide-tools .ide-ib svg { width: 15px; height: 15px; }
+  .ide-render-btn[hidden] { display: none; }
+  .ide-mprev { display: none; }
+  .ide-split { flex: 1; display: flex; min-height: 0; }
+  .ide-edwrap { flex: 1; display: flex; min-width: 0; position: relative; }
+  .ide-ed { flex: 1; overflow: auto; min-width: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: var(--fs, 13px); line-height: 1.6;
+    scrollbar-width: thin; }
+  .ide-ed[hidden] { display: none; }
   .ide-ed:focus { outline: none; }
-  .ide-gutter { position: sticky; left: 0; margin: 0; padding: 10px 14px 24px 12px; text-align: right; color: #6e7681; background: #1e1e1e; user-select: none; flex: none; min-width: 48px; z-index: 1; font: inherit; }
-  .ide-code { margin: 0; padding: 10px 24px 24px 8px; flex: 1; font: inherit; color: #d4d4d4; white-space: pre; tab-size: 2; }
-  .ide-code code { font: inherit; background: none; padding: 0; }
-  .ide-status { display: flex; gap: 18px; justify-content: flex-end; height: 24px; align-items: center; padding: 0 14px; background: #007acc; color: #fff; font-size: 12px; flex: none; }
-  @media (max-width: 720px) {
-    .ide-menu { display: inline-flex; }
-    .ide-side { position: absolute; top: 42px; bottom: 24px; left: 0; z-index: 3; width: min(280px, 82vw); box-shadow: 8px 0 24px rgba(0,0,0,.4); transform: translateX(-102%); transition: transform .18s; }
-    .ide.side-open .ide-side { transform: none; }
-    .ide-acts .ide-btn span { display: none; }
-    .ide-fileacts .ide-btn { font-size: 0; gap: 0; padding: 5px 7px; }
-    .ide-status span:nth-child(3) { display: none; }
+  .ide-lines { width: max-content; min-width: 100%; padding: 4px 0 45vh; }
+  .ide.wrap .ide-lines { width: auto; }
+  .ide-row { display: flex; min-height: 1.6em; }
+  .ide-row .no { position: sticky; left: 0; flex: none; width: var(--gw, 5ch); padding-right: 16px; text-align: right; color: var(--igut); background: var(--ib);
+    user-select: none; cursor: pointer; z-index: 1; }
+  .ide-row .tx { flex: 1; white-space: pre; padding-right: 32px; color: var(--icode); tab-size: 2; }
+  .ide.wrap .ide-row .tx { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .ide-row:hover .no { color: var(--ifg); }
+  .ide-row.cur { background: var(--icur); }
+  .ide-row.cur .no { color: var(--ifg); background: linear-gradient(var(--icur), var(--icur)), var(--ib); }
+  .ide-row.flash { animation: ide-flash 1.4s ease-out; }
+  @keyframes ide-flash { from { background: var(--iflash); } }
+  ::highlight(ide-find) { background-color: rgba(234, 92, 0, .33); }
+  ::highlight(ide-find-on) { background-color: rgba(255, 200, 0, .6); color: #000; }
+  .ide-doc { flex: 1; overflow: auto; padding: 28px clamp(16px, 5vw, 56px) 64px; background: var(--ib); color: var(--ifg); max-width: none; }
+  .ide-doc[hidden] { display: none; }
+  .ide-doc img { max-width: 100%; height: auto; background: repeating-conic-gradient(var(--isel) 0 25%, transparent 0 50%) 0 0 / 16px 16px; border-radius: 8px; }
+  .ide-find { position: absolute; top: 6px; right: 20px; z-index: 4; display: flex; align-items: center; gap: 2px; padding: 4px; background: var(--iside);
+    border: 1px solid var(--iline); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.28); }
+  .ide-find[hidden] { display: none; }
+  .ide-find .ide-in { margin: 0 4px 0 0; width: 200px; }
+  .ide-find .cnt { min-width: 64px; font-size: 12px; color: var(--idim); text-align: center; white-space: nowrap; }
+  .ide-prev { width: 46%; min-width: 300px; flex: none; display: flex; flex-direction: column; border-left: 1px solid var(--iline); background: var(--iside); }
+  .ide-prev[hidden] { display: none; }
+  .ide-pbar { display: flex; align-items: center; gap: 2px; height: 32px; padding: 0 4px 0 8px; border-bottom: 1px solid var(--iline); flex: none; }
+  .ide-pbar select { flex: 1; min-width: 0; height: 24px; border-radius: 6px; border: 1px solid var(--iline); background: var(--ib); color: var(--ifg); font: inherit; font-size: 12px; }
+  .ide-pframe { flex: 1; display: flex; justify-content: center; background: repeating-conic-gradient(var(--ihover) 0 25%, transparent 0 50%) 0 0 / 20px 20px; min-height: 0; }
+  .ide-pframe iframe { width: 100%; height: 100%; border: 0; background: #fff; box-shadow: 0 0 0 1px var(--iline); }
+  .ide-pal { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: min(580px, calc(100vw - 24px)); z-index: 8; background: var(--iside);
+    border: 1px solid var(--iline); border-radius: 10px; box-shadow: 0 18px 50px rgba(0,0,0,.45); overflow: hidden; }
+  .ide-pal[hidden] { display: none; }
+  .ide-pal input { width: 100%; height: 40px; border: 0; border-bottom: 1px solid var(--iline); background: transparent; color: var(--ifg); padding: 0 14px; font: inherit; font-size: 14px; }
+  .ide-pal input:focus { outline: none; }
+  .ide-pal-list { max-height: min(380px, 60vh); overflow: auto; padding: 4px; }
+  .ide-pal .it { display: flex; align-items: center; gap: 8px; width: 100%; height: 30px; padding: 0 10px; border-radius: 6px; text-align: left; white-space: nowrap; }
+  .ide-pal .it:hover { background: var(--ihover); } .ide-pal .it.on { background: var(--isel); }
+  .ide-pal .it small { color: var(--idim); overflow: hidden; text-overflow: ellipsis; }
+  .ide-status { display: flex; align-items: center; gap: 16px; height: 24px; padding: 0 12px; background: var(--ibar); border-top: 1px solid var(--iline); color: var(--idim);
+    font-size: 12px; flex: none; white-space: nowrap; overflow: hidden; }
+  .ide-status > span:first-child { display: inline-flex; align-items: center; gap: 5px; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .ide-status svg { width: 13px; height: 13px; }
+  .ide-status .sp { flex: 1; }
+  .ide-status button { font-size: 12px; color: var(--idim) !important; }
+  .ide-status button:hover { color: var(--ifg) !important; }
+  @media (max-width: 760px) {
+    .ide-menu { display: inline-grid; }
+    .ide-act, .ide-quick span, .ide-quick kbd { display: none; }
+    .ide-quick { flex: none; width: 28px; height: 28px; padding: 0; justify-content: center; border: 0; background: none; }
+    .ide-title small { display: none; }
+    .ide-tb span { display: none; }
+    .ide-side, .ide.no-side .ide-side { display: flex; position: absolute; top: 0; bottom: 0; left: 0; z-index: 6; width: min(300px, 86vw);
+      transform: translateX(-104%); visibility: hidden; transition: transform .18s, visibility .18s; }
+    .ide.side-open .ide-side { transform: none; visibility: visible; box-shadow: 8px 0 24px rgba(0,0,0,.35); }
+    .ide-mprev { display: inline-grid; }
+    .ide-stabs { display: flex; }
+    .ide-tools [data-ide="font-"], .ide-tools [data-ide="font+"] { display: none; }
+    .ide-prev { position: absolute; inset: 0; width: auto; min-width: 0; z-index: 5; }
+    .ide-find { left: 8px; right: 8px; } .ide-find .ide-in { flex: 1; width: auto; }
+    .ide-status .st-size, .ide-status .st-fs, .ide-status > span:first-child { display: none; }
   }
-  @media (prefers-reduced-motion: reduce) { .ide, .ide-side { animation: none; transition: none; } }
+  @media (prefers-reduced-motion: reduce) { .ide, .ide-side, .ide-row.flash { animation: none; transition: none; } }
   .code-btns { display: inline-flex; gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
   .code-btns button[disabled] { opacity: .5; }
   .run-out { margin: -8px 0 16px; border: 1px solid var(--border); border-top: 0; border-radius: 0 0 12px 12px; background: var(--surface); overflow: hidden; }
@@ -1522,7 +1627,7 @@
     if (!streaming) {
       const chat = [genChat, currentChat()].find((c) => c?.messages.includes(m));
       const files = chat && projectAt(chat, chat.messages.indexOf(m));
-      if (files) { node._project = files; html += projectCard(files, chat); }
+      if (files) { node._project = files; node._projectPrev = projectBefore(chat, chat.messages.indexOf(m)); html += projectCard(files, chat); }
     }
     if (m.webCheck) html += `<div class="memo">${ICON_CHECK}${esc(m.webCheck)}</div>`;
     if (m.cutWarning && !streaming) html += `<div class="error">${esc(m.cutWarning === true ? "Code ở cuối có vẻ chưa viết xong." : m.cutWarning)} <button type="button" class="btn" data-act="continue">Viết tiếp</button></div>`;
@@ -1782,6 +1887,9 @@
     "- Sự thật, tin tức, số liệu, giá cả: tra cứu; việc quan trọng thì đối chiếu ít nhất hai nguồn và ghi nguồn.\n" +
     "- Lời khuyên, kế hoạch, quyết định: làm rõ mục tiêu và ràng buộc, đưa phương án cụ thể theo thứ tự ưu tiên, nêu rủi ro và cách giảm rủi ro.\n" +
     "- Viết, dịch, tóm tắt: xác định người đọc, giọng văn, độ dài; viết xong đọc lại một lượt để sửa câu chữ.\n" +
+    "- Xây dựng sản phẩm (web, game, ứng dụng, slide, tài liệu): hình dung sản phẩm hoàn chỉnh trước khi làm; liệt kê cả yêu cầu ngầm mà người dùng chắc chắn mong đợi " +
+    "(chạy được ngay, đẹp trên điện thoại, lưu lại, không lỗi, tiếng Việt tự nhiên); chọn phạm vi vừa đủ để làm TRỌN VẸN và chạy thật, thay vì nhiều tính năng mà dở dang; " +
+    "làm phần lõi chạy được trước rồi mới trau chuốt; cuối cùng đóng vai người dùng thử từng thao tác.\n" +
     "- Ước lượng, dự báo (bao nhiêu, mất bao lâu, tốn bao nhiêu): chia thành các đại lượng ước được (kiểu Fermi), ghi rõ giả định và con số dùng, " +
     "đưa ra khoảng hợp lý chứ không chỉ một con số, rồi so với một mốc thực tế đã biết.\n" +
     "Thói quen của người giỏi (dùng cho câu khó):\n" +
@@ -1879,7 +1987,7 @@
   };
   // Tay nghề riêng của dòng Titan (mô hình mạnh nhất): làm slide và làm web ở mức chuyên gia. Chỉ thêm khi câu hỏi đang dùng kỹ năng tương ứng.
   const TITAN_SLIDES =
-    "Tay nghề làm slide của dòng Titan (mức cao nhất của Astra). Quy trình bắt buộc:\n" +
+    "Tay nghề làm slide mức chuyên gia của Astra. Quy trình bắt buộc:\n" +
     "1) Xác định khán giả, mục tiêu (sau bài họ cần hiểu, nhớ hay làm gì) và thời lượng; số slide khoảng 1 slide cho mỗi 1–2 phút nói.\n" +
     "2) Tra cứu dữ kiện thật trước khi viết: số liệu có năm và nguồn, ví dụ cụ thể, nhân vật, sự kiện; không bịa số.\n" +
     "3) Dàn ý theo câu chuyện: vấn đề → vì sao quan trọng → 2 đến 4 ý lớn (mỗi ý mở bằng một section) → bằng chứng, ví dụ → kết luận và lời kêu gọi. " +
@@ -1891,10 +1999,12 @@
     "viết như lời nói tự nhiên và có câu dẫn sang slide sau.\n" +
     "6) Bài giảng cho học sinh: có slide câu hỏi nhanh kiểm tra hiểu bài và slide tóm tắt 3 ý. Bài thuyết trình kinh doanh: mở bằng một con số gây ấn tượng, " +
     "có slide đề xuất và bước tiếp theo. Bài báo cáo khoa học: mục tiêu, phương pháp, kết quả (biểu đồ), kết luận, hạn chế.\n" +
+    "Nguyên tắc thiết kế: mỗi slide người xem hiểu ý chính trong 3 giây; một con số lớn ấn tượng hơn một đoạn chữ; biểu đồ chỉ một thông điệp, tiêu đề nói luôn kết luận " +
+    "(\"Doanh thu tăng gấp đôi sau 2 năm\"); số liệu trong stats ghi kèm đơn vị và năm; slide kết nhắc lại 1 thông điệp cần nhớ.\n" +
     "7) Tự soát trước khi nộp: JSON hợp lệ (dấu phẩy, ngoặc, dấu ngoặc kép trong chuỗi phải viết \\\"), mọi số liệu có nguồn ở slide cuối, " +
     "không slide nào vượt giới hạn chữ, icon hợp nghĩa, theme hợp chủ đề và người xem.";
   const TITAN_WEB =
-    "Tay nghề làm web của dòng Titan (kỹ sư frontend cấp cao của Astra):\n" +
+    "Tay nghề làm web mức chuyên gia (kỹ sư frontend cấp cao của Astra):\n" +
     "1) Trước khi code, nghĩ trong phần suy nghĩ: người dùng là ai, luồng chính 3–5 bước, danh sách tính năng đầy đủ như sản phẩm thật, cấu trúc dữ liệu, " +
     "các màn hình hoặc khối giao diện, các trạng thái (trống, đang tải, lỗi, thành công).\n" +
     "2) Thiết kế có hệ thống trước: biến CSS cho màu (nền, bề mặt, chữ, chữ phụ, viền, màu nhấn, nhấn đậm, thành công, cảnh báo, lỗi), " +
@@ -1905,16 +2015,31 @@
     "icon SVG cùng một bộ, ảnh có tỉ lệ cố định và object-fit, chữ không tràn, khoảng trắng rộng rãi, căn lề thẳng hàng.\n" +
     "6) Trước khi nộp, đi lại từng luồng như người dùng thật: bấm từng nút, nhập dữ liệu sai, tải lại trang, màn hình 360px, chế độ tối; " +
     "kiểm tra id, class, tên hàm khớp giữa HTML, CSS và JS; không lỗi console.";
+  // Tư duy lập trình chung cho mọi mô hình, thêm khi câu hỏi có viết code (lập trình, web, game, dự án, thi đấu).
+  const CODE_CRAFT =
+    "Tư duy lập trình (áp dụng cho mọi việc viết code):\n" +
+    "1) Hiểu bài trước: input, output, ràng buộc, môi trường chạy; biến yêu cầu thành danh sách tiêu chí kiểm tra được (\"bấm X thì Y\", \"n = 10^5 chạy dưới 1 giây\").\n" +
+    "2) Thiết kế trước khi gõ: chọn cấu trúc dữ liệu trước (chọn đúng thì code tự gọn); chia mô-đun theo trách nhiệm; định nghĩa giao diện (tên hàm, tham số, giá trị trả về, " +
+    "lỗi có thể xảy ra) trước khi viết thân hàm; nghĩ luồng dữ liệu và luồng trạng thái.\n" +
+    "3) Làm từng bước nhỏ chạy được: phần lõi trước, chạy thử, rồi mới thêm tính năng; mỗi hàm một việc, ngắn; tên biến và hàm nói đúng ý nghĩa; không lặp code.\n" +
+    "4) Chỉ dùng API chắc chắn có thật: đúng tên, đúng tham số, đúng phiên bản; không bịa hàm thư viện hay thuộc tính DOM; thư viện qua CDN chỉ dùng phiên bản bạn chắc tồn tại.\n" +
+    "5) Bất biến và trường hợp biên: nêu điều luôn đúng của dữ liệu và giữ nó sau mỗi thao tác; xét rỗng, một phần tử, trùng lặp, rất lớn, số âm, null hoặc undefined, " +
+    "chữ có dấu, mạng lỗi, người dùng bấm liên tục.\n" +
+    "6) Đọc lại như người rà soát khó tính trước khi chạy và trước khi nộp: dò từng hàm với một ví dụ cụ thể; tên, id, class, export khớp giữa các file; " +
+    "lệch một đơn vị ở vòng lặp và chỉ số; async thiếu await; sự kiện gán hai lần; biến bị che; so sánh khác kiểu; tài nguyên không được dọn.\n" +
+    "7) Kiểm thử thật bằng công cụ (py-run, js-run, cpp-run): ví dụ thường, trường hợp biên và vài test ngẫu nhiên so với một cách chậm mà chắc; code cuối là code đã chạy qua.\n" +
+    "8) Sửa code có sẵn: đọc hiểu trước, giữ phong cách cũ, thay đổi ít nhất có thể, không làm hỏng phần khác, nói rõ đã đổi gì và vì sao.\n" +
+    "9) Hiệu năng có chủ đích: ước lượng độ phức tạp theo kích thước dữ liệu thật; tối ưu đúng chỗ nóng, không tối ưu sớm làm code khó đọc.";
+  const CODE_SKILLS = new Set(["code", "web", "game", "project", "webapp", "webdev", "ioi"]);
   const TITANS = ["glm-5.3-flash", "nemotron-3-ultra", "nemotron-3.5-super-vl", "nemotron-3.5-lightning"];
   // Gắn điểm mạnh của đúng mô hình sắp nhận câu hỏi vào lời nhắc hệ thống (bản sao, không đổi lịch sử).
   function withProfile(messages, model) {
     const sys = messages[0];
     if (sys?.role !== "system" || typeof sys.content !== "string") return messages;
     const add = [MODEL_PROFILES[model]];
-    if (TITANS.includes(model)) {
-      if (sys.content.includes("Kỹ năng làm bài trình chiếu")) add.push(TITAN_SLIDES);
-      if (/Kỹ năng làm trang web|Kỹ năng làm dự án web nhiều file|Kỹ năng phát triển ứng dụng web lớn/.test(sys.content)) add.push(TITAN_WEB);
-    }
+    // Tay nghề slide và web mức chuyên gia: trước chỉ dòng Titan có, nay mọi mô hình đều được dùng.
+    if (sys.content.includes("Kỹ năng làm bài trình chiếu")) add.push(TITAN_SLIDES);
+    if (/Kỹ năng làm trang web|Kỹ năng làm dự án web nhiều file|Kỹ năng phát triển ứng dụng web lớn|Kỹ năng làm game/.test(sys.content)) add.push(TITAN_WEB);
     if (/^glm/.test(model) && !sys.content.includes(GLM_PROMPT)) add.push(GLM_PROMPT);
     const text = add.filter(Boolean).join("\n\n");
     return text ? [{ ...sys, content: sys.content + "\n\n" + text }, ...messages.slice(1)] : messages;
@@ -2066,6 +2191,48 @@
       remind: "trang đơn giản thì đưa trọn một file HTML hoàn chỉnh trong một khối ```html (website nhiều trang hoặc cần tách file thì theo định dạng dự án nhiều file): thiết kế đẹp, responsive, có chế độ tối, không lỗi JS; logic phức tạp thì chạy thử bằng js-run trước",
     },
     {
+      // Làm game chơi được ngay trong trình duyệt (canvas, Web Audio), một file hoặc dự án nhiều file dùng ES module.
+      id: "game", test: /\bgame\b|trò chơi|chơi được|\bcanvas\b|phaser|platformer|bắn (súng|máy bay|phi thuyền|zombie|quái)|rắn săn mồi|snake|tetris|flappy|pong|breakout|pac-?man|mario|xếp hình|đua xe|thủ thành|tower defense|roguelike|rpg|puzzle|match-?3|2048|sudoku|cờ (vua|caro|tướng)|minesweeper|dò mìn|endless runner/i,
+      prompt:
+        "Kỹ năng làm game (HTML5 canvas, chơi được ngay trong trình duyệt, cả máy tính lẫn điện thoại):\n" +
+        "Thiết kế trước khi code (trong phần suy nghĩ, ngắn gọn): vòng chơi cốt lõi trong một câu (người chơi lặp lại việc gì, vì sao vui); mục tiêu, cách thua, cách thắng; " +
+        "điều khiển bàn phím và cảm ứng; tiến trình (màn, độ khó tăng theo công thức rõ ràng như tốc độ = 1 + 0.15 × màn); danh sách thực thể và thuộc tính; " +
+        "các màn hình: menu → đang chơi → tạm dừng → thua hoặc thắng → chơi lại.\n" +
+        "Kiến trúc chuẩn:\n" +
+        "- Vòng lặp: requestAnimationFrame với bước thời gian cố định (biến tích luỹ, dt = 1/60 giây, giới hạn tối đa 0.1 giây để không nhảy cóc khi đổi tab); " +
+        "update(dt) tách khỏi render(); tự tạm dừng khi document.hidden (visibilitychange) hoặc cửa sổ mất focus.\n" +
+        "- Máy trạng thái cảnh: mỗi cảnh (menu, play, pause, gameover) có enter, exit, update, render, xử lý input; không rải cờ boolean khắp nơi.\n" +
+        "- Thực thể: class hoặc object có x, y, vx, vy, w, h hoặc r, alive, update(dt), draw(ctx); xoá bằng cờ alive rồi lọc sau mỗi lượt update (không splice khi đang duyệt); " +
+        "đạn, hạt, kẻ địch sinh liên tục thì dùng object pool.\n" +
+        "- Va chạm: AABB hoặc hình tròn; nhiều vật thể thì chia lưới không gian; platformer xử lý va chạm tách theo từng trục; bản đồ ô dùng mảng 2D.\n" +
+        "- Input: lớp quản lý phím lưu trạng thái (đang giữ, vừa bấm), chặn cuộn trang khi bấm mũi tên và Space; cảm ứng bằng pointer events với nút ảo hoặc cần điều khiển ảo " +
+        "(chỉ hiện trên màn hình cảm ứng), vùng chạm tối thiểu 48px; tay cầm (Gamepad API) khi hợp lý.\n" +
+        "- Canvas sắc nét: kích thước logic cố định (ví dụ 960×540), co giãn giữ tỉ lệ để vừa màn hình, nhân devicePixelRatio; pixel art thì imageSmoothingEnabled = false; " +
+        "xoay ngang điện thoại vẫn chơi được.\n" +
+        "- Âm thanh không cần file: tự tạo bằng Web Audio (oscillator, noise, gain envelope) cho bắn, nổ, ăn điểm, lên màn, thua; chỉ tạo AudioContext sau thao tác đầu tiên của người chơi; " +
+        "có nút tắt tiếng và nhớ lựa chọn.\n" +
+        "- Đồ hoạ không cần ảnh: vẽ bằng canvas (path, gradient, shadowBlur cho hiệu ứng phát sáng), sprite pixel từ mảng chuỗi, nền nhiều lớp chuyển động parallax; " +
+        "màu theo một bảng màu thống nhất khai báo một chỗ.\n" +
+        "- Lưu điểm cao, màn đã mở và cài đặt bằng localStorage bọc try/catch.\n" +
+        "Cảm giác chơi (game feel): mọi thao tác có phản hồi ngay; rung màn hình nhẹ, hạt nổ, nháy trắng khi trúng đòn, khựng hình rất ngắn khi va chạm mạnh, số điểm bay lên; " +
+        "chuyển cảnh và giao diện có easing; độ khó tăng mượt và có lúc nghỉ; vài giây bất tử sau khi hồi sinh; màn đầu có hướng dẫn điều khiển ngắn; " +
+        "HUD rõ ràng (điểm, mạng, màn, kỷ lục). Tôn trọng prefers-reduced-motion (giảm rung và nháy).\n" +
+        "Chất lượng: không tạo object mới liên tục trong vòng lặp nóng; giới hạn số hạt; hằng số chỉnh game (tốc độ, máu, tần suất sinh địch) gom vào một object CONFIG; " +
+        "logic quan trọng (va chạm, tính điểm, sinh màn, AI kẻ địch) viết thành hàm thuần và chạy thử bằng js-run trước; " +
+        "trước khi nộp tự chơi thử trong đầu từng luồng: bắt đầu, ghi điểm, thua, chơi lại, tạm dừng rồi tiếp tục, đổi kích thước cửa sổ, chỉ dùng cảm ứng; không lỗi console.\n" +
+        "Cách tổ chức file:\n" +
+        "- Game nhỏ (rắn, pong, flappy, 2048, cờ caro…): MỘT file HTML hoàn chỉnh.\n" +
+        "- Game lớn hoặc người dùng muốn tách file: theo định dạng dự án nhiều file, cấu trúc gợi ý: index.html, css/style.css, js/main.js (khởi động), js/config.js (CONFIG), " +
+        "js/core/loop.js, js/core/input.js, js/core/audio.js, js/core/renderer.js, js/scenes/menu.js, js/scenes/play.js, js/scenes/gameover.js, " +
+        "js/entities/player.js, js/entities/enemy.js, js/entities/bullet.js, js/entities/particles.js, js/utils/math.js, js/utils/storage.js, " +
+        "data/levels.json khi có màn thiết kế sẵn, README.md (cách chơi, điều khiển, cấu trúc).\n" +
+        "- Game nhiều file dùng ES module: index.html chỉ có <script type=\"module\" src=\"js/main.js\"><\/script>; mỗi file export rõ ràng thứ nó cung cấp, " + // <\/ để không đóng script của trang
+        "import bằng đường dẫn tương đối có đuôi .js (import { Player } from \"./entities/player.js\"); không import vòng tròn (dữ liệu dùng chung để trong config.js hoặc truyền qua tham số). " +
+        "Trang chat chạy thử được dự án dùng module.\n" +
+        "- Phaser 3 qua CDN với phiên bản cụ thể (https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js) chỉ khi game cần vật lý phức tạp hoặc bản đồ ô lớn; còn lại dùng canvas thuần.",
+      remind: "game: thiết kế vòng chơi trước; vòng lặp bước cố định, máy trạng thái cảnh (menu, chơi, tạm dừng, thua), điều khiển cả bàn phím lẫn cảm ứng, âm thanh Web Audio, hiệu ứng phản hồi, lưu kỷ lục; game lớn thì nhiều file dùng ES module, viết trọn mọi file",
+    },
+    {
       // Website nhiều trang, dự án nhiều file (tĩnh hoặc dùng framework).
       id: "project", test: /nhiều (file|tệp|trang)|đa trang|multi-?page|multi-?file|dự án (web|website|frontend|fullstack)|\bproject\b|cấu trúc (thư mục|dự án|file)|website (hoàn chỉnh|đầy đủ|bán hàng|công ty|doanh nghiệp|giới thiệu|cá nhân|trường|nhà hàng|khách sạn|tin tức|blog)|(tách|chia) (ra )?(thành )?(nhiều |các )?(file|tệp)|\breact\b|\bvite\b|next\.?js|\bvue\b|express|node\.?js|\.(css|js|json)\b/i,
       prompt:
@@ -2079,8 +2246,15 @@
         "chế độ tối, đánh dấu trang đang mở trong menu) và js riêng cho trang cần; dữ liệu (sản phẩm, bài viết, câu hỏi) để trong data/*.json và đọc bằng fetch có xử lý lỗi; " +
         "ảnh vẽ bằng SVG trong assets/ hoặc dùng ảnh AI qua đường dẫn Pollinations.\n" +
         "- Nạp file bằng đường dẫn tương đối (css/style.css, js/main.js, ../ khi ở thư mục con), không dùng đường dẫn bắt đầu bằng / . " +
-        "Script nạp bằng <script src=\"js/main.js\" defer><\/script> theo thứ tự phụ thuộc, các file chia sẻ hàm qua một object toàn cục (window.App); " + // <\/ để không đóng script của trang
-        "không dùng import/export giữa các file để trang mở trực tiếp bằng file:// vẫn chạy.\n" +
+        "Chọn MỘT cách nạp JS và dùng nhất quán trong cả dự án: (a) website tĩnh đơn giản: <script src=\"js/main.js\" defer><\/script> theo thứ tự phụ thuộc, " + // <\/ để không đóng script của trang
+        "các file chia sẻ hàm qua một object toàn cục (window.App), mở bằng file:// vẫn chạy; (b) ứng dụng hoặc game có nhiều mô-đun: ES module, trang chỉ nạp " +
+        "<script type=\"module\" src=\"js/main.js\"><\/script>, mỗi file export rõ ràng, import bằng đường dẫn tương đối có đuôi .js, không import vòng tròn; " +
+        "README ghi chạy bằng máy chủ tĩnh (npx serve) vì module không chạy qua file://. Trang chat chạy thử được cả hai cách.\n" +
+        "- Quy trình để không sót file: (1) viết sơ đồ thư mục trước, đó là danh sách file bắt buộc phải viết; (2) viết theo thứ tự phụ thuộc: config, tiện ích, " +
+        "lớp lõi, rồi tới phần dùng chúng, index.html, cuối cùng README.md; (3) mỗi file ghi một dòng chú thích đầu file nói vai trò của nó; " +
+        "(4) tên hàm, class, id, đường dẫn và tên export phải khớp chính xác giữa các file (dùng đúng tên đã export, đúng đường dẫn đã có trong sơ đồ); " +
+        "(5) cuối cùng đối chiếu: mọi file trong sơ đồ đã viết, mọi import, src, href, fetch đều trỏ tới file có thật, không file nào viết dở. " +
+        "Câu trả lời dài cũng không sao: trang tự cho viết tiếp khi bị ngắt, nên không được rút gọn hay bỏ file.\n" +
         "- Mọi trang có cùng header (logo, menu với đủ liên kết tới mọi trang, nút menu trên điện thoại) và footer; mỗi trang có <title> và meta description riêng; " +
         "liên kết nào cũng phải trỏ tới file có thật trong dự án. Trang 404.html khi hợp lý.\n" +
         "- Dự án dùng framework (React, Vue, Vite, Next.js) hoặc có máy chủ (Node.js, Express, cơ sở dữ liệu): đủ package.json (phiên bản thư viện cụ thể, scripts dev, build, start), " +
@@ -2363,6 +2537,7 @@
     parts.push(TOOL_PROMPT); // công cụ (chạy code, tra cứu, tạo ảnh) luôn được bật
     if (currentMode().prompt) parts.push(currentMode().prompt);
     for (const k of activeSkills(chat)) if (k.prompt) parts.push(k.prompt);
+    if (activeSkills(chat).some((k) => CODE_SKILLS.has(k.id))) parts.push(CODE_CRAFT);
     let mem = MEMORY_PROMPT;
     if (memories.length) mem += "\n\nNhững điều bạn đã ghi nhớ về người dùng:\n" + memories.map((m) => "- " + m.text).join("\n");
     parts.push(mem);
@@ -2814,6 +2989,14 @@
         if (target && !files.has(target) && /\.(html?|css|js|json|svg)$/i.test(target)) problems.push(`${p}: dẫn tới file ${ref} nhưng dự án không có file ${target}.`);
       }
     }
+    // Module import tới file không có trong dự án.
+    for (const [p, c] of files) {
+      if (!/\.(m?js|html?)$/i.test(p)) continue;
+      const dir = p.includes("/") ? p.slice(0, p.lastIndexOf("/") + 1) : "";
+      for (const m of c.matchAll(IMPORT_RE)) {
+        if (/^\.{1,2}\//.test(m[3]) && !resolveImport(files, m[3], dir)) problems.push(`${p}: import "${m[3]}" nhưng dự án không có file đó.`);
+      }
+    }
     return [...new Set(problems)].slice(0, 15);
   }
   async function autoFixWeb(history, reply, node) {
@@ -2849,6 +3032,7 @@
       await answerWithTools([...history, { role: "assistant", content: (files ? projectDump(files) : answer).slice(0, 60000) },
         { role: "user", content: (files ? PROJECT_FIX_PROMPT : WEB_FIX_PROMPT).replace("{E}", problems.map((x) => "- " + x).join("\n")) }], reply, node);
       delete reply.notice;
+      if (files) reply.content = nameBlocks(reply.content, files);
       const fixed = splitThink(reply.content).answer;
       if (files ? !filesIn(fixed).length : !fixed.includes("```html")) {
         // Bản sửa không có trang web: giữ bản trước.
@@ -2988,6 +3172,13 @@
           const t = cleanPath((m[1].startsWith("/") ? "" : dir) + m[1]);
           if (want(t)) missing.add(t);
         }
+      }
+      // import "./x.js" giữa các module: tính theo vị trí của chính file đó.
+      if (/\.(m?js|html?)$/i.test(p)) for (const m of c.matchAll(IMPORT_RE)) {
+        const spec = m[3];
+        if (!/^\.{1,2}\//.test(spec) || resolveImport(files, spec, dir)) continue;
+        const t = cleanPath(dir + spec.split(/[?#]/)[0]);
+        if (want(/\.\w+$/.test(t) ? t : t + ".js")) missing.add(/\.\w+$/.test(t) ? t : t + ".js");
       }
       // fetch("data/x.json") tính theo vị trí trang (thường ở gốc), không theo vị trí file JS.
       for (const m of c.matchAll(/\bfetch\(\s*["'`]([^"'`$#?]+)["'`]/g)) {
@@ -4480,9 +4671,32 @@
     }
     return parts.join("/");
   }
+  // Bản sửa dự án mà mô hình quên ghi đường dẫn ở dòng mở khối: ghép khối đó với file cũ cùng loại trong dự án
+  // (chỉ có một file cùng đuôi, hoặc tên file xuất hiện trong nội dung, hoặc trang HTML chính), rồi ghi đường dẫn vào dòng mở khối.
+  function nameBlocks(text, base) {
+    if (!base?.size) return text;
+    const named = new Set(filesIn(text).map(([p]) => p));
+    return String(text).replace(/^([ \t]*```)([^\n`]*)\n([\s\S]*?)\n([ \t]*```)/gm, (all, open, info, body, close) => {
+      const lang = (info.trim().match(/^[\w+#.-]+/) || [""])[0].toLowerCase();
+      if (!LANG_EXT[lang] || NOT_FILES.test(lang) || filesIn(all).length) return all;
+      const cands = [...base.keys()].filter((p) => LANG_EXT[lang].includes(extOf(p)) && !named.has(p));
+      const low = body.toLowerCase().replace(/[-_]/g, "");
+      const hit = cands.filter((p) => { const n = p.split("/").pop().replace(/\.\w+$/, "").toLowerCase().replace(/[-_]/g, ""); return n.length > 2 && low.includes(n); });
+      const pick = cands.length === 1 ? cands[0] : /^html?$/.test(lang) && cands.includes(mainPage(base)) ? mainPage(base) : hit.length === 1 ? hit[0] : null;
+      if (!pick) return all;
+      named.add(pick);
+      return `${open}${lang} ${pick}\n${body}\n${close}`;
+    });
+  }
+  // Đuôi file ứng với ngôn ngữ ghi ở dòng mở khối code (để đoán tên cho khối không ghi đường dẫn).
+  const LANG_EXT = { html: ["html", "htm"], htm: ["html", "htm"], xml: ["xml", "svg"], svg: ["svg"], css: ["css"], scss: ["scss"], less: ["less"],
+    js: ["js", "mjs"], javascript: ["js", "mjs"], mjs: ["mjs", "js"], jsx: ["jsx", "js"], ts: ["ts"], typescript: ["ts"], tsx: ["tsx"], json: ["json"],
+    md: ["md"], markdown: ["md"], py: ["py"], python: ["py"], java: ["java"], cpp: ["cpp", "cc", "h"], "c++": ["cpp"], c: ["c", "h"], go: ["go"], rust: ["rs"], rs: ["rs"],
+    php: ["php"], ruby: ["rb"], sql: ["sql"], yaml: ["yml", "yaml"], yml: ["yml", "yaml"], sh: ["sh"], bash: ["sh"], vue: ["vue"], svelte: ["svelte"], csv: ["csv"], txt: ["txt"] };
   function filesIn(text) {
-    const out = [];
-    for (const m of String(text || "").matchAll(/^[ \t]*```([^\n`]*)\n([\s\S]*?)\n[ \t]*```/gm)) {
+    const src = String(text || "");
+    const blocks = [];
+    for (const m of src.matchAll(/^[ \t]*```([^\n`]*)\n([\s\S]*?)\n[ \t]*```/gm)) {
       const info = m[1].replace(/\b(title|file|filename|path|name)\s*=\s*["']?([^"'\s]+)["']?/i, " $2").trim();
       const lang = (info.match(/^[\w+#.-]+/) || [""])[0];
       if (NOT_FILES.test(lang)) continue;
@@ -4492,9 +4706,42 @@
         const first = body.match(/^\s*(?:<!--|\/\/|\/\*|#)\s*(?:file:?\s*)?([\w@()[\] ./-]+\.[A-Za-z0-9]{1,8})\s*(?:-->|\*\/)?\s*$/m);
         if (first && first.index < 3) { path = first[1].trim(); body = body.slice(first.index + first[0].length).replace(/^\n/, ""); }
       }
-      if (path) out.push([cleanPath(path), body]);
+      blocks.push({ path: path ? cleanPath(path) : null, body, lang: lang.toLowerCase(), at: m.index });
     }
-    return out;
+    // Khối không ghi đường dẫn trong một câu trả lời rõ ràng là dự án (đã có file ghi đường dẫn, hoặc có sơ đồ thư mục):
+    // đoán tên từ dòng tiêu đề ngay trên khối, rồi từ sơ đồ thư mục theo đuôi file, cuối cùng trang HTML hoàn chỉnh là index.html.
+    const unnamed = blocks.filter((b) => !b.path && LANG_EXT[b.lang]);
+    const trees = treeFiles(src);
+    if (unnamed.length && (blocks.some((b) => b.path) || trees.length)) {
+      const used = new Set(blocks.filter((b) => b.path).map((b) => b.path));
+      let tree = trees.flat();
+      const top = tree[0]?.split("/")[0];
+      if (top && tree.every((p) => p.startsWith(top + "/"))) tree = tree.map((p) => p.slice(top.length + 1));
+      tree = [...new Set(tree.map(cleanPath))];
+      for (const b of unnamed) {
+        const exts = LANG_EXT[b.lang];
+        const okExt = (p) => exts.includes(extOf(p));
+        // 1) Dòng tiêu đề ngay trên khối: "### `js/player.js`", "**css/style.css**", "File: js/app.js:"
+        const before = src.slice(0, b.at).split("\n").map((l) => l.trim()).filter(Boolean).slice(-2).reverse();
+        let path = null;
+        for (const l of before) {
+          if (/^```/.test(l)) break;
+          const t = (l.match(/[\w@()[\]./-]+\.[A-Za-z0-9]{1,8}/g) || []).map(cleanPath).find((x) => okExt(x) && !used.has(x));
+          if (t) { path = t; break; }
+        }
+        // 2) Sơ đồ thư mục: file cùng đuôi chưa dùng, ưu tiên file có tên xuất hiện trong nội dung khối (class Player → player.js).
+        if (!path) {
+          const cands = tree.filter((p) => okExt(p) && !used.has(p));
+          const low = b.body.toLowerCase();
+          const score = (p) => { const n = p.split("/").pop().replace(/\.\w+$/, "").toLowerCase().replace(/[-_]/g, ""); return n.length > 2 && low.replace(/[-_]/g, "").includes(n) ? 1 : 0; };
+          path = cands.sort((a, c) => score(c) - score(a))[0] || null;
+        }
+        // 3) Trang HTML hoàn chỉnh mà dự án chưa có trang chính.
+        if (!path && /^html?$/.test(b.lang) && /<html\b|<!doctype/i.test(b.body) && !used.has("index.html")) path = "index.html";
+        if (path) { b.path = path; used.add(path); }
+      }
+    }
+    return blocks.filter((b) => b.path).map((b) => [b.path, b.body]);
   }
   // Dự án tính tới câu trả lời thứ idx: file của các câu trả lời trước, các bản đã tự sửa của câu này, rồi chính câu này.
   // Các file của dự án trước câu trả lời thứ idx (để biết câu trả lời này sửa tiếp hay mở dự án mới).
@@ -4538,6 +4785,35 @@
     `clear:()=>{m.clear();save()},key:i=>[...m.keys()][i]??null,get length(){return m.size}};` +
     `try{Object.defineProperty(window,k,{value:s,configurable:true})}catch(e){}}})()<\/script>`;
   const withShim = (html, shim) => (/<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, (h) => h + shim) : shim + html);
+  // ES module trong dự án (import/export giữa các file): mỗi file JS có một địa chỉ ảo https://proj.local/<đường dẫn>,
+  // đường dẫn import tương đối được đổi sang địa chỉ ảo đó, rồi import map trỏ địa chỉ ảo tới nội dung file (data: URL).
+  // Nhờ vậy khung xem trước (srcdoc, không có máy chủ) vẫn chạy được dự án dùng module như khi mở bằng máy chủ thật.
+  const PROJ_ORIGIN = "https://proj.local/";
+  // Tìm file mà một đường dẫn import trỏ tới (cho phép thiếu đuôi .js hoặc trỏ vào thư mục có index.js).
+  function resolveImport(files, spec, fromDir) {
+    if (!/^(\.{1,2}\/|\/)/.test(spec)) return null;
+    const base = cleanPath((spec.startsWith("/") ? "" : fromDir) + spec.split(/[?#]/)[0]);
+    for (const p of [base, base + ".js", base + ".mjs", base + "/index.js"]) if (files.has(p)) return p;
+    return null;
+  }
+  const IMPORT_RE = /(\bfrom\s*|\bimport\s*\(\s*|\bimport\s+)(["'])([^"'\n]+)\2/g;
+  function rewriteImports(files, code, fromDir) {
+    return code.replace(IMPORT_RE, (all, head, q, spec) => {
+      const p = resolveImport(files, spec, fromDir);
+      return p ? head + q + PROJ_ORIGIN + p + q : all;
+    });
+  }
+  const usesModules = (files) => [...files].some(([p, c]) => (/\.html?$/i.test(p) && /<script\b[^>]*type\s*=\s*["']?module/i.test(c)) ||
+    (/\.m?js$/i.test(p) && /^\s*(import\s|export\s)/m.test(c)));
+  function importMapFor(files) {
+    const imports = {};
+    for (const [p, c] of files) {
+      if (!/\.(m?js)$/i.test(p)) continue;
+      const dir = p.includes("/") ? p.slice(0, p.lastIndexOf("/") + 1) : "";
+      imports[PROJ_ORIGIN + p] = "data:text/javascript;charset=utf-8," + encodeURIComponent(rewriteImports(files, c, dir));
+    }
+    return imports;
+  }
   // Dựng một trang của dự án thành một file HTML chạy được trong khung xem trước: chèn CSS, JS, ảnh SVG vào thẳng trang,
   // giả lập fetch() cho các file dữ liệu (JSON, CSV…), và bắt sự kiện bấm link sang trang khác để khung xem trước tự chuyển trang.
   function bundlePage(files, path, navId, store) {
@@ -4557,9 +4833,15 @@
     });
     // Script có defer hoặc type=module chạy sau khi trang dựng xong: đưa xuống cuối trang để giữ đúng thứ tự đó.
     const later = [];
+    const modular = usesModules(files);
+    // Module viết thẳng trong trang: đổi đường dẫn import tương đối theo vị trí của trang.
+    if (modular) html = html.replace(/(<script\b[^>]*type\s*=\s*["']?module["']?[^>]*>)([\s\S]*?)(<\/script>)/gi,
+      (all, open, code, close) => (/\bsrc\s*=/.test(open) ? all : open + rewriteImports(files, code, dir) + close));
     html = html.replace(/<script\b([^>]*)\bsrc\s*=\s*["']([^"']+)["']([^>]*)>\s*<\/script>/gi, (tag, a, src, b) => {
       const p = local(src);
       if (!p || !files.has(p)) return tag;
+      // File module: nạp qua import map để các import bên trong nó tìm đúng file.
+      if (modular && /type\s*=\s*["']?module/i.test(a + b)) { later.push(`<script type="module" data-file="${p}">import "${PROJ_ORIGIN}${p}";<\/script>`); return ""; }
       const attrs = (a + b).replace(/\s(defer|async)\b(=["']?[^"'\s>]*["']?)?/gi, "");
       const code = `<script${attrs} data-file="${p}">${files.get(p).replace(/<\/script/gi, "<\\/script")}<\/script>`;
       if (/\bdefer\b|type\s*=\s*["']?module/i.test(a + b)) { later.push(code); return ""; }
@@ -4570,6 +4852,19 @@
       return p && files.has(p) && !/\.html?$/i.test(p) ? `${attr}="${dataUrl(p)}"` : all;
     });
     if (later.length) html = /<\/body>/i.test(html) ? html.replace(/<\/body>/i, later.join("") + "</bo" + "dy>") : html + later.join("");
+    if (modular) {
+      // Gộp với import map sẵn có của trang (ví dụ map thư viện qua CDN), import map phải đứng trước mọi module.
+      const own = importMapFor(files);
+      let merged = false;
+      html = html.replace(/<script\b[^>]*type\s*=\s*["']?importmap["']?[^>]*>([\s\S]*?)<\/script>/i, (all, json) => {
+        try { const m = JSON.parse(json); m.imports = { ...(m.imports || {}), ...own }; merged = true; return `<script type="importmap">${JSON.stringify(m).replace(/<\//g, "<\\/")}<\/script>`; }
+        catch { return all; }
+      });
+      if (!merged) {
+        const tag = `<script type="importmap">${JSON.stringify({ imports: own }).replace(/<\//g, "<\\/")}<\/script>`;
+        html = /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, (h) => h + tag) : tag + html;
+      }
+    }
     const data = {};
     for (const [p, c] of files) if (!/\.(html?|css|js|mjs)$/i.test(p)) data[p] = c;
     const helper = `<script>(()=>{const F=${JSON.stringify(data).replace(/<\//g, "<\\/")},D=${JSON.stringify(dir)},T=${JSON.stringify(MIME)};` +
@@ -4643,9 +4938,12 @@
     saveBlob(await zip.generateAsync({ type: "blob" }), fileName(name || "du-an-web") + ".zip");
   }
   // ---------- Trình xem code kiểu VS Code ----------
-  // Cây thư mục bên trái (thu gọn được, lọc theo tên), các tab file đang mở, số dòng, tô màu cú pháp, thanh trạng thái;
-  // sao chép, tải từng file, tải .zip, chạy thử dự án web. Trên điện thoại, cây thư mục mở bằng nút ☰.
-  const FILE_COLORS = { html: "#e44d26", htm: "#e44d26", css: "#42a5f5", scss: "#c6538c", less: "#2a4d80", js: "#f1e05a", mjs: "#f1e05a", cjs: "#f1e05a",
+  // Tối giản, theo giao diện sáng/tối của trang. Thanh hoạt động (Explorer, Tìm kiếm), cây thư mục có icon theo loại file
+  // và đánh dấu kiểu Git (U: file mới, M: file vừa sửa so với lần trả lời trước), tab, số dòng, tô màu cú pháp,
+  // tìm trong file (Ctrl+F, tô sáng mọi chỗ khớp), tìm trong cả dự án (Ctrl+Shift+F), mở nhanh file (Ctrl+P), nhảy tới dòng (Ctrl+G),
+  // tự xuống dòng (Alt+Z), cỡ chữ (Ctrl+= / Ctrl+-), xem trước trang web ngay bên cạnh code, xem Markdown và SVG dạng đã hiển thị,
+  // sao chép, tải từng file, tải .zip, chạy thử dự án web. Trên điện thoại, thanh bên mở bằng nút ☰.
+  const FILE_COLORS = { html: "#e44d26", htm: "#e44d26", css: "#42a5f5", scss: "#c6538c", less: "#2a4d80", js: "#e8c547", mjs: "#e8c547", cjs: "#e8c547",
     jsx: "#61dafb", ts: "#3178c6", tsx: "#3178c6", json: "#cbcb41", md: "#519aba", py: "#3776ab", cpp: "#f34b7d", cc: "#f34b7d", c: "#a8b9cc", h: "#a074c4",
     java: "#b07219", kt: "#a97bff", go: "#00add8", rs: "#dea584", php: "#777bb4", rb: "#cc342d", sql: "#e38c00", svg: "#ffb13b", txt: "#9aa0a6",
     vue: "#41b883", svelte: "#ff3e00", sh: "#89e051", yml: "#cb171e", yaml: "#cb171e", xml: "#e37933", csv: "#89e051", env: "#ecd53f", toml: "#9c4221" };
@@ -4655,31 +4953,107 @@
   const LANG_TITLE = { html: "HTML", htm: "HTML", css: "CSS", scss: "SCSS", js: "JavaScript", mjs: "JavaScript", jsx: "JavaScript JSX", ts: "TypeScript", tsx: "TypeScript JSX",
     json: "JSON", md: "Markdown", py: "Python", cpp: "C++", cc: "C++", c: "C", h: "C/C++ Header", java: "Java", go: "Go", rs: "Rust", php: "PHP", sql: "SQL",
     svg: "SVG", txt: "Plain Text", vue: "Vue", sh: "Shell", yml: "YAML", yaml: "YAML", xml: "XML", csv: "CSV" };
-  const fileDot = (p) => `<span class="ide-ico" style="--c:${FILE_COLORS[extOf(p)] || "#9aa0a6"}">${esc((extOf(p) || "·").slice(0, 4))}</span>`;
-  function openIde(files, name, onRun) {
+  const HLJS_URL = "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js";
+  const ideSvg = (d, cls = "") => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
+  const IDE_D = {
+    files: "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7ZM14 2v5h5M9 13h6M9 17h4",
+    search: "M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14ZM20 20l-3.5-3.5",
+    file: "M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8ZM14 3v5h5",
+    folder: "M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z",
+    folderOpen: "M3 7a2 2 0 0 1 2-2h4l2 2h7a2 2 0 0 1 2 2v1M3 7v10a2 2 0 0 0 2 2h12.5a2 2 0 0 0 1.9-1.4L21.5 12a1 1 0 0 0-1-1.3H7.3a2 2 0 0 0-1.9 1.4L3 19",
+    chev: "m6 9 6 6 6-6",
+    preview: "M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2ZM12 3v18",
+    wrap: "M3 6h18M3 12h15a3 3 0 0 1 0 6h-4M3 18h7M16 16l-2 2 2 2",
+    collapse: "m7 20 5-5 5 5M7 4l5 5 5-5",
+    reload: "M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5",
+    phone: "M8 2h8a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2ZM11 18h2",
+    eye: "M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12ZM12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z",
+    close: "M18 6 6 18M6 6l12 12",
+    up: "m18 15-6-6-6 6", down: "m6 9 6 6 6-6",
+    branch: "M6 3v12M18 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM6 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM18 9a9 9 0 0 1-9 9",
+    menu: "M4 6h16M4 12h16M4 18h16",
+    minus: "M5 12h14", plus: "M12 5v14M5 12h14",
+  };
+  const fileIcon = (p) => `<span class="ide-fi" style="--c:${FILE_COLORS[extOf(p)] || "#9aa0a6"}">${ideSvg(IDE_D.file)}</span>`;
+  // Tách HTML đã tô màu (chỉ có thẻ span) thành từng dòng: đóng các thẻ đang mở ở cuối dòng và mở lại ở dòng sau.
+  function htmlLines(html) {
+    const out = [], stack = [];
+    let cur = "";
+    for (const m of html.matchAll(/(<span[^>]*>)|(<\/span>)|(\n)|([^<\n]+|<)/g)) {
+      if (m[1]) { stack.push(m[1]); cur += m[1]; }
+      else if (m[2]) { stack.pop(); cur += m[2]; }
+      else if (m[3]) { out.push(cur + "</span>".repeat(stack.length)); cur = stack.join(""); }
+      else cur += m[0];
+    }
+    out.push(cur + "</span>".repeat(stack.length));
+    return out;
+  }
+  // Khoảng chữ [start, end) trong một phần tử (đi qua các nút chữ con) dưới dạng Range, để tô sáng chỗ khớp.
+  function rangeIn(el, start, end) {
+    const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    const r = document.createRange();
+    let pos = 0, set = false;
+    for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+      const len = n.nodeValue.length;
+      if (!set && start <= pos + len) { r.setStart(n, start - pos); set = true; }
+      if (set && end <= pos + len) { r.setEnd(n, end - pos); return r; }
+      pos += len;
+    }
+    return null;
+  }
+  const canHighlight = () => typeof Highlight === "function" && window.CSS?.highlights;
+  function openIde(files, name, onRun, prev) {
     document.querySelector(".ide")?.remove();
     const back = document.activeElement;
     const paths = [...files.keys()];
+    const prefs = { wrap: false, fs: 13, side: true, ...store.get("glm.ide", {}) };
+    const savePrefs = () => store.set("glm.ide", prefs);
+    // So với dự án ở lần trả lời trước: U là file mới, M là file đã sửa.
+    const mark = (p) => (!prev?.size ? "" : !prev.has(p) ? "U" : prev.get(p) !== files.get(p) ? "M" : "");
+    const marks = paths.map(mark);
+    const nNew = marks.filter((x) => x === "U").length, nMod = marks.filter((x) => x === "M").length;
+    const isWeb = paths.some((p) => /\.html?$/i.test(p));
     const open = [], closed = new Set();
-    let active = null, filter = "";
+    let active = null, filter = "", panel = "files", curLine = 0, render = false, prevOn = false, prevPage = null, prevWidth = "";
+    let finds = [], findAt = -1, palItems = [], palAt = 0;
+    const navId = Math.random().toString(36).slice(2);
+    const dark = document.documentElement.dataset.theme === "dark" || (document.documentElement.dataset.theme !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
     const box = document.createElement("div");
-    box.className = "ide";
+    box.className = "ide" + (dark ? "" : " light") + (prefs.wrap ? " wrap" : "");
+    box.style.setProperty("--fs", prefs.fs + "px");
     box.setAttribute("role", "dialog");
     box.setAttribute("aria-label", "Trình xem code: " + name);
+    const ib = (act, d, label, extra = "") => `<button type="button" class="ide-ib ${extra}" data-ide="${act}" aria-label="${label}" title="${label}">${ideSvg(d)}</button>`;
     box.innerHTML =
-      `<div class="ide-bar"><button type="button" class="ide-btn ide-menu" data-ide="side" aria-label="Hiện cây thư mục">☰</button>` +
-      `<span class="ide-title">${esc(name)}</span><span class="ide-acts">` +
-      (onRun ? `<button type="button" class="ide-btn" data-ide="run">${ICON_PLAY}<span>Chạy thử</span></button>` : "") +
-      `<button type="button" class="ide-btn" data-ide="zip">${ICON_DOWN}<span>Tải .zip</span></button>` +
-      `<button type="button" class="ide-btn ide-x" data-ide="close" aria-label="Đóng" title="Đóng (Esc)">×</button></span></div>` +
-      `<div class="ide-body"><aside class="ide-side"><div class="ide-side-h">EXPLORER <small>${files.size} file</small></div>` +
-      `<input class="ide-filter" type="search" placeholder="Lọc file…" aria-label="Lọc file"><div class="ide-tree" role="tree"></div></aside>` +
+      `<div class="ide-top">${ib("side", IDE_D.menu, "Thanh bên (Ctrl+B)", "ide-menu")}` +
+      `<span class="ide-title">${esc(name)}<small>${files.size} file${nNew || nMod ? ` · ${nMod ? `<b class="M">${nMod} sửa</b>` : ""}${nNew && nMod ? " · " : ""}${nNew ? `<b class="U">${nNew} mới</b>` : ""}` : ""}</small></span>` +
+      `<button type="button" class="ide-quick" data-ide="quick">${ideSvg(IDE_D.search)}<span>Tìm file</span><kbd>Ctrl P</kbd></button>` +
+      `<span class="ide-acts">` + (onRun ? `<button type="button" class="ide-tb primary" data-ide="run">${ICON_PLAY}<span>Chạy thử</span></button>` : "") +
+      `<button type="button" class="ide-tb" data-ide="zip">${ICON_DOWN}<span>.zip</span></button>${ib("close", IDE_D.close, "Đóng (Esc)", "ide-x")}</span></div>` +
+      `<div class="ide-body"><nav class="ide-act">${ib("p-files", IDE_D.files, "Explorer (Ctrl+Shift+E)")}${ib("p-search", IDE_D.search, "Tìm trong dự án (Ctrl+Shift+F)")}` +
+      (isWeb ? ib("preview", IDE_D.preview, "Xem trước bên cạnh") : "") + `</nav>` +
+      `<aside class="ide-side"><div class="ide-stabs">${ib("p-files", IDE_D.files, "Explorer")}${ib("p-search", IDE_D.search, "Tìm trong dự án")}</div>` +
+      `<div class="ide-pane" data-pane="files"><div class="ide-sh">Explorer<span>${ib("collapse", IDE_D.collapse, "Thu gọn thư mục")}</span></div>` +
+      `<input class="ide-in" data-in="filter" type="search" placeholder="Lọc file…" aria-label="Lọc file"><div class="ide-tree" role="tree"></div></div>` +
+      `<div class="ide-pane" data-pane="search" hidden><div class="ide-sh">Tìm trong dự án</div>` +
+      `<input class="ide-in" data-in="search" type="search" placeholder="Tìm chữ trong mọi file…" aria-label="Tìm trong dự án"><div class="ide-hits"></div></div></aside>` +
       `<section class="ide-main"><div class="ide-tabs" role="tablist"></div>` +
-      `<div class="ide-crumb"><span class="ide-path"></span><span class="ide-fileacts"><button type="button" class="ide-btn" data-ide="copy">${ICON_COPY}Sao chép</button>` +
-      `<button type="button" class="ide-btn" data-ide="dl">${ICON_DOWN}Tải file</button></span></div>` +
-      `<div class="ide-ed" tabindex="0"><pre class="ide-gutter" aria-hidden="true"></pre><pre class="ide-code"><code></code></pre></div></section></div>` +
-      `<div class="ide-status"><span class="st-lang"></span><span class="st-lines"></span><span class="st-size"></span><span>UTF-8</span></div>`;
+      `<div class="ide-crumb"><span class="ide-path"></span><span class="ide-tools">` +
+      ib("render", IDE_D.eye, "Xem dạng hiển thị", "ide-render-btn") + (isWeb ? ib("preview", IDE_D.preview, "Xem trước", "ide-mprev") : "") + ib("wrap", IDE_D.wrap, "Tự xuống dòng (Alt+Z)") +
+      ib("font-", IDE_D.minus, "Chữ nhỏ hơn (Ctrl+-)") + ib("font+", IDE_D.plus, "Chữ lớn hơn (Ctrl+=)") +
+      `<button type="button" class="ide-ib" data-ide="copy" aria-label="Sao chép file" title="Sao chép file">${ICON_COPY}</button>` +
+      `<button type="button" class="ide-ib" data-ide="dl" aria-label="Tải file này" title="Tải file này">${ICON_DOWN}</button></span></div>` +
+      `<div class="ide-split"><div class="ide-edwrap"><div class="ide-ed" tabindex="0"><div class="ide-lines"></div></div><div class="ide-doc content" hidden></div>` +
+      `<div class="ide-find" hidden><input class="ide-in" data-in="find" placeholder="Tìm trong file" aria-label="Tìm trong file"><span class="cnt"></span>` +
+      `${ib("find-prev", IDE_D.up, "Trước (Shift+Enter)")}${ib("find-next", IDE_D.down, "Sau (Enter)")}${ib("find-close", IDE_D.close, "Đóng (Esc)")}</div></div>` +
+      `<div class="ide-prev" hidden><div class="ide-pbar"><select aria-label="Trang xem trước"></select>${ib("p-phone", IDE_D.phone, "Khổ điện thoại")}` +
+      `${ib("p-reload", IDE_D.reload, "Tải lại")}${ib("preview", IDE_D.close, "Đóng xem trước")}</div><div class="ide-pframe"></div></div></div></section>` +
+      `<div class="ide-pal" hidden><input data-in="pal" placeholder="Gõ tên file, hoặc :số dòng để nhảy tới dòng" aria-label="Mở nhanh file"><div class="ide-pal-list" role="listbox"></div></div></div>` +
+      `<div class="ide-status"><span>${ideSvg(IDE_D.branch)} ${esc(name)}</span><span class="sp"></span><span class="st-line"></span>` +
+      `<button type="button" data-ide="wrap" class="st-wrap"></button><button type="button" data-ide="font+" class="st-fs"></button>` +
+      `<span class="st-lang"></span><span class="st-lines"></span><span class="st-size"></span><span>UTF-8</span></div>`;
     const $$ = (s) => box.querySelector(s);
+    const ed = $$(".ide-ed"), lines = $$(".ide-lines");
     // Cây thư mục: thư mục trước, rồi file, theo bảng chữ cái.
     const tree = {};
     for (const p of paths) {
@@ -4691,90 +5065,319 @@
       const rows = [];
       const walk = (node, depth, prefix) => {
         const keys = Object.keys(node).sort((a, b) => (b.endsWith("/") - a.endsWith("/")) || a.localeCompare(b));
+        let changed = false;
         for (const k of keys) {
           if (k.endsWith("/")) {
             const dir = prefix + k, shut = closed.has(dir) && !filter;
             const at = rows.length;
-            if (!shut) walk(node[k], depth + 1, dir);
+            const sub = walk(node[k], depth + 1, dir);
             const kids = rows.splice(at);
             if (filter && !kids.length) continue;
+            changed ||= sub;
             rows.push(`<button type="button" class="ide-node dir" role="treeitem" aria-expanded="${!shut}" data-dir="${esc(dir)}" style="--d:${depth}">` +
-              `<span class="chev">${shut ? "▸" : "▾"}</span>${esc(k.slice(0, -1))}</button>`, ...kids);
+              `${ideSvg(IDE_D.chev, "chev")}${ideSvg(shut ? IDE_D.folder : IDE_D.folderOpen, "fold")}<span class="nm">${esc(k.slice(0, -1))}</span>${sub ? '<i class="dot"></i>' : ""}</button>`,
+              ...(shut ? [] : kids));
           } else {
-            const p = node[k];
+            const p = node[k], m = mark(p);
             if (filter && !p.toLowerCase().includes(filter)) continue;
-            rows.push(`<button type="button" class="ide-node${p === active ? " on" : ""}" role="treeitem" data-file="${esc(p)}" style="--d:${depth}">` +
-              `${fileDot(p)}${esc(k)}</button>`);
+            changed ||= !!m;
+            rows.push(`<button type="button" class="ide-node${p === active ? " on" : ""} ${m}" role="treeitem" data-file="${esc(p)}" style="--d:${depth}" title="${esc(p)}">` +
+              `<span class="sp"></span>${fileIcon(p)}<span class="nm">${esc(k)}</span>${m ? `<span class="dec ${m}" title="${m === "U" ? "File mới" : "Đã sửa"}">${m}</span>` : ""}</button>`);
           }
         }
+        return changed;
       };
       walk(tree, 0, "");
       $$(".ide-tree").innerHTML = rows.join("") || '<div class="ide-empty">Không có file nào khớp.</div>';
     };
     const drawTabs = () => {
-      $$(".ide-tabs").innerHTML = open.map((p) => `<span class="ide-tab${p === active ? " on" : ""}" role="tab" aria-selected="${p === active}">` +
-        `<button type="button" data-tab="${esc(p)}" title="${esc(p)}">${fileDot(p)}${esc(p.split("/").pop())}</button>` +
-        `<button type="button" class="tx" data-close="${esc(p)}" aria-label="Đóng ${esc(p)}">×</button></span>`).join("");
+      $$(".ide-tabs").innerHTML = open.map((p) => `<span class="ide-tab${p === active ? " on" : ""} ${mark(p)}" role="tab" aria-selected="${p === active}" data-tab="${esc(p)}" title="${esc(p)}">` +
+        `${fileIcon(p)}<span class="nm">${esc(p.split("/").pop())}</span><button type="button" class="tx" data-close="${esc(p)}" aria-label="Đóng ${esc(p)}">${ideSvg(IDE_D.close)}</button></span>`).join("");
+      $$(".ide-tabs .on")?.scrollIntoView({ block: "nearest", inline: "nearest" });
+    };
+    const setPanel = (p) => {
+      panel = p;
+      box.querySelectorAll("[data-pane]").forEach((x) => (x.hidden = x.dataset.pane !== p));
+      box.querySelectorAll('[data-ide="p-files"]').forEach((x) => x.classList.toggle("on", p === "files" && prefs.side));
+      box.querySelectorAll('[data-ide="p-search"]').forEach((x) => x.classList.toggle("on", p === "search" && prefs.side));
+    };
+    const setSide = (on) => { prefs.side = on; savePrefs(); box.classList.toggle("no-side", !on); setPanel(panel); };
+    const status = () => {
+      $$(".st-wrap").textContent = prefs.wrap ? "Tự xuống dòng" : "Không xuống dòng";
+      $$(".st-fs").textContent = `Cỡ ${prefs.fs}`;
+      $$(".st-line").textContent = curLine ? `Dòng ${curLine}` : "";
+      $$('[data-ide="wrap"].ide-ib').classList.toggle("on", prefs.wrap);
+    };
+    const rowOf = (n) => lines.children[n - 1];
+    const goLine = (n, flash = true) => {
+      const row = rowOf(Math.max(1, Math.min(n, lines.children.length)));
+      if (!row) return;
+      lines.querySelector(".cur")?.classList.remove("cur");
+      row.classList.add("cur");
+      curLine = +row.dataset.n;
+      ed.scrollTop = row.offsetTop - ed.clientHeight / 3;
+      if (flash) { row.classList.remove("flash"); void row.offsetWidth; row.classList.add("flash"); }
+      status();
+    };
+    const drawCode = (p, html) => {
+      const rows = html ? htmlLines(html) : files.get(p).split("\n").map((l) => esc(l));
+      box.style.setProperty("--gw", `${String(rows.length).length + 2.6}ch`);
+      lines.innerHTML = rows.map((h, i) => `<div class="ide-row" data-n="${i + 1}"><span class="no">${i + 1}</span><span class="tx">${h}</span></div>`).join("");
+      if (curLine) rowOf(curLine)?.classList.add("cur");
+    };
+    // Xem dạng hiển thị: Markdown thành văn bản định dạng, SVG thành hình.
+    const canRender = (p) => /\.(md|markdown|svg)$/i.test(p || "");
+    const drawDoc = () => {
+      const doc = $$(".ide-doc"), on = render && canRender(active);
+      doc.hidden = !on; ed.hidden = on;
+      $$(".ide-render-btn").hidden = !canRender(active);
+      $$(".ide-render-btn").classList.toggle("on", on);
+      if (!on) return;
+      doc.innerHTML = /\.svg$/i.test(active)
+        ? `<img alt="${esc(active)}" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(files.get(active))}">`
+        : markdown(files.get(active));
     };
     const clearEditor = () => {
-      active = null;
-      $$(".ide-code code").textContent = ""; $$(".ide-gutter").textContent = ""; $$(".ide-path").textContent = "";
+      active = null; curLine = 0;
+      lines.innerHTML = ""; $$(".ide-path").textContent = "";
       for (const c of [".st-lang", ".st-lines", ".st-size"]) $$(c).textContent = "";
-      drawTabs(); drawTree();
+      drawTabs(); drawTree(); drawDoc(); status();
     };
-    const show = (p) => {
+    const show = (p, line) => {
       if (!files.has(p)) return;
       if (!open.includes(p)) open.push(p);
+      const same = p === active;
       active = p;
-      const text = files.get(p), ext = extOf(p), lines = text.split("\n").length;
-      $$(".ide-gutter").textContent = Array.from({ length: lines }, (_, i) => i + 1).join("\n");
-      const code = $$(".ide-code code");
-      code.textContent = text;
-      if (text.length < 300000) {
-        loadScript("https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js").then(() => {
-          if (active !== p) return;
+      if (!same) {
+        curLine = 0;
+        const text = files.get(p), ext = extOf(p);
+        drawCode(p);
+        if (text.length < 400000) loadScript(HLJS_URL).then(() => {
+          if (active !== p || !window.hljs) return;
           const lang = HL_OF[ext];
-          code.innerHTML = (lang && hljs.getLanguage(lang) ? hljs.highlight(text, { language: lang }) : hljs.highlightAuto(text)).value;
+          drawCode(p, (lang && hljs.getLanguage(lang) ? hljs.highlight(text, { language: lang }) : hljs.highlightAuto(text)).value);
+          if (!$$(".ide-find").hidden) runFind(false);
         }, () => {});
+        $$(".ide-path").innerHTML = p.split("/").map((x, i, a) => (i === a.length - 1 ? fileIcon(p) : "") + `<span>${esc(x)}</span>`).join("<i>›</i>");
+        $$(".st-lang").textContent = LANG_TITLE[ext] || (ext ? ext.toUpperCase() : "Plain Text");
+        $$(".st-lines").textContent = `${text.split("\n").length} dòng`;
+        const bytes = new Blob([text]).size;
+        $$(".st-size").textContent = bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
+        ed.scrollTo(0, 0);
+        if (prevOn && /\.html?$/i.test(p)) showPreview(p);
       }
-      $$(".ide-path").innerHTML = p.split("/").map((x) => `<span>${esc(x)}</span>`).join("<i>›</i>");
-      $$(".st-lang").textContent = LANG_TITLE[ext] || (ext ? ext.toUpperCase() : "Plain Text");
-      $$(".st-lines").textContent = `${lines} dòng`;
-      const bytes = new Blob([text]).size;
-      $$(".st-size").textContent = bytes < 1024 ? `${bytes} B` : `${(bytes / 1024).toFixed(1)} KB`;
-      $$(".ide-ed").scrollTo(0, 0);
       box.classList.remove("side-open");
-      drawTabs(); drawTree();
+      drawTabs(); drawTree(); drawDoc(); status();
+      if (line) requestAnimationFrame(() => goLine(line));
+      if (!$$(".ide-find").hidden) runFind(false);
     };
-    const onKey = (e) => { if (e.key === "Escape" && box.isConnected) { e.stopPropagation(); close(); } };
-    const close = () => { box.remove(); removeEventListener("keydown", onKey, true); back?.focus?.(); };
+    // ---- Tìm trong file ----
+    const clearMarks = () => { if (canHighlight()) { CSS.highlights.delete("ide-find"); CSS.highlights.delete("ide-find-on"); } };
+    const runFind = (jump = true) => {
+      const q = $$('[data-in="find"]').value;
+      finds = [];
+      if (q && active) {
+        const ql = q.toLowerCase();
+        files.get(active).split("\n").forEach((l, i) => {
+          const ll = l.toLowerCase();
+          for (let at = ll.indexOf(ql); at >= 0 && finds.length < 3000; at = ll.indexOf(ql, at + ql.length)) finds.push({ n: i + 1, a: at, b: at + q.length });
+        });
+      }
+      findAt = finds.length ? Math.max(0, finds.findIndex((f) => f.n >= (curLine || 1))) : -1;
+      paintFind(jump);
+    };
+    const paintFind = (jump) => {
+      $$(".ide-find .cnt").textContent = !$$('[data-in="find"]').value ? "" : finds.length ? `${findAt + 1}/${finds.length}` : "Không thấy";
+      clearMarks();
+      if (!finds.length) return;
+      const f = finds[findAt];
+      if (jump) goLine(f.n, false);
+      if (!canHighlight()) return;
+      const r = (x) => { const tx = rowOf(x.n)?.querySelector(".tx"); return tx && rangeIn(tx, x.a, x.b); };
+      CSS.highlights.set("ide-find", new Highlight(...finds.slice(0, 1500).map(r).filter(Boolean)));
+      const on = r(f);
+      if (on) CSS.highlights.set("ide-find-on", new Highlight(on));
+    };
+    const stepFind = (d) => { if (!finds.length) return; findAt = (findAt + d + finds.length) % finds.length; paintFind(true); };
+    const openFind = () => {
+      const f = $$(".ide-find"), inp = $$('[data-in="find"]');
+      f.hidden = false;
+      const sel = String(getSelection()).trim();
+      if (sel && !sel.includes("\n")) inp.value = sel;
+      inp.focus(); inp.select(); runFind();
+    };
+    const closeFind = () => { $$(".ide-find").hidden = true; clearMarks(); ed.focus(); };
+    // ---- Tìm trong cả dự án ----
+    const runSearch = () => {
+      const q = $$('[data-in="search"]').value, ql = q.toLowerCase();
+      if (!q) { $$(".ide-hits").innerHTML = ""; return; }
+      let total = 0, html = "";
+      for (const p of paths) {
+        const hits = [];
+        files.get(p).split("\n").forEach((l, i) => {
+          const at = l.toLowerCase().indexOf(ql);
+          if (at < 0 || hits.length >= 50) return;
+          const from = Math.max(0, at - 24);
+          hits.push(`<button type="button" class="ide-hit" data-hit="${esc(p)}" data-line="${i + 1}" title="Dòng ${i + 1}"><span class="ln">${i + 1}</span>` +
+            `${from ? "…" : ""}${esc(l.slice(from, at).trimStart())}<mark>${esc(l.slice(at, at + q.length))}</mark>${esc(l.slice(at + q.length, at + q.length + 60))}</button>`);
+        });
+        if (!hits.length) continue;
+        total += hits.length;
+        html += `<div class="ide-hf">${fileIcon(p)}<span class="nm">${esc(p.split("/").pop())}</span><small>${esc(p.includes("/") ? p.slice(0, p.lastIndexOf("/")) : "")}</small><b>${hits.length}</b></div>` + hits.join("");
+        if (total > 400) break;
+      }
+      $$(".ide-hits").innerHTML = (total ? `<div class="ide-empty">${total} kết quả</div>` : '<div class="ide-empty">Không tìm thấy.</div>') + html;
+    };
+    // ---- Mở nhanh file / nhảy tới dòng ----
+    const subseq = (q, s) => { let i = 0; for (const ch of s) if (ch === q[i]) i++; return i === q.length; };
+    const drawPal = () => {
+      const q = $$('[data-in="pal"]').value.trim();
+      const list = $$(".ide-pal-list");
+      if (q.startsWith(":")) {
+        const n = parseInt(q.slice(1), 10);
+        palItems = [];
+        list.innerHTML = `<div class="ide-empty">${active ? (n ? `Nhấn Enter để tới dòng ${n} của ${esc(active.split("/").pop())}` : `Gõ số dòng (1–${lines.children.length})`) : "Chưa mở file nào"}</div>`;
+        return;
+      }
+      const ql = q.toLowerCase();
+      const base = (p) => p.split("/").pop().toLowerCase();
+      palItems = (ql ? paths.filter((p) => subseq(ql, p.toLowerCase())) : [...open.slice().reverse(), ...paths.filter((p) => !open.includes(p))])
+        .sort((a, b) => !ql ? 0 : (base(a).startsWith(ql) ? 0 : base(a).includes(ql) ? 1 : 2) - (base(b).startsWith(ql) ? 0 : base(b).includes(ql) ? 1 : 2) || a.length - b.length)
+        .slice(0, 40);
+      palAt = Math.min(palAt, Math.max(0, palItems.length - 1));
+      list.innerHTML = palItems.map((p, i) => `<button type="button" class="it${i === palAt ? " on" : ""}" role="option" data-pal="${esc(p)}">${fileIcon(p)}` +
+        `<span class="nm">${esc(p.split("/").pop())}</span><small>${esc(p)}</small></button>`).join("") || '<div class="ide-empty">Không có file nào khớp.</div>';
+      list.querySelector(".on")?.scrollIntoView({ block: "nearest" });
+    };
+    const openPal = (prefix = "") => { const pal = $$(".ide-pal"), inp = $$('[data-in="pal"]'); pal.hidden = false; inp.value = prefix; palAt = 0; drawPal(); inp.focus(); };
+    const closePal = () => { $$(".ide-pal").hidden = true; };
+    const pickPal = () => {
+      const q = $$('[data-in="pal"]').value.trim();
+      if (q.startsWith(":")) { const n = parseInt(q.slice(1), 10); closePal(); if (n && active) { render = false; drawDoc(); goLine(n); } return; }
+      const p = palItems[palAt];
+      if (p) { closePal(); show(p); }
+    };
+    // ---- Xem trước trang web bên cạnh code ----
+    let store0 = {};
+    const showPreview = (p) => {
+      const pages = paths.filter((x) => /\.html?$/i.test(x));
+      prevPage = files.has(p) ? p : prevPage || mainPage(files);
+      const sel = $$(".ide-prev select");
+      sel.innerHTML = pages.map((x) => `<option${x === prevPage ? " selected" : ""}>${esc(x)}</option>`).join("");
+      const frame = document.createElement("iframe");
+      frame.sandbox = "allow-scripts allow-modals allow-forms allow-pointer-lock";
+      frame.title = "Xem trước " + prevPage;
+      frame.style.width = prevWidth;
+      frame.srcdoc = bundlePage(files, prevPage, navId, store0);
+      $$(".ide-pframe").replaceChildren(frame);
+    };
+    const togglePreview = (on = !prevOn) => {
+      prevOn = on;
+      $$(".ide-prev").hidden = !on;
+      box.querySelectorAll('.ide-act [data-ide="preview"]').forEach((b) => b.classList.toggle("on", on));
+      if (on) showPreview(/\.html?$/i.test(active || "") ? active : prevPage);
+      else $$(".ide-pframe").replaceChildren();
+    };
+    const onMsg = (e) => {
+      if (!box.isConnected) return;
+      if (e.data?.proj !== navId) return;
+      if (e.data.store) store0 = e.data.store;
+      if (e.data.go && files.has(e.data.go)) showPreview(e.data.go);
+    };
+    addEventListener("message", onMsg);
+    const font = (d) => { prefs.fs = Math.max(10, Math.min(22, prefs.fs + d)); box.style.setProperty("--fs", prefs.fs + "px"); savePrefs(); status(); };
+    const toggleWrap = () => { prefs.wrap = !prefs.wrap; box.classList.toggle("wrap", prefs.wrap); savePrefs(); status(); if (curLine) goLine(curLine, false); };
+    const close = () => { clearMarks(); box.remove(); removeEventListener("keydown", onKey, true); removeEventListener("message", onMsg); back?.focus?.(); };
+    const mod = (e) => e.ctrlKey || e.metaKey;
+    const onKey = (e) => {
+      if (!box.isConnected) return;
+      const k = e.key.toLowerCase();
+      if (e.key === "Escape") {
+        e.stopPropagation(); e.preventDefault();
+        if (!$$(".ide-pal").hidden) closePal();
+        else if (!$$(".ide-find").hidden) closeFind();
+        else if (box.classList.contains("side-open")) box.classList.remove("side-open");
+        else close();
+        return;
+      }
+      if (!$$(".ide-pal").hidden && ["arrowdown", "arrowup", "enter"].includes(k)) {
+        e.preventDefault();
+        if (k === "enter") pickPal();
+        else { palAt = Math.max(0, Math.min(palItems.length - 1, palAt + (k === "arrowdown" ? 1 : -1))); drawPal(); }
+        return;
+      }
+      if (document.activeElement === $$('[data-in="find"]') && k === "enter") { e.preventDefault(); stepFind(e.shiftKey ? -1 : 1); return; }
+      if (k === "f3") { e.preventDefault(); stepFind(e.shiftKey ? -1 : 1); return; }
+      if (e.altKey && k === "z") { e.preventDefault(); toggleWrap(); return; }
+      if (!mod(e)) return;
+      const act = e.shiftKey && k === "f" ? () => { setSide(true); setPanel("search"); box.classList.add("side-open"); $$('[data-in="search"]').focus(); }
+        : e.shiftKey && k === "e" ? () => { setSide(true); setPanel("files"); box.classList.add("side-open"); }
+        : k === "p" ? () => openPal() : k === "g" ? () => openPal(":") : k === "f" ? openFind : k === "b" ? () => setSide(!prefs.side)
+        : k === "=" || k === "+" ? () => font(1) : k === "-" ? () => font(-1) : null;
+      if (act) { e.preventDefault(); e.stopPropagation(); act(); }
+    };
     addEventListener("keydown", onKey, true);
     box.addEventListener("click", (e) => {
-      const t = e.target.closest("[data-file],[data-dir],[data-tab],[data-close],[data-ide]");
+      if (e.target.closest(".ide-pal") || e.target.closest(".ide-quick")) { /* xử lý bên dưới */ }
+      else if (!$$(".ide-pal").hidden) closePal();
+      const t = e.target.closest("[data-file],[data-dir],[data-tab],[data-close],[data-ide],[data-hit],[data-pal],.ide-row .no");
       if (!t) return;
-      if (t.dataset.file) show(t.dataset.file);
-      else if (t.dataset.dir) { if (closed.has(t.dataset.dir)) closed.delete(t.dataset.dir); else closed.add(t.dataset.dir); drawTree(); }
-      else if (t.dataset.tab) show(t.dataset.tab);
-      else if (t.dataset.close) {
+      if (t.matches(".no")) { goLine(+t.parentElement.dataset.n, false); return; }
+      if (t.dataset.close) {
+        e.stopPropagation();
         const i = open.indexOf(t.dataset.close);
         open.splice(i, 1);
         if (active !== t.dataset.close) drawTabs();
         else if (open.length) show(open[Math.max(0, i - 1)]);
         else clearEditor();
-      } else {
+        return;
+      }
+      if (t.dataset.file) show(t.dataset.file);
+      else if (t.dataset.pal) { closePal(); show(t.dataset.pal); }
+      else if (t.dataset.hit) { render = false; show(t.dataset.hit, +t.dataset.line); }
+      else if (t.dataset.dir) { if (closed.has(t.dataset.dir)) closed.delete(t.dataset.dir); else closed.add(t.dataset.dir); drawTree(); }
+      else if (t.dataset.tab) show(t.dataset.tab);
+      else {
         const act = t.dataset.ide;
         if (act === "close") close();
-        else if (act === "side") box.classList.toggle("side-open");
+        else if (act === "side") { if (matchMedia("(max-width: 760px)").matches) box.classList.toggle("side-open"); else setSide(!prefs.side); }
+        else if (act === "p-files" || act === "p-search") {
+          const p = act.slice(2);
+          if (prefs.side && panel === p && !matchMedia("(max-width: 760px)").matches) setSide(false);
+          else { setSide(true); setPanel(p); if (p === "search") $$('[data-in="search"]').focus(); }
+        }
+        else if (act === "collapse") { for (const p of paths) { const parts = p.split("/"); for (let i = 1; i < parts.length; i++) closed.add(parts.slice(0, i).join("/") + "/"); } drawTree(); }
+        else if (act === "quick") openPal();
+        else if (act === "render") { render = !render; drawDoc(); }
+        else if (act === "wrap") toggleWrap();
+        else if (act === "font+") font(1);
+        else if (act === "font-") font(-1);
+        else if (act === "find-next") stepFind(1);
+        else if (act === "find-prev") stepFind(-1);
+        else if (act === "find-close") closeFind();
+        else if (act === "preview") togglePreview();
+        else if (act === "p-reload") showPreview(prevPage);
+        else if (act === "p-phone") { prevWidth = prevWidth ? "" : "390px"; t.classList.toggle("on", !!prevWidth); const f = $$(".ide-pframe iframe"); if (f) f.style.width = prevWidth; }
         else if (act === "zip") zipProject(files, name).catch((err) => alert("Không tạo được file .zip: " + err.message));
         else if (act === "run") { close(); onRun(); }
-        else if (act === "copy" && active) copy(files.get(active)).then(() => flash(t, `${ICON_CHECK}Đã chép`, `${ICON_COPY}Sao chép`));
+        else if (act === "copy" && active) copy(files.get(active)).then(() => { t.innerHTML = ICON_CHECK; setTimeout(() => (t.innerHTML = ICON_COPY), 1500); });
         else if (act === "dl" && active) saveBlob(new Blob([files.get(active)], { type: (MIME[extOf(active)] || "text/plain") + ";charset=utf-8" }), active.split("/").pop());
       }
     });
-    $$(".ide-filter").addEventListener("input", (e) => { filter = e.target.value.trim().toLowerCase(); drawTree(); });
+    box.addEventListener("input", (e) => {
+      const which = e.target.dataset?.in;
+      if (which === "filter") { filter = e.target.value.trim().toLowerCase(); drawTree(); }
+      else if (which === "search") runSearch();
+      else if (which === "find") runFind();
+      else if (which === "pal") { palAt = 0; drawPal(); }
+    });
+    $$(".ide-prev select").addEventListener("change", (e) => showPreview(e.target.value));
     document.body.append(box);
+    setSide(prefs.side && !matchMedia("(max-width: 760px)").matches ? true : prefs.side);
+    setPanel("files");
+    status();
     show(mainPage(files) || paths.find((p) => /(^|\/)readme\.md$/i.test(p)) || paths[0]);
-    $$(".ide-x").focus();
+    ed.focus();
   }
 
   // ---------- Xuất file PowerPoint, Excel, Word ----------
@@ -5543,7 +6146,7 @@ go((parseInt(location.hash.slice(1))||1)-1);setTimeout(()=>{const h=document.que
       const node = ideBtn.closest(".msg"), card = ideBtn.closest(".file-card"), files = node?._project;
       if (!files) return;
       const run = card.querySelector("[data-proj-run]");
-      openIde(files, card.querySelector(".file-name b").textContent, run ? () => { if (!card.nextElementSibling?.classList.contains("proj-preview")) run.click(); } : null);
+      openIde(files, card.querySelector(".file-name b").textContent, run ? () => { if (!card.nextElementSibling?.classList.contains("proj-preview")) run.click(); } : null, node._projectPrev);
       return;
     }
     const projBtn = e.target.closest("[data-proj-run], [data-proj-zip]");
