@@ -2220,6 +2220,9 @@
         "Chất lượng: không tạo object mới liên tục trong vòng lặp nóng; giới hạn số hạt; hằng số chỉnh game (tốc độ, máu, tần suất sinh địch) gom vào một object CONFIG; " +
         "logic quan trọng (va chạm, tính điểm, sinh màn, AI kẻ địch) viết thành hàm thuần và chạy thử bằng js-run trước; " +
         "trước khi nộp tự chơi thử trong đầu từng luồng: bắt đầu, ghi điểm, thua, chơi lại, tạm dừng rồi tiếp tục, đổi kích thước cửa sổ, chỉ dùng cảm ứng; không lỗi console.\n" +
+        "Trang sẽ tự thử chơi game ngay sau khi bạn viết: chạm giữa canvas, bấm nút Bắt đầu hoặc Chơi (nếu có), Enter, Space, rồi giữ phím mũi tên và Space; " +
+        "nếu hình trên canvas đứng yên hoặc trống trơn thì bị coi là lỗi. Vì vậy màn hình bắt đầu PHẢI vào game được bằng chạm hoặc click, Enter và Space; " +
+        "mọi phần tử HTML mà code gọi tới (getElementById, querySelector) phải có thật trong trang.\n" +
         "Cách tổ chức file:\n" +
         "- Game nhỏ (rắn, pong, flappy, 2048, cờ caro…): MỘT file HTML hoàn chỉnh.\n" +
         "- Game lớn hoặc người dùng muốn tách file: theo định dạng dự án nhiều file, cấu trúc gợi ý: index.html, css/style.css, js/main.js (khởi động), js/config.js (CONFIG), " +
@@ -2932,32 +2935,114 @@
     if (!first || !filesIn(answer).length || filesIn(splitThink(first.content).answer).length < 2) return answer;
     return splitThink(first.content).answer.trim() + "\n\n(Sau khi tự chạy thử, đã sửa các file sau:)\n\n" + answer;
   }
-  // Tự chạy thử trang web trong một khung ẩn khổ điện thoại (390px): bắt lỗi JavaScript và lỗi tải tài nguyên, bấm thử mọi nút,
-  // kiểm tra trang có bị tràn ngang không. Khung có sandbox (không đọc được dữ liệu của trang chat).
-  function checkWebPage(code) {
+  // Mã chạy bên trong khung thử: bắt lỗi JavaScript và lỗi tải tài nguyên, thử chơi game (nếu game), bấm thử mọi nút,
+  // rồi báo trang có tràn ngang không. Hàm này được chuyển thành chữ và chèn vào trang, nên không dùng biến bên ngoài.
+  function pageProbe(id, game) {
+    const seen = new Set();
+    const send = (m) => { m = String(m).slice(0, 300); if (seen.has(m) || seen.size > 12) return; seen.add(m); parent.postMessage({ chk: id, msg: m }, "*"); };
+    // Ảnh, video, âm thanh lấy từ mạng ngoài (ảnh AI, ảnh minh hoạ) tải chậm hoặc bị chặn trong khung thử không phải lỗi code: bỏ qua.
+    addEventListener("error", (e) => {
+      const t = e.target;
+      if (t && t !== window && (t.src || t.href)) {
+        const raw = t.getAttribute("src") || t.getAttribute("href") || "";
+        if (/^(IMG|SOURCE|VIDEO|AUDIO|TRACK)$/.test(t.tagName) && /^(https?:)?[/][/]/i.test(raw)) return;
+        send("Không tải được " + (t.src || t.href));
+      } else send((e.message || "Lỗi") + (e.lineno ? " (dòng " + e.lineno + ")" : ""));
+    }, true);
+    addEventListener("unhandledrejection", (e) => send("Promise bị lỗi: " + ((e.reason && e.reason.message) || e.reason)));
+    const ce = console.error;
+    console.error = (...a) => { send("console.error: " + a.map(String).join(" ")); ce.apply(console, a); };
+    addEventListener("submit", (e) => e.preventDefault(), true);
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    // Thử chơi game: chụp canvas lớn nhất (thu nhỏ 64×48, đổi sang mức xám) trước và sau khi thao tác như người chơi.
+    async function playtest() {
+      const cv = [...document.querySelectorAll("canvas")].map((c) => [c, c.getBoundingClientRect()])
+        .filter(([, r]) => r.width * r.height >= 20000).sort((x, y) => y[1].width * y[1].height - x[1].width * x[1].height)[0]?.[0];
+      if (!cv) return;
+      let ok2d = false;
+      try { ok2d = !!cv.getContext("2d"); } catch {}
+      if (!ok2d) return; // canvas WebGL không đọc lại được hình một cách đáng tin: bỏ qua
+      const small = document.createElement("canvas");
+      const W = 64, H = 48, N = W * H;
+      small.width = W; small.height = H;
+      const sx = small.getContext("2d", { willReadFrequently: true });
+      const snap = () => {
+        try {
+          sx.clearRect(0, 0, W, H); sx.drawImage(cv, 0, 0, W, H);
+          const d = sx.getImageData(0, 0, W, H).data, g = new Float32Array(N);
+          for (let i = 0; i < N; i++) g[i] = (d[i * 4] * 0.3 + d[i * 4 + 1] * 0.59 + d[i * 4 + 2] * 0.11) * (d[i * 4 + 3] / 255);
+          return g;
+        } catch { return null; } // canvas có ảnh khác nguồn (tainted): không đọc được
+      };
+      // Số ô thay đổi rõ (một quân cờ nhỏ hiện ra cũng đủ làm vài ô đổi), thay vì trung bình cả khung hình.
+      const diff = (a, b) => { let n = 0; for (let i = 0; i < N; i++) if (Math.abs(a[i] - b[i]) > 6) n++; return n; };
+      const spread = (a) => { let lo = 255, hi = 0; for (const v of a) { if (v < lo) lo = v; if (v > hi) hi = v; } return hi - lo; };
+      const key = (type, k, code) => document.body.dispatchEvent(new KeyboardEvent(type, { key: k, code, keyCode: { Enter: 13, " ": 32, ArrowRight: 39, ArrowUp: 38 }[k], bubbles: true, cancelable: true }));
+      const tap = () => {
+        const r = cv.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2, o = { clientX: x, clientY: y, bubbles: true, cancelable: true, pointerId: 1, isPrimary: true };
+        const fire = (E, type, opt) => { try { cv.dispatchEvent(new E(type, opt)); } catch {} };
+        let touch = null;
+        try { touch = new Touch({ identifier: 1, target: cv, clientX: x, clientY: y }); } catch {}
+        fire(PointerEvent, "pointerdown", { ...o, pointerType: "touch" }); fire(MouseEvent, "mousedown", o);
+        if (touch) fire(TouchEvent, "touchstart", { touches: [touch], targetTouches: [touch], changedTouches: [touch], bubbles: true, cancelable: true });
+        fire(PointerEvent, "pointerup", { ...o, pointerType: "touch" }); fire(MouseEvent, "mouseup", o);
+        if (touch) fire(TouchEvent, "touchend", { touches: [], targetTouches: [], changedTouches: [touch], bubbles: true, cancelable: true });
+        fire(MouseEvent, "click", o);
+      };
+      const a = snap(); await wait(450); const b = snap();
+      if (!a || !b) return;
+      // Bắt đầu như người chơi: chạm giữa màn hình, bấm nút Bắt đầu/Chơi nếu có, Enter, Space.
+      tap();
+      const start = [...document.querySelectorAll("button,[role=button],a")].find((el) => el.offsetParent !== null && /bắt đầu|chơi|start|play|tiếp tục|continue/i.test(el.textContent || ""));
+      try { start?.click(); } catch {}
+      for (const [k, c] of [["Enter", "Enter"], [" ", "Space"]]) { key("keydown", k, c); key("keyup", k, c); }
+      await wait(300);
+      // Chơi thử: giữ phím mũi tên và Space một lúc.
+      key("keydown", "ArrowRight", "ArrowRight"); key("keydown", " ", "Space");
+      await wait(450); key("keyup", "ArrowRight", "ArrowRight"); key("keydown", "ArrowUp", "ArrowUp");
+      await wait(300); key("keyup", "ArrowUp", "ArrowUp"); key("keyup", " ", "Space");
+      const c = snap();
+      if (!c) return;
+      const idle = diff(a, b), moved = Math.max(diff(b, c), diff(a, c));
+      if (spread(c) < 2) send("Game: canvas không vẽ gì (màn hình một màu trơn) sau khi bắt đầu chơi. Kiểm tra vòng lặp requestAnimationFrame có chạy và hàm vẽ có được gọi không.");
+      else if (moved < Math.max(idle * 1.5 + 2, 3)) send("Game không phản hồi: sau khi chạm giữa màn hình, bấm nút bắt đầu (nếu có), Enter, Space và giữ phím mũi tên, hình trên canvas gần như không đổi " +
+        "(có thể bị kẹt ở màn hình bắt đầu, vòng lặp không chạy, hoặc input không được gắn). Màn hình bắt đầu phải vào game được bằng chạm hoặc click, Enter và Space; điều khiển phải làm hình thay đổi.");
+    }
+    addEventListener("load", () => setTimeout(async () => {
+      if (game) { try { await playtest(); } catch (x) { send("Thử chơi game lỗi: " + x.message); } }
+      for (const b of [...document.querySelectorAll("button,[role=button],input[type=button],input[type=submit]")].slice(0, 25)) {
+        try { b.click(); } catch (x) { send("Bấm nút lỗi: " + x.message); }
+      }
+      setTimeout(() => { const w = document.documentElement.scrollWidth; parent.postMessage({ chk: id, done: 1, overflow: w > innerWidth + 4 ? w : 0 }, "*"); }, 700);
+    }, 600));
+  }
+  // Tự chạy thử trang web trong một khung khổ điện thoại (390px) có sandbox (không đọc được dữ liệu của trang chat).
+  // Khung nằm trong màn hình nhưng trong suốt và nằm dưới mọi thứ: khung đặt ngoài màn hình hoặc visibility:hidden thì Chrome dừng
+  // requestAnimationFrame (0 khung hình mỗi giây), khi đó vòng lặp game không bao giờ chạy và lỗi lúc chơi không bị phát hiện.
+  // game = true: thử chơi game (chạm, Enter, Space, phím mũi tên) và báo lỗi nếu hình trên canvas đứng yên.
+  function checkWebPage(code, game = false) {
     return new Promise((resolve) => {
       const id = Math.random().toString(36).slice(2), errors = [];
-      const probe = `<script>(()=>{const id=${JSON.stringify(id)},seen=new Set(),send=(m)=>{m=String(m).slice(0,300);if(seen.has(m)||seen.size>12)return;seen.add(m);parent.postMessage({chk:id,msg:m},"*")};` +
-        // Ảnh, video, âm thanh lấy từ mạng ngoài (ảnh AI, ảnh minh hoạ) tải chậm hoặc bị chặn trong khung thử không phải lỗi code: bỏ qua.
-        `addEventListener("error",e=>{const t=e.target;if(t&&t!==window&&(t.src||t.href)){const raw=t.getAttribute("src")||t.getAttribute("href")||"";` +
-        `if(/^(IMG|SOURCE|VIDEO|AUDIO|TRACK)$/.test(t.tagName)&&/^(https?:)?[/][/]/i.test(raw))return;send("Không tải được "+(t.src||t.href))}` +
-        `else send((e.message||"Lỗi")+(e.lineno?" (dòng "+e.lineno+")":""))},true);` +
-        `addEventListener("unhandledrejection",e=>send("Promise bị lỗi: "+((e.reason&&e.reason.message)||e.reason)));` +
-        `const ce=console.error;console.error=(...a)=>{send("console.error: "+a.map(String).join(" "));ce.apply(console,a)};` +
-        `addEventListener("submit",e=>e.preventDefault(),true);` +
-        `addEventListener("load",()=>setTimeout(()=>{for(const b of [...document.querySelectorAll("button,[role=button],input[type=button],input[type=submit]")].slice(0,25)){try{b.click()}catch(x){send("Bấm nút lỗi: "+x.message)}}` +
-        `setTimeout(()=>{const w=document.documentElement.scrollWidth;parent.postMessage({chk:id,done:1,overflow:w>innerWidth+4?w:0},"*")},700)},600))})()<\/script>`;
+      const probe = `<script>(${pageProbe})(${JSON.stringify(id)},${game ? "true" : "false"})<\/script>`;
       const frame = document.createElement("iframe");
       frame.sandbox = "allow-scripts allow-forms";
       frame.setAttribute("aria-hidden", "true");
-      frame.style.cssText = "position:fixed;left:-10000px;top:0;width:390px;height:800px;border:0;visibility:hidden";
-      const finish = (overflow = 0) => { removeEventListener("message", onMsg); clearTimeout(timer); frame.remove(); resolve({ errors, overflow }); };
+      frame.tabIndex = -1;
+      frame.style.cssText = "position:fixed;left:0;top:0;width:390px;height:800px;border:0;opacity:0;z-index:-1;pointer-events:none";
+      const focusBefore = document.activeElement;
+      const finish = (overflow = 0) => {
+        removeEventListener("message", onMsg); clearTimeout(timer);
+        const stolen = document.activeElement === frame;
+        frame.remove();
+        if (stolen) focusBefore?.focus?.(); // trang thử tự gọi focus() thì trả lại ô nhập cho người dùng
+        resolve({ errors, overflow });
+      };
       const onMsg = (e) => {
         if (e.source !== frame.contentWindow || e.data?.chk !== id) return;
         if (e.data.msg) errors.push(e.data.msg);
         if (e.data.done) finish(e.data.overflow);
       };
-      const timer = setTimeout(() => finish(0), 8000);
+      const timer = setTimeout(() => finish(0), 10000);
       addEventListener("message", onMsg);
       frame.srcdoc = withShim(code, storageShim() + probe);
       document.body.append(frame);
@@ -2972,11 +3057,11 @@
     "Hãy tìm đúng nguyên nhân từng lỗi và sửa, giữ nguyên các phần đang đúng. Chỉ viết lại TRỌN những file cần sửa, mỗi file một khối code có tên file " +
     "ở dòng mở khối (ví dụ ```js js/app.js), đúng đường dẫn cũ; file không đổi thì không viết lại. Kèm một dòng ngắn nói đã sửa gì.";
   // Chạy thử mọi trang của dự án (tối đa 4 trang), gộp lỗi kèm tên trang.
-  async function checkProject(files) {
+  async function checkProject(files, game = false) {
     const problems = [];
     const pages = [...files.keys()].filter((p) => /\.html?$/i.test(p)).sort((a, b) => (a === mainPage(files) ? -1 : b === mainPage(files) ? 1 : 0)).slice(0, 4);
     for (const p of pages) {
-      const r = await checkWebPage(bundlePage(files, p));
+      const r = await checkWebPage(bundlePage(files, p), game && p === mainPage(files));
       for (const e of r.errors) problems.push(`${p}: ${e}`);
       if (r.overflow) problems.push(`${p}: trên điện thoại (khung 390px) trang bị tràn ngang, rộng ${r.overflow}px.`);
     }
@@ -3013,9 +3098,11 @@
       reply.notice = round ? `Đang chạy thử lại ${what} đã sửa…` : `Đang chạy thử ${what}…`;
       paintAssistant(node, reply, true);
       let problems;
-      if (files) problems = await checkProject(files);
+      // Người dùng đang nhờ làm game: thử chơi luôn (chạm, Enter, Space, phím mũi tên) để bắt game đứng yên ở màn hình bắt đầu.
+      const game = !!chat && activeSkills(chat, true).some((k) => k.id === "game");
+      if (files) problems = await checkProject(files, game);
       else {
-        const r = await checkWebPage(html);
+        const r = await checkWebPage(html, game);
         problems = [...r.errors, ...(r.overflow ? [`Trên điện thoại (khung 390px) trang bị tràn ngang, rộng ${r.overflow}px: có phần tử rộng cố định hoặc thiếu max-width, flex-wrap.`] : [])];
       }
       delete reply.notice;
